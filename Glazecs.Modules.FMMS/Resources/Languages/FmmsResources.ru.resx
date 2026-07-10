@@ -1,0 +1,320 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<!-- 
+		Microsoft ResX Schema
+
+		Version 1.3
+
+		The primary goals of this format is to allow a simple XML format 
+		that is mostly human readable. The generation and parsing of the 
+		various data types are done through the TypeConverter classes 
+		associated with the data types.
+
+		Example:
+
+		... ado.net/XML headers & schema ...
+		<resheader name="resmimetype">text/microsoft-resx</resheader>
+		<resheader name="version">1.3</resheader>
+		<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+		<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+		<data name="Name1">this is my long string</data>
+		<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+		<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+			[base64 mime encoded serialized .NET Framework object]
+		</data>
+		<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+			[base64 mime encoded string representing a byte array form of the .NET Framework object]
+		</data>
+
+		There are any number of "resheader" rows that contain simple 
+		name/value pairs.
+
+		Each data row contains a name, and value. The row also contains a 
+		type or mimetype. Type corresponds to a .NET class that support 
+		text/value conversion through the TypeConverter architecture. 
+		Classes that don't support this are serialized and stored with the 
+		mimetype set.
+
+		The mimetype is used for serialized objects, and tells the 
+		ResXResourceReader how to depersist the object. This is currently not 
+		extensible. For a given mimetype the value must be set accordingly:
+
+		Note - application/x-microsoft.net.object.binary.base64 is the format 
+		that the ResXResourceWriter will generate, however the reader can 
+		read any of the formats listed below.
+
+		mimetype: application/x-microsoft.net.object.binary.base64
+		value   : The object must be serialized with 
+			: System.Serialization.Formatters.Binary.BinaryFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.soap.base64
+		value   : The object must be serialized with 
+			: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.bytearray.base64
+		value   : The object must be serialized into a byte array 
+			: using a System.ComponentModel.TypeConverter
+			: and then encoded with base64 encoding.
+	-->
+	
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Page_Folder_Scanner_Title" xml:space="preserve">
+    <value>Анализ дисков</value>
+  </data>
+  <data name="ModuleDescription" xml:space="preserve">
+    <value>Анализ файлов и метаданных</value>
+  </data>
+  <data name="ModuleName" xml:space="preserve">
+    <value>FMMS</value>
+  </data>
+  <data name="Page_Files_Scanner_Title" xml:space="preserve">
+    <value>Анализ файлов</value>
+  </data>
+  <data name="Page_Files_Scanner_Description" xml:space="preserve">
+    <value>Получение различных метаданных о файлах</value>
+  </data>
+  <data name="Page_Folder_Scanner_Description" xml:space="preserve">
+    <value>Получение списка файлов и папок внутри папок</value>
+  </data>
+  <data name="Settings_General_Title" xml:space="preserve">
+    <value>Общие настройки</value>
+  </data>
+  <data name="Settings_ScanArchives" xml:space="preserve">
+    <value>Сканировать содержимое архивов</value>
+  </data>
+  <data name="Settings_DisplayedSizeType" xml:space="preserve">
+    <value>Единица измерения размера</value>
+  </data>
+  <data name="SizeType_B" xml:space="preserve">
+    <value>Байты (Б)</value>
+  </data>
+  <data name="SizeType_KB" xml:space="preserve">
+    <value>Килобайты (КБ)</value>
+  </data>
+  <data name="SizeType_MB" xml:space="preserve">
+    <value>Мегабайты (МБ)</value>
+  </data>
+  <data name="SizeType_GB" xml:space="preserve">
+    <value>Гигабайты (ГБ)</value>
+  </data>
+  <data name="Settings_Hashing_Title" xml:space="preserve">
+    <value>Вычислять хеш-суммы</value>
+  </data>
+  <data name="Settings_Columns_Title" xml:space="preserve">
+    <value>Видимость колонок</value>
+  </data>
+  <data name="Settings_Columns_Description" xml:space="preserve">
+    <value>Выберите, какие данные отображать в главном окне сканирования</value>
+  </data>
+  <data name="Column_Id" xml:space="preserve">
+    <value>Идентификатор</value>
+  </data>
+  <data name="Column_Name" xml:space="preserve">
+    <value>Имя файла</value>
+  </data>
+  <data name="Column_PagesCount" xml:space="preserve">
+    <value>Кол-во страниц</value>
+  </data>
+  <data name="Column_Extension" xml:space="preserve">
+    <value>Расширение</value>
+  </data>
+  <data name="Column_SHA256" xml:space="preserve">
+    <value>Хеш SHA-256</value>
+  </data>
+  <data name="Column_SHA512" xml:space="preserve">
+    <value>Хеш SHA-512</value>
+  </data>
+  <data name="Column_MD5" xml:space="preserve">
+    <value>Хеш MD5</value>
+  </data>
+  <data name="Column_FullPath" xml:space="preserve">
+    <value>Полный путь</value>
+  </data>
+  <data name="Column_IsArchive" xml:space="preserve">
+    <value>Является архивом</value>
+  </data>
+  <data name="Column_IsArchiveEntry" xml:space="preserve">
+    <value>Вложен в архив</value>
+  </data>
+  <data name="Column_CompressedSize" xml:space="preserve">
+    <value>Сжатый размер</value>
+  </data>
+  <data name="Column_UnCompressedSize" xml:space="preserve">
+    <value>Несжатый размер</value>
+  </data>
+  <data name="Column_Size" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="Settings_Archives_Title" xml:space="preserve">
+    <value>Расширения архивов</value>
+  </data>
+  <data name="Settings_CustomArchiveExtensions_Hint" xml:space="preserve">
+    <value>Добавьте расширения, которые приложение должно считать архивами (например, .apk, .epub).</value>
+  </data>
+  <data name="Settings_CustomArchiveExtensions_Label" xml:space="preserve">
+    <value>Расширения файлов</value>
+  </data>
+  <data name="Settings_CustomArchiveExtensions_Helper" xml:space="preserve">
+    <value>Нажмите Enter для добавления нового расширения</value>
+  </data>
+  <data name="Settings_PagesRules_Title" xml:space="preserve">
+    <value>Пользовательские правила подсчета страниц</value>
+  </data>
+  <data name="Settings_PagesRules_Extension" xml:space="preserve">
+    <value>Расширение</value>
+  </data>
+  <data name="Settings_PagesRules_Value" xml:space="preserve">
+    <value>Значение</value>
+  </data>
+  <data name="Settings_PagesRules_Empty" xml:space="preserve">
+    <value>Пользовательские правила не заданы</value>
+  </data>
+  <data name="Common_Add" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Сохранить настройки</value>
+  </data>
+  <data name="Scanner_FolderPath" xml:space="preserve">
+    <value>Путь к папке</value>
+  </data>
+  <data name="Scanner_SelectFolder" xml:space="preserve">
+    <value>Выбрать папку</value>
+  </data>
+  <data name="Scanner_Start" xml:space="preserve">
+    <value>Начать сканирование</value>
+  </data>
+  <data name="Scanner_Cancel" xml:space="preserve">
+    <value>Отменить</value>
+  </data>
+  <data name="Scanner_Completed_Success" xml:space="preserve">
+    <value>Сканирование успешно завершено</value>
+  </data>
+  <data name="Scanner_Cancelled" xml:space="preserve">
+    <value>Сканирование отменено</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Menu_Open_File" xml:space="preserve">
+    <value>Открыть файл</value>
+  </data>
+  <data name="Menu_Open_Folder" xml:space="preserve">
+    <value>Показать в папке</value>
+  </data>
+  <data name="Menu_Copy_Info" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="Menu_Copy_Info_TSV" xml:space="preserve">
+    <value>Копировать как TSV</value>
+  </data>
+  <data name="Menu_Copy_Info_All" xml:space="preserve">
+    <value>Копировать всё выбранное</value>
+  </data>
+  <data name="Menu_Copy_Info_TSV_All" xml:space="preserve">
+    <value>Копировать всё как TSV</value>
+  </data>
+  <data name="Common_Copied" xml:space="preserve">
+    <value>Скопировано в буфер обмена</value>
+  </data>
+  <data name="Table_Id" xml:space="preserve">
+    <value>№</value>
+  </data>
+  <data name="Table_Name" xml:space="preserve">
+    <value>Имя файла</value>
+  </data>
+  <data name="Table_Extension" xml:space="preserve">
+    <value>Расширение</value>
+  </data>
+  <data name="Table_Size" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="Table_Compressed_Size" xml:space="preserve">
+    <value>Сжатый размер</value>
+  </data>
+  <data name="Table_UnCompressed_Size" xml:space="preserve">
+    <value>Несжатый размер</value>
+  </data>
+  <data name="Table_Pages_Count" xml:space="preserve">
+    <value>Кол-во страниц</value>
+  </data>
+  <data name="Table_Is_Archive" xml:space="preserve">
+    <value>Архив</value>
+  </data>
+  <data name="Table_Is_Archive_Entry" xml:space="preserve">
+    <value>Файл из архива</value>
+  </data>
+  <data name="Table_Full_Path" xml:space="preserve">
+    <value>Полный путь</value>
+  </data>
+  <data name="Table_MD5" xml:space="preserve">
+    <value>MD5 хеш</value>
+  </data>
+  <data name="Table_SHA256" xml:space="preserve">
+    <value>SHA-256 хеш</value>
+  </data>
+  <data name="Table_SHA512" xml:space="preserve">
+    <value>SHA-512 хеш</value>
+  </data>
+  <data name="Settings_Saved_Success" xml:space="preserve">
+    <value>Настройки сохранены</value>
+  </data>
+  <data name="Directory_Analyzer_Title" xml:space="preserve">
+    <value>Directory Analyze</value>
+  </data>
+  <data name="Column_Name_Dir" xml:space="preserve">
+    <value>Имя директории</value>
+  </data>
+  <data name="Column_Files_Count" xml:space="preserve">
+    <value>Количество файлов</value>
+  </data>
+  <data name="Settings_DirectoryScan_Title" xml:space="preserve">
+    <value>Настройки сканирования директорий</value>
+  </data>
+  <data name="Settings_IncludeHiddenFolders" xml:space="preserve">
+    <value>Сканировать скрытые директории</value>
+  </data>
+  <data name="Settings_DisplayOptions_Title" xml:space="preserve">
+    <value>Настройки отображения</value>
+  </data>
+</root>

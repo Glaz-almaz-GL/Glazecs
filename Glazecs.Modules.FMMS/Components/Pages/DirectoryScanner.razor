@@ -1,0 +1,423 @@
+﻿@using System.Diagnostics
+@using System.Text
+@using CommunityToolkit.Maui.Storage
+@using Glazecs.Modules.FMMS.Abstractions.Enums
+@using Glazecs.Modules.FMMS.Abstractions.Interfaces
+@using Glazecs.Modules.FMMS.Abstractions.Models
+@using Glazecs.Modules.FMMS.Resources.Languages
+@using Glazecs.Modules.FMMS.Services
+@using Glazecs.Shared.Core.Extensions
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using MudBlazor
+@inject IStringLocalizer<FmmsResources> Localizer
+@inject IDirectoryScannerService Scanner
+@inject FmmsSettingsService SettingsService
+@inject ISnackbar Snackbar
+@page "/modules/fmms/directory_scanner"
+
+<MudContainer @onkeydown="OnDataGridKeyDown" tabindex="0" MaxWidth="MaxWidth.False" Class="mt-4">
+	<MudStack Spacing="3">
+
+		<!-- Панель управления -->
+		<MudCard Outlined="true">
+			<MudCardContent>
+				<MudStack Row="true" Spacing="2">
+					<MudTextField T="string"
+								  @bind-Value="_dirPath"
+								  Placeholder="@Localizer["Scanner_FolderPath"]"
+								  Disabled="@_isScanning"
+								  Variant="Variant.Outlined" />
+
+					<MudIconButton Icon="@Icons.Material.Filled.FolderOpen" Disabled="@(_isScanning || !_isSupportedPlatform)" Style="width: 56px; height: 56px;" Variant="Variant.Outlined" Color="Color.Primary" OnClick="SelectFolderAsync" />
+
+					@if (!_isScanning)
+					{
+						<MudIconButton Icon="@Icons.Material.Filled.Start" Style="width: 56px; height: 56px;" Variant="Variant.Filled" Color="Color.Primary" OnClick="StartScanningAsync" Disabled="@(string.IsNullOrWhiteSpace(_dirPath) || !Directory.Exists(_dirPath))" />
+					}
+					else
+					{
+						<MudIconButton Icon="@Icons.Material.Filled.Cancel" Style="width: 56px; height: 56px;" Variant="Variant.Filled" Color="Color.Error" OnClick="CancelScanning" />
+					}
+				</MudStack>
+
+				@if (_isScanning || _progress > 0)
+				{
+					<MudProgressLinear Color="Color.Primary" Value="@_progress" Class="mt-4" Indeterminate="@(_progress == 0)" />
+				}
+			</MudCardContent>
+		</MudCard>
+
+		<!-- Таблица результатов с горизонтальной прокруткой -->
+		<MudCard Outlined="true">
+			<MudCardContent Style="padding: 0;">
+				<div style="overflow-x: auto; max-height: 100%; overflow-y: auto;">
+					<MudDataGrid T="ScannedDirectory"
+								 Items="@_scannedDirs"
+								 SelectedItems="@_selectedRows"
+								 SelectedItemsChanged="@SelectedItemsChanged"
+								 Hover="true"
+								 Striped="true"
+								 Dense="true"
+								 Elevation="0"
+								 Outlined="false"
+								 HorizontalScrollbar="true"
+								 ColumnResizeMode="ResizeMode.Column"
+								 Filterable="true"
+								 ReadOnly="true"
+								 SortMode="SortMode.Single"
+								 MultiSelection="true"
+								 SelectOnRowClick="true"
+								 Bordered="true"
+								 RowContextMenuClick="@OpenMenuContent"
+								 RowsPerPage="20">
+						<Columns>
+							<SelectColumn />
+
+							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => _scannedDirs.IndexOf(x) + 1" Title="@Localizer["Table_Id"]">
+								<CellTemplate>
+									<MudText Typo="Typo.body2">@(_scannedDirs.IndexOf(context.Item) + 1)</MudText>
+								</CellTemplate>
+							</PropertyColumn>
+
+							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.RelativePath" Title="@Localizer["Column_Name_Dir"]" />
+
+							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.FullPath" Title="@Localizer["Table_Full_Path"]" />
+
+							<PropertyColumn T="ScannedDirectory" TProperty="long" Filterable="false" Property="x => x.Size" Title="@Localizer["Column_Size"]">
+								<CellTemplate>
+									<MudText Typo="Typo.body2">@FormatSize(context.Item.Size)</MudText>
+								</CellTemplate>
+							</PropertyColumn>
+
+							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => x.FilesCount" Title="@Localizer["Column_Files_Count"]" />
+						</Columns>
+						<PagerContent>
+							<MudDataGridPager T="ScannedDirectory" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
+						</PagerContent>
+					</MudDataGrid>
+
+					<MudMenu Dense="true" DropShadow="true" PositionAtCursor="true" @ref="_contextMenu" Class="custom-context-menu">
+						<!-- Группа 1: Открытие -->
+						<MudMenuItem OnClick="@(() => OpenDirectory(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FolderOpen">
+							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+								<MudText Typo="Typo.body2">@Localizer["Menu_Open_Folder"]</MudText>
+								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + O</MudChip>
+							</MudStack>
+						</MudMenuItem>
+
+						<MudDivider Class="my-1" />
+
+						<!-- Группа 2: Копирование (Одиночное) -->
+						<MudMenuItem OnClick="@CopySingleInfoAsync" Icon="@Icons.Material.Outlined.FileCopy">
+							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info"]</MudText>
+								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
+							</MudStack>
+						</MudMenuItem>
+
+						<MudMenuItem OnClick="@CopySingleInfoTsvAsync" Icon="@Icons.Material.TwoTone.FileCopy">
+							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV"]</MudText>
+								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
+							</MudStack>
+						</MudMenuItem>
+
+						@if (_selectedRows?.Count > 1)
+						{
+							<MudDivider Class="my-1" />
+
+							<!-- Группа 3: Массовые операции -->
+							<MudMenuItem OnClick="@CopySelectedInfoAsync" Icon="@Icons.Material.Outlined.CopyAll">
+								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_All"]</MudText>
+							</MudMenuItem>
+
+							<MudMenuItem OnClick="@CopySelectedInfoTsvAsync" Icon="@Icons.Material.TwoTone.CopyAll">
+								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV_All"]</MudText>
+							</MudMenuItem>
+						}
+					</MudMenu>
+				</div>
+			</MudCardContent>
+		</MudCard>
+	</MudStack>
+</MudContainer>
+
+@code {
+	private string _dirPath = string.Empty;
+	private bool _isScanning;
+	private double _progress;
+	private CancellationTokenSource? _cts;
+	private ScannedDirectory? _contextRow;
+	private MudMenu _contextMenu = null!;
+	private List<ScannedDirectory> _scannedDirs = new();
+	private HashSet<ScannedDirectory>? _selectedRows = null;
+	private bool _isSupportedPlatform => !OperatingSystem.IsBrowser();
+
+	// Кэш для делегатов форматирования
+	private Dictionary<string, Func<ScannedDirectory, int, string>>? _columnFormatters;
+
+	private async Task SelectFolderAsync()
+	{
+		var result = await FolderPicker.Default.PickAsync();
+		if (result != null && !string.IsNullOrEmpty(result.Folder?.Path))
+		{
+			_dirPath = result.Folder.Path;
+		}
+	}
+
+	private async Task StartScanningAsync()
+	{
+		_isScanning = true;
+		_progress = 0;
+		_scannedDirs.Clear();
+		_cts = new CancellationTokenSource();
+
+		var progress = new Progress<double>(value =>
+		{
+			_progress = value;
+
+			int progressInt = (int)(value * 100);
+
+			// Каждые 0.25%
+			if (progressInt % 25 == 0)
+			{
+				StateHasChanged();
+			}
+		});
+
+		try
+		{
+			List<ScannedDirectory> tempList = new List<ScannedDirectory>(capacity: 250);
+
+			await foreach (var dir in Scanner.ScanDirectoryAsync(
+			_dirPath,
+			SettingsService.DirectoryScanningSettings,
+			progress,
+			_cts.Token))
+			{
+				tempList.Add(dir);
+
+				if (tempList.Count >= 250)
+				{
+					_scannedDirs.AddRange(tempList);
+					tempList.Clear();
+
+					await InvokeAsync(StateHasChanged);
+				}
+			}
+
+			if (tempList.Count > 0)
+			{
+				_scannedDirs.AddRange(tempList);
+				await InvokeAsync(StateHasChanged);
+			}
+
+			Snackbar.Add(Localizer["Scanner_Completed_Success"], Severity.Success);
+		}
+		catch (OperationCanceledException)
+		{
+			Snackbar.Add(Localizer["Scanner_Cancelled"], Severity.Warning);
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add($"{Localizer["Common_Error"]}: {ex.Message}", Severity.Error);
+		}
+		finally
+		{
+			_isScanning = false;
+			_cts?.Dispose();
+			_cts = null;
+			await InvokeAsync(StateHasChanged);
+		}
+	}
+
+	private void CancelScanning()
+	{
+		_cts?.Cancel();
+	}
+
+	private async Task OpenMenuContent(DataGridRowClickEventArgs<ScannedDirectory> args)
+	{
+		_contextRow = args.Item;
+		await _contextMenu.OpenMenuAsync(args.MouseEventArgs);
+	}
+
+	private void SelectedItemsChanged(HashSet<ScannedDirectory> items)
+	{
+		_selectedRows = items;
+	}
+
+	public string FormatSize(double size)
+	{
+		var type = SettingsService.DirectoryScanningSettings.DisplayedSizeType;
+
+		return type switch
+		{
+			FileSizeType.Bit => $"{size.ToBits():F0} Bit",
+			FileSizeType.B => $"{size:F0} B",
+			FileSizeType.KB => $"{size.ToKiloBytes():F2} KB",
+			FileSizeType.MB => $"{size.ToMegaBytes():F2} MB",
+			FileSizeType.GB => $"{size.ToGigaBytes():F2} GB",
+			FileSizeType.TB => $"{size.ToTeraBytes():F2} TB",
+			FileSizeType.PB => $"{size.ToPetaBytes():F2} PB",
+			_ => $"{size:F0} B"
+		};
+	}
+
+	#region ScannedDirectoryActions
+
+	private void OpenDirectory(string? dirPath)
+	{
+		if (string.IsNullOrEmpty(dirPath)) return;
+		try
+		{
+			// Открываем саму папку в проводнике
+			Process.Start(new ProcessStartInfo(dirPath) { UseShellExecute = true });
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add(ex.Message, Severity.Error, config => config.RequireInteraction = true);
+		}
+	}
+
+	private void InitializeColumnFormatters()
+	{
+		if (_columnFormatters != null) return;
+
+		_columnFormatters = new Dictionary<string, Func<ScannedDirectory, int, string>>
+		{
+			["Id"] = (_, index) => $"{Localizer["Table_Id"]}: {index}",
+			["RelativePath"] = (dir, _) => $"{Localizer["Column_Name_Dir"]}: {dir.RelativePath}",
+			["FullPath"] = (dir, _) => $"{Localizer["Table_Full_Path"]}: {dir.FullPath}",
+			["Size"] = (dir, _) => $"{Localizer["Column_Size"]}: {FormatSize(dir.Size)}",
+			["FilesCount"] = (dir, _) => $"{Localizer["Column_Files_Count"]}: {dir.FilesCount}"
+		};
+	}
+
+	private IEnumerable<KeyValuePair<string, Func<ScannedDirectory, int, string>>> GetVisibleFormatters()
+	{
+		InitializeColumnFormatters();
+		return _columnFormatters!;
+	}
+
+	private string GetDirInfoFormatted(ScannedDirectory dir)
+	{
+		var index = _scannedDirs.IndexOf(dir) + 1;
+		var sb = new StringBuilder();
+
+		foreach (var formatter in GetVisibleFormatters())
+		{
+			sb.Append($"{formatter.Value(dir, index)} ");
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	private string GetDirInfoTsv(ScannedDirectory dir)
+	{
+		var index = _scannedDirs.IndexOf(dir) + 1;
+		var values = GetVisibleFormatters()
+			.Select(f =>
+			{
+				var formatted = f.Value(dir, index);
+				var separatorIndex = formatted.IndexOf(':');
+				return separatorIndex >= 0 ? formatted.Substring(separatorIndex + 1).Trim() : formatted.Trim();
+			})
+			.ToList();
+
+		return string.Join("\t", values);
+	}
+
+	private string GetTsvHeaders()
+	{
+		var headers = GetVisibleFormatters()
+			.Select(f => Localizer[f.Key])
+			.ToList();
+
+		return string.Join("\t", headers);
+	}
+
+	private async Task CopySingleInfoAsync()
+	{
+		if (_contextRow != null || _selectedRows?.Count > 0)
+		{
+			ScannedDirectory dir = _contextRow ?? _selectedRows!.First();
+			await Clipboard.Default.SetTextAsync(GetDirInfoFormatted(dir));
+			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		}
+	}
+
+	private async Task CopySingleInfoTsvAsync()
+	{
+		if (_contextRow != null || _selectedRows?.Count > 0)
+		{
+			ScannedDirectory dir = _contextRow ?? _selectedRows!.First();
+			StringBuilder sb = new();
+			sb.AppendLine(GetTsvHeaders());
+			sb.AppendLine(GetDirInfoTsv(dir));
+
+			await Clipboard.Default.SetTextAsync(sb.ToString());
+			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		}
+	}
+
+	private async Task CopySelectedInfoAsync()
+	{
+		if (_selectedRows?.Count == 0) return;
+
+		var sortedDirs = _selectedRows!
+			.Select(dir => new { Dir = dir, Index = _scannedDirs.IndexOf(dir) })
+			.OrderBy(item => item.Index)
+			.Select(item => item.Dir)
+			.ToList();
+
+		var sb = new StringBuilder();
+		foreach (var dir in sortedDirs) sb.AppendLine(GetDirInfoFormatted(dir));
+
+		await Clipboard.Default.SetTextAsync(sb.ToString());
+		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+	}
+
+	private async Task CopySelectedInfoTsvAsync()
+	{
+		if (_selectedRows?.Count == 0) return;
+
+		var sortedDirs = _selectedRows!
+			.Select(dir => new { Dir = dir, Index = _scannedDirs.IndexOf(dir) })
+			.OrderBy(item => item.Index)
+			.Select(item => item.Dir)
+			.ToList();
+
+		var sb = new StringBuilder();
+		sb.AppendLine(GetTsvHeaders());
+		foreach (var dir in sortedDirs) sb.AppendLine(GetDirInfoTsv(dir));
+
+		await Clipboard.Default.SetTextAsync(sb.ToString());
+		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+	}
+
+	#endregion
+
+	private async Task OnDataGridKeyDown(KeyboardEventArgs e)
+	{
+		if (e.CtrlKey && e.ShiftKey && e.Code == "KeyC")
+		{
+			await CopySingleInfoTsvAsync();
+		}
+		else if (e.CtrlKey && e.Code == "KeyC")
+		{
+			await CopySingleInfoAsync();
+		}
+
+		if (_contextRow != null || _selectedRows?.Count > 0)
+		{
+			ScannedDirectory dir = _contextRow ?? _selectedRows!.First();
+
+			if (e.CtrlKey && e.ShiftKey && e.Code == "KeyO")
+			{
+				OpenDirectory(dir.FullPath);
+			}
+		}
+	}
+}

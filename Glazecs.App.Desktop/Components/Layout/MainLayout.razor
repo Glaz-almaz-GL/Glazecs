@@ -1,0 +1,52 @@
+﻿@inherits LayoutComponentBase
+
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Glazecs</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudDrawerHeader>
+
+        </MudDrawerHeader>
+        <MudDrawerContainer>
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+            <MudNavGroup Icon="@Icons.Material.Filled.PieChart" Title="Modules">
+                <MudNavGroup Icon="@Icons.Material.Filled.FilePresent" Title="FMMS">
+                    <MudNavLink Href="/modules/fmms/files_scanner" Icon="@Icons.Material.Filled.Dashboard">
+                        Files Scanner
+                    </MudNavLink>
+
+                    <MudNavLink Href="/modules/fmms/directory_scanner" Icon="@Icons.Material.Filled.FilterNone">
+                        Directory Scanner
+                    </MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Icon="@Icons.Material.Filled.AddChart" Title="File Chunker">
+                    <MudNavLink Href="/modules/file-chunker/word" Icon="@Icons.Custom.FileFormats.FileWord">
+                        Word
+                    </MudNavLink>
+                </MudNavGroup>
+            </MudNavGroup>
+        </MudDrawerContainer>
+    </MudDrawer>
+
+    <MudMainContent>
+        <div style="padding:10px;">
+            @Body
+        </div>
+    </MudMainContent>
+</MudLayout>

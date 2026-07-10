@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/App/">
+    <Project Path="Glazecs.App.Desktop/Glazecs.App.Desktop.csproj" Id="de1aaab2-8d8a-471c-9803-faba14db2b9e">
+      <Deploy Solution="Debug|*" />
+    </Project>
+    <Project Path="Glazecs.App.Mobile/Glazecs.App.Mobile.csproj" Id="c938e1da-b187-49b7-ad5b-d9ec28b85922" />
+    <Project Path="Glazecs.App.Web/Glazecs.App.Web.csproj" Id="1c306288-29d5-42c2-bbe5-93e6a86df3cd" />
+  </Folder>
+  <Folder Name="/Modules/">
+    <Project Path="Glazecs.Modules.FileChunker.Abstractions/Glazecs.Modules.FileChunker.Abstractions.csproj" Id="36b258bb-6072-4f21-8f09-074773a8c674" />
+    <Project Path="Glazecs.Modules.FileChunker/Glazecs.Modules.FileChunker.csproj" Id="fdbdc059-577c-47e9-a2ce-2062c4b22f9a" />
+    <Project Path="Glazecs.Modules.FMMS.Abstractions/Glazecs.Modules.FMMS.Abstractions.csproj" />
+    <Project Path="Glazecs.Modules.FMMS/Glazecs.Modules.FMMS.csproj" />
+    <Project Path="Glazecs.Modules.Hash.Abstractions/Glazecs.Modules.Hash.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Glazecs.Shared.Core/Glazecs.Shared.Core.csproj" Id="b190462f-8c15-474b-87a6-0ac82593926f" />
+    <Project Path="Glazecs.Shared.UI/Glazecs.Shared.UI.csproj" Id="951f5856-6d00-41a8-be3e-0e87204f03fb" />
+  </Folder>
+</Solution>
