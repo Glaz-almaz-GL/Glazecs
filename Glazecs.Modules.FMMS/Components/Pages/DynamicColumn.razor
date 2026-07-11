@@ -3,9 +3,9 @@
 @using Glazecs.Modules.FMMS.Resources.Languages
 @using Microsoft.Extensions.Localization
 @using MudBlazor
-@inject IStringLocalizer<FmmsResources> Localizer
+@inject IStringLocalizer<FmmsResources> L
 
-<TemplateColumn T="ScannedFile" Title="@Localizer[Config.HeaderKey]">
+<TemplateColumn T="ScannedFile" Title="@L[Config.HeaderKey]">
     <CellTemplate>
         <MudText Typo="Typo.body2">
             @Config.ValueSelector(context.Item)

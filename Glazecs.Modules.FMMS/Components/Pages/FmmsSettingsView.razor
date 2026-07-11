@@ -7,7 +7,7 @@
 @using Glazecs.Modules.FMMS.Resources.Languages
 @using Glazecs.Modules.FMMS.Services
 @using Glazecs.Modules.Hash.Abstractions.Interfaces
-@inject IStringLocalizer<FmmsResources> Localizer
+@inject IStringLocalizer<FmmsResources> L
 @inject FmmsSettingsService SettingsService
 @inject ISnackbar Snackbar
 @inject IHashProviderFactory HashProviderFactory
@@ -18,19 +18,19 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_General_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_General_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudStack Spacing="3">
                 <MudSwitch T="bool"
                            ValueChanged="OnArchiveSettingsChanged"
-                           Label="@Localizer["Settings_ScanArchives"]"
+                           Label="@L["Settings_ScanArchives"]"
                            Color="Color.Primary" />
 
                 <MudSelect T="FileSizeType"
                            ValueChanged="OnSizeTypeSettingChanged"
-                           Label="@Localizer["Settings_DisplayedSizeType"]"
+                           Label="@L["Settings_DisplayedSizeType"]"
                            Variant="Variant.Outlined" Dense="true">
                     <MudSelectItem T="FileSizeType" Value="@FileSizeType.Bit">Bit</MudSelectItem>
                     <MudSelectItem T="FileSizeType" Value="@FileSizeType.B">B</MudSelectItem>
@@ -42,7 +42,7 @@
 
                 <MudNumericField T="int"
                                  ValueChanged="OnMaxFilesSettingsChanged"
-                                 Label="@Localizer["Settings_MaxConcurrentFiles"]"
+                                 Label="@L["Settings_MaxConcurrentFiles"]"
                                  Min="1" Variant="Variant.Outlined" Style="max-width: 200px;" />
             </MudStack>
         </MudCardContent>
@@ -52,12 +52,12 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_Hashing_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_Hashing_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudStack Spacing="3">
-                <MudText Typo="Typo.subtitle2">@Localizer["Settings_Hashing_Algorithms"]</MudText>
+                <MudText Typo="Typo.subtitle2">@L["Settings_Hashing_Algorithms"]</MudText>
                 <MudGrid>
                     @foreach (var a in SettingsService.FilesScanningSettings.Hashing.AlgorithmsToCalculate)
                     {
@@ -86,17 +86,17 @@
                 <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap">
                     <MudNumericField T="long"
                                      ValueChanged="OnMaxSizeSettingsChanged"
-                                     Label="@Localizer["Settings_Hashing_MaxSize"]"
+                                     Label="@L["Settings_Hashing_MaxSize"]"
                                      Min="0" Variant="Variant.Outlined" Style="max-width: 200px;" />
 
                     <MudSwitch T="bool"
                                ValueChanged="OnCalculateSettingsChanged"
-                               Label="@Localizer["Settings_Hashing_Parallel"]"
+                               Label="@L["Settings_Hashing_Parallel"]"
                                Color="Color.Primary" />
 
                     <MudNumericField T="int"
                                      ValueChanged="OnParallelismSettingsChanged"
-                                     Label="@Localizer["Settings_Hashing_MaxParallelism"]"
+                                     Label="@L["Settings_Hashing_MaxParallelism"]"
                                      Min="1" Variant="Variant.Outlined" Style="max-width: 200px;" />
                 </MudStack>
             </MudStack>
@@ -107,12 +107,12 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_Columns_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_Columns_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudStack Spacing="3">
-                <MudText Typo="Typo.subtitle2">@Localizer["Settings_Columns_Standard"]</MudText>
+                <MudText Typo="Typo.subtitle2">@L["Settings_Columns_Standard"]</MudText>
                 <MudGrid>
                     @foreach (var kvp in SettingsService.FilesScanningSettings.Columns.StandardColumns)
                     {
@@ -128,7 +128,7 @@
 
                 <MudDivider Class="my-2" />
 
-                <MudText Typo="Typo.subtitle2">@Localizer["Settings_Columns_Hashes"]</MudText>
+                <MudText Typo="Typo.subtitle2">@L["Settings_Columns_Hashes"]</MudText>
                 <MudGrid>
                     @foreach (var kvp in SettingsService.FilesScanningSettings.Columns.HashColumns)
                     {
@@ -149,7 +149,7 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_PagesRules_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_PagesRules_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
@@ -157,16 +157,16 @@
                 <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
                     <MudTextField T="string"
                                   @bind-Value="_newRuleExt"
-                                  Label="@Localizer["Settings_PagesRules_Extension"]"
+                                  Label="@L["Settings_PagesRules_Extension"]"
                                   Variant="Variant.Outlined" Style="max-width: 150px;"
                                   OnKeyDown="@HandleEnterKeyPages" />
                     <MudNumericField T="int"
                                      @bind-Value="_newRulePages"
-                                     Label="@Localizer["Settings_PagesRules_Value"]"
+                                     Label="@L["Settings_PagesRules_Value"]"
                                      Min="1" Variant="Variant.Outlined" Style="max-width: 150px;" />
                     <MudSpacer />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddPageRule">
-                        @Localizer["Common_Add"]
+                        @L["Common_Add"]
                     </MudButton>
                 </MudStack>
 
@@ -174,8 +174,8 @@
                 {
                     <MudTable Items="SettingsService.FilesScanningSettings.PagesCountCustomRules.ToList()" Hover="true" Striped="true" Elevation="0">
                         <HeaderContent>
-                            <MudTh>@Localizer["Settings_PagesRules_Extension"]</MudTh>
-                            <MudTh>@Localizer["Settings_PagesRules_Value"]</MudTh>
+                            <MudTh>@L["Settings_PagesRules_Extension"]</MudTh>
+                            <MudTh>@L["Settings_PagesRules_Value"]</MudTh>
                             <MudTh Style="width:100px;"></MudTh>
                         </HeaderContent>
                         <RowTemplate>
@@ -189,7 +189,7 @@
                 }
                 else
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">@Localizer["Settings_PagesRules_Empty"]</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@L["Settings_PagesRules_Empty"]</MudText>
                 }
             </MudStack>
         </MudCardContent>
@@ -199,7 +199,7 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_Archives_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_Archives_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
@@ -207,11 +207,11 @@
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
                     <MudTextField T="string"
                                   @bind-Value="_newArchiveExt"
-                                  Label="@Localizer["Settings_PagesRules_Extension"]"
+                                  Label="@L["Settings_PagesRules_Extension"]"
                                   Placeholder=".rar" Variant="Variant.Outlined" Style="max-width: 200px;"
                                   OnKeyDown="@HandleEnterKey" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddArchiveExtension">
-                        @Localizer["Common_Add"]
+                        @L["Common_Add"]
                     </MudButton>
                 </MudStack>
 
@@ -229,14 +229,14 @@
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@Localizer["Settings_DirectoryScan_Title"]</MudText>
+                <MudText Typo="Typo.h6">@L["Settings_DirectoryScan_Title"]</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudStack Spacing="3">
                 <MudSwitch T="bool"
                            ValueChanged="OnIncludeHiddenSettingsChanged"
-                           Label="@Localizer["Settings_IncludeHiddenFolders"]"
+                           Label="@L["Settings_IncludeHiddenFolders"]"
                            Color="Color.Primary" />
             </MudStack>
         </MudCardContent>
@@ -245,7 +245,7 @@
     <!-- Кнопка явного сохранения -->
     <MudStack Row="true" Justify="Justify.FlexEnd">
         <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SaveExplicitly" StartIcon="@Icons.Material.Filled.Save">
-            @Localizer["Common_Save"]
+            @L["Common_Save"]
         </MudButton>
     </MudStack>
 </MudStack>
@@ -265,7 +265,7 @@
 
     private string GetLocalizedColumnName(FileColumn column)
     {
-        return Localizer[$"Column_{column}"]?.Value ?? column.ToString();
+        return L[$"Column_{column}"]?.Value ?? column.ToString();
     }
 
     #region Hashing Logic
@@ -370,7 +370,7 @@
         // Проверка: только буквы, цифры и точка в начале, длина от 2 до 10 символов
         if (!Regex.IsMatch(ext, @"^\.[a-z0-9]{1,9}$"))
         {
-            Snackbar.Add(Localizer["Settings_InvalidExtension"], Severity.Warning);
+            Snackbar.Add(L["Settings_InvalidExtension"], Severity.Warning);
             return false;
         }
 
@@ -428,7 +428,7 @@
     private async Task SaveExplicitly()
     {
         await SettingsService.SaveAsync();
-        Snackbar.Add(Localizer["Settings_Saved_Success"], Severity.Success);
+        Snackbar.Add(L["Settings_Saved_Success"], Severity.Success);
     }
 
     private async Task HandleEnterKey(KeyboardEventArgs args)

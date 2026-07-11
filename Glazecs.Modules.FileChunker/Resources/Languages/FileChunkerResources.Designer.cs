@@ -59,5 +59,446 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на File Name.
+        /// </summary>
+        public static string ColumnFileName {
+            get {
+                return ResourceManager.GetString("ColumnFileName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Path.
+        /// </summary>
+        public static string ColumnPath {
+            get {
+                return ResourceManager.GetString("ColumnPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Size.
+        /// </summary>
+        public static string ColumnSize {
+            get {
+                return ResourceManager.GetString("ColumnSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Source Files.
+        /// </summary>
+        public static string ColumnSourceFiles {
+            get {
+                return ResourceManager.GetString("ColumnSourceFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Error processing: {0}.
+        /// </summary>
+        public static string ErrorProcessing {
+            get {
+                return ResourceManager.GetString("ErrorProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Error scanning folder: {0}.
+        /// </summary>
+        public static string ErrorScanFolder {
+            get {
+                return ResourceManager.GetString("ErrorScanFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Error selecting files: {0}.
+        /// </summary>
+        public static string ErrorSelectFiles {
+            get {
+                return ResourceManager.GetString("ErrorSelectFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Error selecting folder: {0}.
+        /// </summary>
+        public static string ErrorSelectFolder {
+            get {
+                return ResourceManager.GetString("ErrorSelectFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на All Supported.
+        /// </summary>
+        public static string FormatAll {
+            get {
+                return ResourceManager.GetString("FormatAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Select which files will be processed.
+        /// </summary>
+        public static string FormatHelper {
+            get {
+                return ResourceManager.GetString("FormatHelper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing Format.
+        /// </summary>
+        public static string FormatLabel {
+            get {
+                return ResourceManager.GetString("FormatLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на PDF (.pdf).
+        /// </summary>
+        public static string FormatPdf {
+            get {
+                return ResourceManager.GetString("FormatPdf", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Word (.docx).
+        /// </summary>
+        public static string FormatWord {
+            get {
+                return ResourceManager.GetString("FormatWord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Found Files.
+        /// </summary>
+        public static string FoundFilesTitle {
+            get {
+                return ResourceManager.GetString("FoundFilesTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Header Template.
+        /// </summary>
+        public static string HeaderTemplateLabel {
+            get {
+                return ResourceManager.GetString("HeaderTemplateLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на {FileName} - Part {FilePart}.
+        /// </summary>
+        public static string HeaderTemplatePlaceholder {
+            get {
+                return ResourceManager.GetString("HeaderTemplatePlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на No files of format &quot;{0}&quot; found in folder..
+        /// </summary>
+        public static string InfoNoFilesInFormat {
+            get {
+                return ResourceManager.GetString("InfoNoFilesInFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Max chunk size (MB).
+        /// </summary>
+        public static string MaxChunkSizeLabel {
+            get {
+                return ResourceManager.GetString("MaxChunkSizeLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на No files found. Specify a folder and click &quot;Scan&quot;..
+        /// </summary>
+        public static string NoFilesFound {
+            get {
+                return ResourceManager.GetString("NoFilesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на No data. Start file processing..
+        /// </summary>
+        public static string NoResults {
+            get {
+                return ResourceManager.GetString("NoResults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на You can enter the path manually or select a folder using the button on the right.
+        /// </summary>
+        public static string OutputDirectoryHelper {
+            get {
+                return ResourceManager.GetString("OutputDirectoryHelper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Output Directory.
+        /// </summary>
+        public static string OutputDirectoryLabel {
+            get {
+                return ResourceManager.GetString("OutputDirectoryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Enter path or select folder.
+        /// </summary>
+        public static string OutputDirectoryPlaceholder {
+            get {
+                return ResourceManager.GetString("OutputDirectoryPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на File Chunking Settings.
+        /// </summary>
+        public static string PageTitle {
+            get {
+                return ResourceManager.GetString("PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Final chunk index.
+        /// </summary>
+        public static string PlaceholderChunkIndex {
+            get {
+                return ResourceManager.GetString("PlaceholderChunkIndex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Generation date (yyyy-MM-dd).
+        /// </summary>
+        public static string PlaceholderDate {
+            get {
+                return ResourceManager.GetString("PlaceholderDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на File name (without path).
+        /// </summary>
+        public static string PlaceholderFileName {
+            get {
+                return ResourceManager.GetString("PlaceholderFileName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Current file part number.
+        /// </summary>
+        public static string PlaceholderFilePart {
+            get {
+                return ResourceManager.GetString("PlaceholderFilePart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на File size in bytes (with separators).
+        /// </summary>
+        public static string PlaceholderFileSize {
+            get {
+                return ResourceManager.GetString("PlaceholderFileSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Full original path to file.
+        /// </summary>
+        public static string PlaceholderOriginalPath {
+            get {
+                return ResourceManager.GetString("PlaceholderOriginalPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Available placeholders (click to insert):.
+        /// </summary>
+        public static string PlaceholdersCaption {
+            get {
+                return ResourceManager.GetString("PlaceholdersCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Total number of file parts.
+        /// </summary>
+        public static string PlaceholderTotalParts {
+            get {
+                return ResourceManager.GetString("PlaceholderTotalParts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Start Processing.
+        /// </summary>
+        public static string ProcessButton {
+            get {
+                return ResourceManager.GetString("ProcessButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing files....
+        /// </summary>
+        public static string ProcessingOverlay {
+            get {
+                return ResourceManager.GetString("ProcessingOverlay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Remove from list.
+        /// </summary>
+        public static string RemoveFileTitle {
+            get {
+                return ResourceManager.GetString("RemoveFileTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Remove punctuation.
+        /// </summary>
+        public static string RemovePunctuationLabel {
+            get {
+                return ResourceManager.GetString("RemovePunctuationLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing Results.
+        /// </summary>
+        public static string ResultsTitle {
+            get {
+                return ResourceManager.GetString("ResultsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing Rules.
+        /// </summary>
+        public static string RulesSectionTitle {
+            get {
+                return ResourceManager.GetString("RulesSectionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Scan Folder.
+        /// </summary>
+        public static string ScanButton {
+            get {
+                return ResourceManager.GetString("ScanButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Scan subfolders (recursively).
+        /// </summary>
+        public static string ScanSubfoldersLabel {
+            get {
+                return ResourceManager.GetString("ScanSubfoldersLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Enter path or select folder.
+        /// </summary>
+        public static string SourceDirectoryPlaceholder {
+            get {
+                return ResourceManager.GetString("SourceDirectoryPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Enter words separated by commas.
+        /// </summary>
+        public static string StopWordsHelper {
+            get {
+                return ResourceManager.GetString("StopWordsHelper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Stop words (comma separated).
+        /// </summary>
+        public static string StopWordsLabel {
+            get {
+                return ResourceManager.GetString("StopWordsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing completed. Chunks created: {0}.
+        /// </summary>
+        public static string SuccessProcessing {
+            get {
+                return ResourceManager.GetString("SuccessProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Files found: {0}..
+        /// </summary>
+        public static string SuccessScan {
+            get {
+                return ResourceManager.GetString("SuccessScan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Apply stop words filter.
+        /// </summary>
+        public static string UseStopWordsLabel {
+            get {
+                return ResourceManager.GetString("UseStopWordsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на No registered chunker for extension {0}. Files skipped..
+        /// </summary>
+        public static string WarningNoChunker {
+            get {
+                return ResourceManager.GetString("WarningNoChunker", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Specify an existing source folder..
+        /// </summary>
+        public static string WarningSelectExistingFolder {
+            get {
+                return ResourceManager.GetString("WarningSelectExistingFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Select files and output folder..
+        /// </summary>
+        public static string WarningSelectFilesAndFolder {
+            get {
+                return ResourceManager.GetString("WarningSelectFilesAndFolder", resourceCulture);
+            }
+        }
     }
 }

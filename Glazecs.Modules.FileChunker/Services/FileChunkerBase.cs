@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
 using Glazecs.Modules.FileChunker.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -8,21 +6,30 @@ using System.Text;
 namespace Glazecs.Modules.FileChunker.Services
 {
     /// <summary>
-    /// Реализация модуля чанкинга для Word документов (.docx).
-    /// Извлекает текст из документов, применяет правила, объединяет мелкие файлы и разбивает крупные на чанки.
+    /// Базовый абстрактный класс для всех реализаций чанкеров.
+    /// Реализует общую логику оркестрации: обработку потоков, батчинг,
+    /// разбиение крупных фрагментов, сохранение чанков и управление состоянием.
+    ///
+    /// Наследники должны реализовать только <see cref="ProcessStreamAsync"/>,
+    /// который отвечает за извлечение текста из конкретного формата файла.
     /// </summary>
-    public sealed class FileChunker(ILogger<FileChunker>? logger = null, IHeaderFormatter? defaultHeaderFormatter = null) : IFileChunker
+    /// <remarks>
+    /// Инициализирует новый экземпляр <see cref="FileChunkerBase"/>.
+    /// </remarks>
+    /// <param name="logger">Логгер для данного типа чанкера.</param>
+    /// <param name="defaultHeaderFormatter">Форматтер заголовков по умолчанию.</param>
+    public abstract class FileChunkerBase(ILogger? logger, IHeaderFormatter? defaultHeaderFormatter) : IFileChunker
     {
-        private readonly ILogger<FileChunker>? _logger = logger;
-        private readonly IHeaderFormatter _defaultHeaderFormatter = defaultHeaderFormatter ?? new Abstractions.Formatters.TemplateHeaderFormatter();
+        protected readonly ILogger? _logger = logger;
+        protected readonly IHeaderFormatter _defaultHeaderFormatter = defaultHeaderFormatter ?? new Abstractions.Formatters.TemplateHeaderFormatter();
 
         /// <inheritdoc />
-        public string ChunkerName => "Word Chunker";
+        public abstract string ChunkerName { get; }
 
         /// <inheritdoc />
-        public IReadOnlyCollection<string> SupportedExtensions => [".docx"];
+        public abstract IReadOnlyCollection<string> SupportedExtensions { get; }
 
-        #region Public API
+        #region Public API (Template Methods)
 
         /// <inheritdoc />
         public async Task<IReadOnlyCollection<ChunkResult>> ProcessAsync(
@@ -34,7 +41,8 @@ namespace Glazecs.Modules.FileChunker.Services
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
-                _logger.LogInformation("Начало обработки файлов. Количество: {Count}", filePaths.Count());
+                _logger.LogInformation("Начало обработки файлов ({Chunker}). Количество: {Count}",
+                    ChunkerName, filePaths.Count());
             }
 
             IEnumerable<Func<Stream>> streamFactories = filePaths.Select(path =>
@@ -63,7 +71,8 @@ namespace Glazecs.Modules.FileChunker.Services
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
-                _logger.LogInformation("Начало обработки потоков. Максимальный размер чанка: {MaxSize} байт", chunkingOptions.MaxChunkSizeBytes);
+                _logger.LogInformation("Начало обработки потоков ({Chunker}). Максимальный размер чанка: {MaxSize} байт",
+                    ChunkerName, chunkingOptions.MaxChunkSizeBytes);
             }
 
             ChunkingState state = new();
@@ -78,7 +87,8 @@ namespace Glazecs.Modules.FileChunker.Services
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
-                _logger.LogInformation("Обработка завершена. Создано чанков: {Count}", state.Results.Count);
+                _logger.LogInformation("Обработка ({Chunker}) завершена. Создано чанков: {Count}",
+                    ChunkerName, state.Results.Count);
             }
 
             return state.Results;
@@ -86,68 +96,27 @@ namespace Glazecs.Modules.FileChunker.Services
 
         #endregion
 
-        #region Stream and Batch Processing
+        #region Abstract Method (to be implemented by inheritors)
 
-        private async Task ProcessStreamAsync(
+        /// <summary>
+        /// Извлекает текст из потока и передаёт его в общую логику батчинга.
+        /// Каждый наследник реализует этот метод специфично для своего формата файла.
+        /// </summary>
+        /// <param name="streamFactory">Фабрика потока исходного файла.</param>
+        /// <param name="options">Опции чанкинга.</param>
+        /// <param name="state">Общее состояние обработки.</param>
+        /// <param name="ct">Токен отмены.</param>
+        protected abstract Task ProcessStreamAsync(
             Func<Stream> streamFactory,
             ChunkingOptions options,
             ChunkingState state,
-            CancellationToken ct)
-        {
-            using Stream stream = streamFactory();
-            string fileName = GetFileNameFromStream(stream);
-            long fileSize = stream.Length;
+            CancellationToken ct);
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
-            {
-                _logger.LogInformation("Обработка файла: {FileName}, размер: {Size} байт", fileName, fileSize);
-            }
+        #endregion
 
-            using WordprocessingDocument document = WordprocessingDocument.Open(stream, false);
-            Body? body = document.MainDocumentPart?.Document?.Body;
+        #region Batch and Chunk Processing (Shared Logic)
 
-            if (body == null)
-            {
-                _logger?.LogWarning("Документ не содержит тела (Body). Файл: {FileName}", fileName);
-                return;
-            }
-
-            StringBuilder batchBuffer = new();
-            long currentBatchBytes = 0;
-            long maxBatchSize = options.MaxChunkSizeBytes;
-
-            foreach (string text in body.Elements<Paragraph>().Select(p => p.InnerText))
-            {
-                ct.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrEmpty(text))
-                {
-                    continue;
-                }
-
-                string line = text + Environment.NewLine;
-                int lineBytes = Encoding.UTF8.GetByteCount(line);
-
-                // Если добавление текущего абзаца превысит лимит батча, обрабатываем накопленный буфер
-                if (batchBuffer.Length > 0 && currentBatchBytes + lineBytes > maxBatchSize)
-                {
-                    await ProcessBatchAsync(batchBuffer.ToString(), fileName, fileSize, options, state, ct);
-                    batchBuffer.Clear();
-                    currentBatchBytes = 0;
-                }
-
-                batchBuffer.Append(line);
-                currentBatchBytes += lineBytes;
-            }
-
-            // Обрабатываем остаток, если он есть
-            if (batchBuffer.Length > 0)
-            {
-                await ProcessBatchAsync(batchBuffer.ToString(), fileName, fileSize, options, state, ct);
-            }
-        }
-
-        private async Task ProcessBatchAsync(
+        protected async Task ProcessBatchAsync(
             string batchContent,
             string fileName,
             long fileSize,
@@ -157,7 +126,8 @@ namespace Glazecs.Modules.FileChunker.Services
         {
             if (_logger?.IsEnabled(LogLevel.Debug) == true)
             {
-                _logger.LogDebug("Извлечено {Length} символов в батче из файла {FileName}", batchContent.Length, fileName);
+                _logger.LogDebug("Извлечено {Length} символов в батче из файла {FileName}",
+                    batchContent.Length, fileName);
             }
 
             string processedText = ApplyRules(batchContent, options.Rules);
@@ -176,16 +146,13 @@ namespace Glazecs.Modules.FileChunker.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger.LogInformation("Батч файла {FileName} превышает максимальный размер чанка. Разбиваем на части.", fileName);
+                    _logger.LogInformation("Батч файла {FileName} превышает максимальный размер чанка. Разбиваем на части.",
+                        fileName);
                 }
 
                 state.ChunkIndex = await SplitLargeContentAsync(
-                    contentWithHeader,
-                    options,
-                    fileName,
-                    state.Results,
-                    state.ChunkIndex,
-                    ct);
+                    contentWithHeader, options, fileName,
+                    state.Results, state.ChunkIndex, ct);
             }
             else
             {
@@ -203,10 +170,6 @@ namespace Glazecs.Modules.FileChunker.Services
                 state.CurrentChunkSize += contentSize;
             }
         }
-
-        #endregion
-
-        #region Chunk Management
 
         private async Task FinalizeChunkingAsync(ChunkingState state, ChunkingOptions options)
         {
@@ -272,7 +235,8 @@ namespace Glazecs.Modules.FileChunker.Services
                 {
                     if (_logger?.IsEnabled(LogLevel.Information) == true)
                     {
-                        _logger.LogInformation("Сохраняем часть файла {FileName}, часть {PartNumber} из {TotalParts}", fileName, partNumber, totalParts);
+                        _logger.LogInformation("Сохраняем часть файла {FileName}, часть {PartNumber} из {TotalParts}",
+                            fileName, partNumber, totalParts);
                     }
 
                     ChunkMetadataContext metadataContext = new()
@@ -282,18 +246,16 @@ namespace Glazecs.Modules.FileChunker.Services
                         FileSizeBytes = content.Length,
                         FilePartNumber = partNumber,
                         TotalFileParts = totalParts,
-                        ChunkIndex = chunkIndex
+                        ChunkIndex = chunkIndex,
+                        GeneratedAt = DateTime.UtcNow
                     };
 
-                    string partHeader = headerFormatter.Format(chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
+                    string partHeader = headerFormatter.Format(
+                        chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
                     string chunkContent = partHeader + currentChunkContent.ToString();
 
-                    await SaveChunkAsync(
-                        chunkContent,
-                        [fileName],
-                        chunkingOptions.OutputDirectory,
-                        chunkIndex,
-                        results);
+                    await SaveChunkAsync(chunkContent, [fileName],
+                        chunkingOptions.OutputDirectory, chunkIndex, results);
 
                     currentChunkContent.Clear();
                     currentChunkSize = 0;
@@ -309,7 +271,8 @@ namespace Glazecs.Modules.FileChunker.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger.LogInformation("Сохраняем последнюю часть файла {FileName}, часть {PartNumber} из {TotalParts}", fileName, partNumber, totalParts);
+                    _logger.LogInformation("Сохраняем последнюю часть файла {FileName}, часть {PartNumber} из {TotalParts}",
+                        fileName, partNumber, totalParts);
                 }
 
                 ChunkMetadataContext metadataContext = new()
@@ -319,18 +282,16 @@ namespace Glazecs.Modules.FileChunker.Services
                     FileSizeBytes = content.Length,
                     FilePartNumber = partNumber,
                     TotalFileParts = totalParts,
-                    ChunkIndex = chunkIndex
+                    ChunkIndex = chunkIndex,
+                    GeneratedAt = DateTime.UtcNow
                 };
 
-                string partHeader = headerFormatter.Format(chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
+                string partHeader = headerFormatter.Format(
+                    chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
                 string chunkContent = partHeader + currentChunkContent.ToString();
 
-                await SaveChunkAsync(
-                    chunkContent,
-                    [fileName],
-                    chunkingOptions.OutputDirectory,
-                    chunkIndex,
-                    results);
+                await SaveChunkAsync(chunkContent, [fileName],
+                    chunkingOptions.OutputDirectory, chunkIndex, results);
 
                 chunkIndex++;
             }
@@ -367,7 +328,8 @@ namespace Glazecs.Modules.FileChunker.Services
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
-                _logger.LogInformation("Чанк сохранен: {OutputFileName}, размер: {Size} байт", outputFileName, fileInfo.Length);
+                _logger.LogInformation("Чанк сохранен: {OutputFileName}, размер: {Size} байт",
+                    outputFileName, fileInfo.Length);
             }
         }
 
@@ -390,7 +352,8 @@ namespace Glazecs.Modules.FileChunker.Services
                 FileSizeBytes = fileSize,
                 FilePartNumber = 1,
                 TotalFileParts = 1,
-                ChunkIndex = chunkIndex
+                ChunkIndex = chunkIndex,
+                GeneratedAt = DateTime.UtcNow
             };
 
             return headerFormatter.Format(options.HeaderTemplate, metadataContext) + Environment.NewLine;
@@ -417,12 +380,14 @@ namespace Glazecs.Modules.FileChunker.Services
 
         #region Helper Methods
 
-        private static string GetFileNameFromStream(Stream stream)
+        protected static string GetFileNameFromStream(Stream stream)
         {
-            return stream is FileStream fileStream ? Path.GetFileName(fileStream.Name) : $"unknown_{Guid.NewGuid():N}";
+            return stream is FileStream fileStream
+                ? Path.GetFileName(fileStream.Name)
+                : $"unknown_{Guid.NewGuid():N}";
         }
 
-        private static int EstimateTotalParts(long contentLength, long maxChunkSizeBytes)
+        protected static int EstimateTotalParts(long contentLength, long maxChunkSizeBytes)
         {
             return (int)Math.Ceiling((double)contentLength / maxChunkSizeBytes);
         }
@@ -431,7 +396,11 @@ namespace Glazecs.Modules.FileChunker.Services
 
         #region Internal State
 
-        private sealed class ChunkingState
+        /// <summary>
+        /// Внутреннее состояние процесса чанкинга, разделяемое между всеми этапами обработки.
+        /// Защищённый класс, доступный наследникам.
+        /// </summary>
+        protected sealed class ChunkingState
         {
             public StringBuilder CurrentChunkContent { get; } = new();
             public List<string> CurrentChunkSourceFiles { get; } = [];

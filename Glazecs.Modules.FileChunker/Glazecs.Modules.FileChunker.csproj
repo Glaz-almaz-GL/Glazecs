@@ -32,6 +32,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Resources\Languages\FileChunkerResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FileChunkerResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Update="Resources\Languages\FileChunkerResources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>FileChunkerResources.Designer.cs</LastGenOutput>

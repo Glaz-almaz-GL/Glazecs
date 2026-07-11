@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Maui" Version="14.2.0" />
+    <PackageReference Include="PdfPig" Version="0.1.15" />
   </ItemGroup>
 
 </Project>

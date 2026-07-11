@@ -10,7 +10,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.Extensions.Localization
 @using MudBlazor
-@inject IStringLocalizer<FmmsResources> Localizer
+@inject IStringLocalizer<FmmsResources> L
 @inject IDirectoryScannerService Scanner
 @inject FmmsSettingsService SettingsService
 @inject ISnackbar Snackbar
@@ -25,7 +25,7 @@
 				<MudStack Row="true" Spacing="2">
 					<MudTextField T="string"
 								  @bind-Value="_dirPath"
-								  Placeholder="@Localizer["Scanner_FolderPath"]"
+								  Placeholder="@L["Scanner_FolderPath"]"
 								  Disabled="@_isScanning"
 								  Variant="Variant.Outlined" />
 
@@ -74,23 +74,23 @@
 						<Columns>
 							<SelectColumn />
 
-							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => _scannedDirs.IndexOf(x) + 1" Title="@Localizer["Table_Id"]">
+							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => _scannedDirs.IndexOf(x) + 1" Title="@L["Table_Id"]">
 								<CellTemplate>
 									<MudText Typo="Typo.body2">@(_scannedDirs.IndexOf(context.Item) + 1)</MudText>
 								</CellTemplate>
 							</PropertyColumn>
 
-							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.RelativePath" Title="@Localizer["Column_Name_Dir"]" />
+							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.RelativePath" Title="@L["Column_Name_Dir"]" />
 
-							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.FullPath" Title="@Localizer["Table_Full_Path"]" />
+							<PropertyColumn T="ScannedDirectory" TProperty="string" Property="x => x.FullPath" Title="@L["Table_Full_Path"]" />
 
-							<PropertyColumn T="ScannedDirectory" TProperty="long" Filterable="false" Property="x => x.Size" Title="@Localizer["Column_Size"]">
+							<PropertyColumn T="ScannedDirectory" TProperty="long" Filterable="false" Property="x => x.Size" Title="@L["Column_Size"]">
 								<CellTemplate>
 									<MudText Typo="Typo.body2">@FormatSize(context.Item.Size)</MudText>
 								</CellTemplate>
 							</PropertyColumn>
 
-							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => x.FilesCount" Title="@Localizer["Column_Files_Count"]" />
+							<PropertyColumn T="ScannedDirectory" TProperty="int" Property="x => x.FilesCount" Title="@L["Column_Files_Count"]" />
 						</Columns>
 						<PagerContent>
 							<MudDataGridPager T="ScannedDirectory" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
@@ -101,7 +101,7 @@
 						<!-- Группа 1: Открытие -->
 						<MudMenuItem OnClick="@(() => OpenDirectory(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FolderOpen">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Open_Folder"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Open_Folder"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + O</MudChip>
 							</MudStack>
 						</MudMenuItem>
@@ -111,14 +111,14 @@
 						<!-- Группа 2: Копирование (Одиночное) -->
 						<MudMenuItem OnClick="@CopySingleInfoAsync" Icon="@Icons.Material.Outlined.FileCopy">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
 							</MudStack>
 						</MudMenuItem>
 
 						<MudMenuItem OnClick="@CopySingleInfoTsvAsync" Icon="@Icons.Material.TwoTone.FileCopy">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
 							</MudStack>
 						</MudMenuItem>
@@ -129,11 +129,11 @@
 
 							<!-- Группа 3: Массовые операции -->
 							<MudMenuItem OnClick="@CopySelectedInfoAsync" Icon="@Icons.Material.Outlined.CopyAll">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_All"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"]</MudText>
 							</MudMenuItem>
 
 							<MudMenuItem OnClick="@CopySelectedInfoTsvAsync" Icon="@Icons.Material.TwoTone.CopyAll">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV_All"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"]</MudText>
 							</MudMenuItem>
 						}
 					</MudMenu>
@@ -213,15 +213,15 @@
 				await InvokeAsync(StateHasChanged);
 			}
 
-			Snackbar.Add(Localizer["Scanner_Completed_Success"], Severity.Success);
+			Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success);
 		}
 		catch (OperationCanceledException)
 		{
-			Snackbar.Add(Localizer["Scanner_Cancelled"], Severity.Warning);
+			Snackbar.Add(L["Scanner_Cancelled"], Severity.Warning);
 		}
 		catch (Exception ex)
 		{
-			Snackbar.Add($"{Localizer["Common_Error"]}: {ex.Message}", Severity.Error);
+			Snackbar.Add($"{L["Common_Error"]}: {ex.Message}", Severity.Error);
 		}
 		finally
 		{
@@ -287,11 +287,11 @@
 
 		_columnFormatters = new Dictionary<string, Func<ScannedDirectory, int, string>>
 		{
-			["Id"] = (_, index) => $"{Localizer["Table_Id"]}: {index}",
-			["RelativePath"] = (dir, _) => $"{Localizer["Column_Name_Dir"]}: {dir.RelativePath}",
-			["FullPath"] = (dir, _) => $"{Localizer["Table_Full_Path"]}: {dir.FullPath}",
-			["Size"] = (dir, _) => $"{Localizer["Column_Size"]}: {FormatSize(dir.Size)}",
-			["FilesCount"] = (dir, _) => $"{Localizer["Column_Files_Count"]}: {dir.FilesCount}"
+			["Id"] = (_, index) => $"{L["Table_Id"]}: {index}",
+			["RelativePath"] = (dir, _) => $"{L["Column_Name_Dir"]}: {dir.RelativePath}",
+			["FullPath"] = (dir, _) => $"{L["Table_Full_Path"]}: {dir.FullPath}",
+			["Size"] = (dir, _) => $"{L["Column_Size"]}: {FormatSize(dir.Size)}",
+			["FilesCount"] = (dir, _) => $"{L["Column_Files_Count"]}: {dir.FilesCount}"
 		};
 	}
 
@@ -332,7 +332,7 @@
 	private string GetTsvHeaders()
 	{
 		var headers = GetVisibleFormatters()
-			.Select(f => Localizer[f.Key])
+			.Select(f => L[f.Key])
 			.ToList();
 
 		return string.Join("\t", headers);
@@ -344,7 +344,7 @@
 		{
 			ScannedDirectory dir = _contextRow ?? _selectedRows!.First();
 			await Clipboard.Default.SetTextAsync(GetDirInfoFormatted(dir));
-			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+			Snackbar.Add(L["Common_Copied"], Severity.Info);
 		}
 	}
 
@@ -358,7 +358,7 @@
 			sb.AppendLine(GetDirInfoTsv(dir));
 
 			await Clipboard.Default.SetTextAsync(sb.ToString());
-			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+			Snackbar.Add(L["Common_Copied"], Severity.Info);
 		}
 	}
 
@@ -376,7 +376,7 @@
 		foreach (var dir in sortedDirs) sb.AppendLine(GetDirInfoFormatted(dir));
 
 		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		Snackbar.Add(L["Common_Copied"], Severity.Info);
 	}
 
 	private async Task CopySelectedInfoTsvAsync()
@@ -394,7 +394,7 @@
 		foreach (var dir in sortedDirs) sb.AppendLine(GetDirInfoTsv(dir));
 
 		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		Snackbar.Add(L["Common_Copied"], Severity.Info);
 	}
 
 	#endregion

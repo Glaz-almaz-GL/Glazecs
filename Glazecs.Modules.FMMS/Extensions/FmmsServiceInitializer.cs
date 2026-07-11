@@ -22,36 +22,36 @@ namespace Glazecs.Modules.FMMS.Extensions
             services.AddMudServices();
             services.AddLocalization();
             services.AddSingleton<FmmsSettingsService>();
-            services.AddSingleton<IFileScannerService, FileScannerService>();
-            services.AddSingleton<IDirectoryScannerService, DirectoryScannerService>();
-            services.AddSingleton<IFilePageService, FilePageService>();
+            services.AddTransient<IFileScannerService, FileScannerService>();
+            services.AddTransient<IDirectoryScannerService, DirectoryScannerService>();
+            services.AddTransient<IFilePageService, FilePageService>();
 
             // <-------- HASH -------->
 
             // Legacy hash providers
-            services.AddSingleton<IHashProvider, MD5HashProvider>();
-            services.AddSingleton<IHashProvider, SHA1HashProvider>();
+            services.AddTransient<IHashProvider, MD5HashProvider>();
+            services.AddTransient<IHashProvider, SHA1HashProvider>();
 
             // SHA-2 hash providers
-            services.AddSingleton<IHashProvider, SHA256HashProvider>();
-            services.AddSingleton<IHashProvider, SHA384HashProvider>();
-            services.AddSingleton<IHashProvider, SHA512HashProvider>();
+            services.AddTransient<IHashProvider, SHA256HashProvider>();
+            services.AddTransient<IHashProvider, SHA384HashProvider>();
+            services.AddTransient<IHashProvider, SHA512HashProvider>();
 
             // SHA-3 hash providers
-            services.AddSingleton<IHashProvider, SHA3_256HashProvider>();
-            services.AddSingleton<IHashProvider, SHA3_384HashProvider>();
-            services.AddSingleton<IHashProvider, SHA3_512HashProvider>();
+            services.AddTransient<IHashProvider, SHA3_256HashProvider>();
+            services.AddTransient<IHashProvider, SHA3_384HashProvider>();
+            services.AddTransient<IHashProvider, SHA3_512HashProvider>();
 
             // CRC hash providers
-            services.AddSingleton<IHashProvider, Crc32HashProvider>();
+            services.AddTransient<IHashProvider, Crc32HashProvider>();
 
             // XXH hash providers
-            services.AddSingleton<IHashProvider, XxHash32Provider>();
-            services.AddSingleton<IHashProvider, XxHash64Provider>();
-            services.AddSingleton<IHashProvider, XxHash128Provider>();
+            services.AddTransient<IHashProvider, XxHash32Provider>();
+            services.AddTransient<IHashProvider, XxHash64Provider>();
+            services.AddTransient<IHashProvider, XxHash128Provider>();
 
             // XXH3 hash providers
-            services.AddSingleton<IHashProvider, XxHash3Provider>();
+            services.AddTransient<IHashProvider, XxHash3Provider>();
 
             // Register the HashProviderFactory as a singleton
             services.AddSingleton<IHashProviderFactory, HashProviderFactory>();

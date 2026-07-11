@@ -13,7 +13,7 @@
 @using MudBlazor
 @inject IFileScannerService ScannerService
 @inject FmmsSettingsService SettingsService
-@inject IStringLocalizer<FmmsResources> Localizer
+@inject IStringLocalizer<FmmsResources> L
 @inject ISnackbar Snackbar
 @page "/modules/fmms/files_scanner"
 
@@ -26,7 +26,7 @@
 				<MudStack Row="true" Spacing="2">
 					<MudTextField T="string"
 									@bind-Value="_dirPath"
-									Placeholder="@Localizer["Scanner_FolderPath"]"
+									Placeholder="@L["Scanner_FolderPath"]"
 									Disabled="@_isScanning"
 									Variant="Variant.Outlined"/>
 
@@ -45,7 +45,7 @@
 				@if (_isScanning || _processedFilesCount > 0)
 				{
 					<MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
-                        <MudText Typo="Typo.body2">@Localizer["Scanner_Processed"]: @_processedFilesCount</MudText>
+                        <MudText Typo="Typo.body2">@L["Scanner_Processed"]: @_processedFilesCount</MudText>
                         <!-- Индикатор активности, так как точный процент неизвестен -->
                         <MudProgressLinear Color="Color.Primary" Value="100" Indeterminate="@_isScanning" Style="flex-grow: 1;" />
 					</MudStack>
@@ -94,14 +94,14 @@
 						<!-- Группа 1: Открытие -->
 						<MudMenuItem OnClick="@(() => OpenFile(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FileOpen">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Open_File"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Open_File"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + O</MudChip>
 							</MudStack>
 						</MudMenuItem>
 
 						<MudMenuItem OnClick="@(() => OpenFileDirectory(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FolderOpen">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Open_Folder"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Open_Folder"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + O</MudChip>
 							</MudStack>
 						</MudMenuItem>
@@ -111,14 +111,14 @@
 						<!-- Группа 2: Копирование (Одиночное) -->
 						<MudMenuItem OnClick="@CopySingleInfoAsync" Icon="@Icons.Material.Outlined.FileCopy">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
 							</MudStack>
 						</MudMenuItem>
 
 						<MudMenuItem OnClick="@CopySingleInfoTsvAsync" Icon="@Icons.Material.TwoTone.FileCopy">
 							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV"]</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV"]</MudText>
 								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
 							</MudStack>
 						</MudMenuItem>
@@ -129,11 +129,11 @@
 
 							<!-- Группа 3: Массовые операции -->
 							<MudMenuItem OnClick="@CopySelectedInfoAsync" Icon="@Icons.Material.Outlined.CopyAll">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_All"] (@_selectedRows.Count)</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"] (@_selectedRows.Count)</MudText>
 							</MudMenuItem>
 
 							<MudMenuItem OnClick="@CopySelectedInfoTsvAsync" Icon="@Icons.Material.TwoTone.CopyAll">
-								<MudText Typo="Typo.body2">@Localizer["Menu_Copy_Info_TSV_All"] (@_selectedRows.Count)</MudText>
+								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"] (@_selectedRows.Count)</MudText>
 							</MudMenuItem>
 						}
 					</MudMenu>
@@ -218,15 +218,15 @@
 				await InvokeAsync(StateHasChanged);
 			}
 
-			Snackbar.Add(Localizer["Scanner_Completed_Success"], Severity.Success);
+			Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success);
 		}
 		catch (OperationCanceledException)
 		{
-			Snackbar.Add(Localizer["Scanner_Cancelled"], Severity.Warning);
+			Snackbar.Add(L["Scanner_Cancelled"], Severity.Warning);
 		}
 		catch (Exception ex)
 		{
-			Snackbar.Add($"{Localizer["Common_Error"]}: {ex.Message}", Severity.Error);
+			Snackbar.Add($"{L["Common_Error"]}: {ex.Message}", Severity.Error);
 		}
 		finally
 		{
@@ -382,7 +382,7 @@
 
 		foreach (var config in configs)
 		{
-			string header = Localizer[config.HeaderKey];
+			string header = L[config.HeaderKey];
 			// Делегат сам знает, как получить значение (включая вычисление индекса для ID)
 			string value = config.ValueSelector(file);
 
@@ -414,7 +414,7 @@
 		var configs = GetVisibleColumnsConfig();
 
 		// Извлекаем локализованные заголовки
-		var headers = configs.Select(c => Localizer[c.HeaderKey].ToString());
+		var headers = configs.Select(c => L[c.HeaderKey].ToString());
 
 		return string.Join("\t", headers);
 	}
@@ -428,7 +428,7 @@
 		{
 			var info = GetFileInfoFormatted(file);
 			await Clipboard.Default.SetTextAsync(info);
-			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+			Snackbar.Add(L["Common_Copied"], Severity.Info);
 		}
 	}
 
@@ -443,7 +443,7 @@
 			sb.AppendLine(GetFileInfoTsv(file));
 
 			await Clipboard.Default.SetTextAsync(sb.ToString());
-			Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+			Snackbar.Add(L["Common_Copied"], Severity.Info);
 		}
 	}
 
@@ -471,7 +471,7 @@
 		}
 
 		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		Snackbar.Add(L["Common_Copied"], Severity.Info);
 	}
 
 	private async Task CopySelectedInfoTsvAsync()
@@ -498,7 +498,7 @@
 		}
 
 		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(Localizer["Common_Copied"], Severity.Info);
+		Snackbar.Add(L["Common_Copied"], Severity.Info);
 	}
 
 	#endregion
