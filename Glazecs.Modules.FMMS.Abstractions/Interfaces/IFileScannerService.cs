@@ -67,7 +67,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Interfaces
         IAsyncEnumerable<ScannedFile> ScanDirectoryAsync(
             string directoryPath,
             FilesScanningSettings settings,
-            IProgress<int> progress,
+            IProgress<int>? progress = null,
             CancellationToken cancellationToken = default);
     }
 }

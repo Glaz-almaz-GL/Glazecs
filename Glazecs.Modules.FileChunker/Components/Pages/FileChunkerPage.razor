@@ -93,7 +93,7 @@
                                          Size="Size.Small"
                                          Style="cursor: pointer;"
                                          OnClick="@(() => InsertPlaceholder(placeholder.Key))">
-                                    <MudTooltip Text="@placeholder.DescriptionResource" Placement="Placement.Top">
+                                    <MudTooltip Text="@placeholder.Description" Placement="Placement.Top">
                                         @placeholder.Key
                                     </MudTooltip>
                                 </MudChip>
@@ -194,14 +194,29 @@
             <MudPaper Class="pa-4" Elevation="0" Outlined="true">
                 <MudGrid Justify="Justify.FlexEnd">
                     <MudItem>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Size="Size.Large"
-                                   Disabled="@(_isProcessing || _selectedFiles.Count == 0 || string.IsNullOrWhiteSpace(_outputDirectory))"
-                                   StartIcon="@Icons.Material.Filled.PlayArrow"
-                                   OnClick="ProcessFiles">
-                            @L["ProcessButton"]
-                        </MudButton>
+
+                        @if (!_isProcessing)
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       Disabled="@(_isProcessing || _selectedFiles.Count == 0 || string.IsNullOrWhiteSpace(_outputDirectory))"
+                                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                                       OnClick="ProcessFiles">
+                                @L["ProcessButton"]
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       Disabled="@(_isProcessing || _selectedFiles.Count == 0 || string.IsNullOrWhiteSpace(_outputDirectory))"
+                                       StartIcon="@Icons.Material.Filled.Cancel"
+                                       OnClick="CancelProcessing">
+                                @L["CancelButton"]
+                            </MudButton>
+                        }
                     </MudItem>
                 </MudGrid>
             </MudPaper>

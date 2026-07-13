@@ -20,6 +20,8 @@ namespace Glazecs.App.Desktop
             builder.Services.AddMudServices();
             builder.Services.AddFmmsServices();
             builder.Services.AddFileChunkerServices();
+            builder.Services.AddLogging();
+            builder.Logging.SetMinimumLevel(LogLevel.Information);
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();

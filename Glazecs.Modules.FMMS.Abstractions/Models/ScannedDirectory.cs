@@ -1,10 +1,30 @@
 ﻿namespace Glazecs.Modules.FMMS.Abstractions.Models
 {
-    public record class ScannedDirectory
+    public readonly record struct ScannedDirectory
     {
-        public string RelativePath { get; init; } = string.Empty;
-        public string FullPath { get; init; } = string.Empty;
-        public long Size { get; init; } = 0;
+        /// <summary>
+        /// Идентификатор
+        /// </summary>
+        public int Id { get; init; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public string RelativePath { get; init; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public string FullPath { get; init; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public long Size { get; init; }
+
+        /// <summary>
+        ///
+        /// </summary>
         public int FilesCount { get; init; }
     }
 }

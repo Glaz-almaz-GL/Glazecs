@@ -264,4 +264,8 @@
   <data name="SourceDirectoryPlaceholder" xml:space="preserve">
     <value>Enter path or select folder</value>
   </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>CancelButton</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
 </root>

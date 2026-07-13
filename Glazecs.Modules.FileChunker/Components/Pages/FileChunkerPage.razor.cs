@@ -2,15 +2,19 @@
 using Glazecs.Modules.FileChunker.Abstractions.Models;
 using Glazecs.Modules.FileChunker.Abstractions.Rules;
 using Glazecs.Modules.FileChunker.Resources.Languages;
+using Glazecs.Shared.Core.Platforms;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using MudBlazor;
 
 namespace Glazecs.Modules.FileChunker.Components.Pages
 {
     public partial class FileChunkerPage(
         IEnumerable<IFileChunker> fileChunkers,
-        IStringLocalizer<FileChunkerResources> localizer) : ComponentBase
+        IStringLocalizer<FileChunkerResources> localizer,
+        ISnackbar snackbar,
+        ILogger<FileChunkerPage>? logger = null) : ComponentBase
     {
         #region State and Properties
 
@@ -30,9 +34,12 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         private string _stopWordsText = string.Empty;
 
         private bool _isProcessing;
+        private CancellationTokenSource? _cts;
 
         private readonly Dictionary<string, IFileChunker> _chunkerByExtension = BuildChunkerMap(fileChunkers);
         private readonly IStringLocalizer<FileChunkerResources> _localizer = localizer;
+        private readonly ISnackbar _snackbar = snackbar;
+        private readonly ILogger<FileChunkerPage>? _logger = logger;
 
         private static readonly Dictionary<string, HashSet<string>> FormatExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -41,10 +48,6 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             ["all"] = new(StringComparer.OrdinalIgnoreCase) { ".docx", ".pdf" }
         };
 
-        /// <summary>
-        /// Список доступных плейсхолдеров для шаблона заголовка.
-        /// Описание берётся из локализатора.
-        /// </summary>
         private List<PlaceholderInfo> _placeholders = [];
 
         protected override void OnInitialized()
@@ -72,7 +75,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
             foreach (IFileChunker chunker in chunkers)
             {
-                foreach (string extension in chunker.SupportedExtensions.Where(extension => !map.ContainsKey(extension)))
+                foreach (string? extension in chunker.SupportedExtensions.Where(extension => !map.ContainsKey(extension)))
                 {
                     map[extension] = chunker;
                 }
@@ -95,57 +98,66 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
         #region Folder Selection and Scanning
 
-        private async Task SelectSourceFolder()
+        private async Task SelectFolderAsync(Action<string> setPath, string errorKey)
         {
+            if (!PlatformSupport.IsFolderPickerSupported)
+            {
+                string reason = PlatformSupport.GetFolderPickerUnsupportedReason()
+                    ?? _localizer["PlatformNotSupported"].Value;
+                _snackbar.Add(reason, Severity.Warning);
+                return;
+            }
+
             try
             {
 #pragma warning disable CA1416
-                var folderResult = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
+                var result = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
 #pragma warning restore CA1416
 
-                if (folderResult.IsSuccessful)
+                if (result.IsSuccessful)
                 {
-                    _sourceDirectory = folderResult.Folder.Path;
+                    setPath(result.Folder.Path);
                     StateHasChanged();
                 }
             }
             catch (Exception ex)
             {
-                Snackbar.Add(_localizer["ErrorSelectFolder", ex.Message].Value, Severity.Error);
+                _logger?.LogError(ex, "Ошибка при выборе папки");
+                _snackbar.Add(_localizer[errorKey, ex.Message].Value, Severity.Error);
             }
         }
 
-        private async Task SelectOutputFolder()
+        private Task SelectSourceFolder()
         {
-            try
-            {
-#pragma warning disable CA1416
-                var folderResult = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
-#pragma warning restore CA1416
+            return SelectFolderAsync(path => _sourceDirectory = path, "ErrorSelectFolder");
+        }
 
-                if (folderResult.IsSuccessful)
-                {
-                    _outputDirectory = folderResult.Folder.Path;
-                    StateHasChanged();
-                }
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add(_localizer["ErrorSelectFolder", ex.Message].Value, Severity.Error);
-            }
+        private Task SelectOutputFolder()
+        {
+            return SelectFolderAsync(path => _outputDirectory = path, "ErrorSelectFolder");
         }
 
         private void ScanSourceFolder()
         {
             if (string.IsNullOrWhiteSpace(_sourceDirectory) || !Directory.Exists(_sourceDirectory))
             {
-                Snackbar.Add(_localizer["WarningSelectExistingFolder"].Value, Severity.Warning);
+                _snackbar.Add(_localizer["WarningSelectExistingFolder"].Value, Severity.Warning);
+                return;
+            }
+
+            if (!FormatExtensions.TryGetValue(_selectedFormat, out HashSet<string>? allowedExtensions))
+            {
+                _snackbar.Add(_localizer["ErrorUnknownFormat", _selectedFormat].Value, Severity.Error);
                 return;
             }
 
             try
             {
-                HashSet<string> allowedExtensions = FormatExtensions[_selectedFormat];
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                {
+                    _logger?.LogInformation("Начало сканирования папки: {Path}, формат: {Format}, рекурсия: {Recurse}",
+                    _sourceDirectory, _selectedFormat, _scanSubfolders);
+                }
 
                 EnumerationOptions enumerationOptions = new()
                 {
@@ -163,29 +175,33 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
                 foreach (FileInfo fileInfo in files)
                 {
-                    _selectedFiles.Add(new SelectedFileInfo
-                    {
-                        Name = fileInfo.Name,
-                        Path = fileInfo.FullName,
-                        Extension = fileInfo.Extension,
-                        Size = fileInfo.Length
-                    });
+                    _selectedFiles.Add(new SelectedFileInfo(
+                        fileInfo.Name,
+                        fileInfo.FullName,
+                        fileInfo.Extension,
+                        fileInfo.Length));
+                }
+
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                {
+                    _logger?.LogInformation("Найдено файлов: {Count}", _selectedFiles.Count);
                 }
 
                 if (_selectedFiles.Count == 0)
                 {
-                    Snackbar.Add(_localizer["InfoNoFilesInFormat", _selectedFormat].Value, Severity.Info);
+                    _snackbar.Add(_localizer["InfoNoFilesInFormat", _selectedFormat].Value, Severity.Info);
                 }
                 else
                 {
-                    Snackbar.Add(_localizer["SuccessScan", _selectedFiles.Count].Value, Severity.Success);
+                    _snackbar.Add(_localizer["SuccessScan", _selectedFiles.Count].Value, Severity.Success);
                 }
 
                 StateHasChanged();
             }
             catch (Exception ex)
             {
-                Snackbar.Add(_localizer["ErrorScanFolder", ex.Message].Value, Severity.Error);
+                _logger?.LogError(ex, "Ошибка при сканировании папки: {Path}", _sourceDirectory);
+                _snackbar.Add(_localizer["ErrorScanFolder", ex.Message].Value, Severity.Error);
             }
         }
 
@@ -203,15 +219,22 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         {
             if (_selectedFiles.Count == 0 || string.IsNullOrWhiteSpace(_outputDirectory))
             {
-                Snackbar.Add(_localizer["WarningSelectFilesAndFolder"].Value, Severity.Warning);
+                _snackbar.Add(_localizer["WarningSelectFilesAndFolder"].Value, Severity.Warning);
                 return;
             }
+
+            _cts = new CancellationTokenSource();
 
             try
             {
                 _isProcessing = true;
-                _results = [];
+                _results.Clear();
                 StateHasChanged();
+
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                {
+                    _logger.LogInformation("Начало обработки {Count} файлов", _selectedFiles.Count);
+                }
 
                 string normalizedTemplate = Environment.NewLine + _headerTemplate.Trim() + Environment.NewLine;
                 List<IChunkRule> rules = BuildRules();
@@ -232,29 +255,50 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                 {
                     if (!_chunkerByExtension.TryGetValue(group.Key, out IFileChunker? chunker))
                     {
-                        Snackbar.Add(_localizer["WarningNoChunker", group.Key].Value, Severity.Warning);
+                        _snackbar.Add(_localizer["WarningNoChunker", group.Key].Value, Severity.Warning);
                         continue;
                     }
 
                     IEnumerable<string> filePaths = group.Select(f => f.Path);
                     IReadOnlyCollection<ChunkResult> chunkResults = await chunker.ProcessAsync(
-                        filePaths, options, CancellationToken.None);
+                        filePaths, options, _cts.Token);
 
                     aggregatedResults.AddRange(chunkResults);
                 }
 
                 _results = aggregatedResults;
-                Snackbar.Add(_localizer["SuccessProcessing", _results.Count].Value, Severity.Success);
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                {
+                    _logger?.LogInformation("Обработка завершена. Создано чанков: {Count}", _results.Count);
+                }
+
+                _snackbar.Add(_localizer["SuccessProcessing", _results.Count].Value, Severity.Success);
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger?.LogInformation(ex, "Обработка отменена пользователем");
+                _snackbar.Add(_localizer["OperationCancelled"].Value, Severity.Info);
             }
             catch (Exception ex)
             {
-                Snackbar.Add(_localizer["ErrorProcessing", ex.Message].Value, Severity.Error);
+                _logger?.LogError(ex, "Ошибка при обработке файлов");
+                _snackbar.Add(_localizer["ErrorProcessing", ex.Message].Value, Severity.Error);
             }
             finally
             {
+                _cts.Dispose();
+                _cts = null;
                 _isProcessing = false;
                 StateHasChanged();
             }
+        }
+
+
+
+
+        private void CancelProcessing()
+        {
+            _cts?.Cancel();
         }
 
         private List<IChunkRule> BuildRules()
@@ -282,18 +326,13 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
         #region Models
 
-        private sealed class SelectedFileInfo
-        {
-            public string Name { get; set; } = string.Empty;
-            public string Path { get; set; } = string.Empty;
-            public string Extension { get; set; } = string.Empty;
-            public long Size { get; set; }
-        }
+        private sealed record SelectedFileInfo(
+            string Name,
+            string Path,
+            string Extension,
+            long Size);
 
-        /// <summary>
-        /// Модель плейсхолдера для шаблона заголовка.
-        /// </summary>
-        private sealed record PlaceholderInfo(string Key, string DescriptionResource);
+        private sealed record PlaceholderInfo(string Key, string Description);
 
         #endregion
     }

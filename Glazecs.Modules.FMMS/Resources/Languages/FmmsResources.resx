@@ -336,4 +336,8 @@
   <data name="Settings_DisplayOptions_Title" xml:space="preserve">
     <value>Display settings</value>
   </data>
+  <data name="Scanner_Processed" xml:space="preserve">
+    <value>Scanner_Processed</value>
+    <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FilesScanner.razor document</comment>
+  </data>
 </root>

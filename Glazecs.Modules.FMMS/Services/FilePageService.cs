@@ -1,17 +1,16 @@
 ﻿using Glazecs.Modules.FMMS.Abstractions.Interfaces;
-using iText.Kernel.Exceptions;
-using iText.Kernel.Pdf;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Reflection.PortableExecutable;
-using System.Text;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Core;
 
 namespace Glazecs.Modules.FMMS.Services
 {
     /// <summary>
-    /// Сервис для подсчёта страниц в PDF-файлах
+    /// Сервис для подсчёта страниц в PDF-файлах с использованием легковесной библиотеки UglyToad.PdfPig.
     /// </summary>
     internal sealed class FilePageService(ILogger<FilePageService>? logger = null) : IFilePageService
     {
@@ -53,9 +52,8 @@ namespace Glazecs.Modules.FMMS.Services
 
             try
             {
-                using PdfReader pdfReader = new(stream);
-                using PdfDocument pdf = new(pdfReader);
-                int pagesCount = pdf.GetNumberOfPages();
+                using PdfDocument document = PdfDocument.Open(stream, new ParsingOptions { UseLenientParsing = true });
+                int pagesCount = document.NumberOfPages;
 
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
@@ -64,11 +62,11 @@ namespace Glazecs.Modules.FMMS.Services
 
                 return pagesCount;
             }
-            catch (BadPasswordException ex)
+            catch (UnauthorizedAccessException ex)
             {
-                throw new UnauthorizedAccessException("PDF-файл защищён паролем", ex);
+                throw new UnauthorizedAccessException("PDF-файл защищён паролем или недоступен", ex);
             }
-            catch (PdfException ex)
+            catch (Exception ex) when (IsPdfProcessingException(ex))
             {
                 throw new InvalidOperationException("PDF-файл повреждён или имеет некорректный формат", ex);
             }
@@ -83,8 +81,9 @@ namespace Glazecs.Modules.FMMS.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug("Файл не найден или путь некорректен: \"{FilePath}\"", filePath);
+                    _logger?.LogDebug("Файл не найден или путь некорректен: \"{FilePath}\"", filePath);
                 }
+
                 return false;
             }
 
@@ -104,8 +103,9 @@ namespace Glazecs.Modules.FMMS.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug(ex, "Ошибка доступа к файлу: \"{FilePath}\"", filePath);
+                    _logger?.LogDebug(ex, "Ошибка доступа к файлу: \"{FilePath}\"", filePath);
                 }
+
                 return false;
             }
         }
@@ -117,18 +117,14 @@ namespace Glazecs.Modules.FMMS.Services
 
             if (stream is null || !stream.CanRead)
             {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
-                {
-                    _logger.LogDebug("Поток равен null или не поддерживает чтение");
-                }
+                _logger?.LogDebug("Поток равен null или не поддерживает чтение");
                 return false;
             }
 
             try
             {
-                using PdfReader pdfReader = new(stream);
-                using PdfDocument pdf = new(pdfReader);
-                pagesCount = pdf.GetNumberOfPages();
+                using PdfDocument document = PdfDocument.Open(stream, new ParsingOptions { UseLenientParsing = true });
+                pagesCount = document.NumberOfPages;
 
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
@@ -141,8 +137,9 @@ namespace Glazecs.Modules.FMMS.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug(ex, "Ошибка обработки PDF: {Message}", ex.Message);
+                    _logger?.LogDebug(ex, "Ошибка обработки PDF: {Message}", ex.Message);
                 }
+
                 return false;
             }
         }
@@ -152,7 +149,7 @@ namespace Glazecs.Modules.FMMS.Services
         #region Asynchronous Methods
 
         /// <inheritdoc/>
-        public Task<int> GetPagesCountInPdfAsync(string filePath, CancellationToken cancellationToken = default)
+        public async Task<int> GetPagesCountInPdfAsync(string filePath, CancellationToken cancellationToken = default)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
@@ -161,68 +158,79 @@ namespace Glazecs.Modules.FMMS.Services
                 throw new FileNotFoundException("PDF-файл не найден", filePath);
             }
 
-            return Task.Run(() => GetPagesCountInPdf(filePath), cancellationToken);
+            return await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return GetPagesCountInPdf(filePath);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        public Task<int> GetPagesCountInPdfAsync(Stream stream, CancellationToken cancellationToken = default)
+        public async Task<int> GetPagesCountInPdfAsync(Stream stream, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(stream);
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.Run(() => GetPagesCountInPdf(stream), cancellationToken);
+            return await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return GetPagesCountInPdf(stream);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        public Task<(bool Success, int PagesCount)> TryGetPagesCountInPdfAsync(string filePath, CancellationToken cancellationToken = default)
+        public async Task<(bool Success, int PagesCount)> TryGetPagesCountInPdfAsync(string filePath, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug("Файл не найден или путь некорректен: \"{FilePath}\"", filePath);
+                    _logger?.LogDebug("Файл не найден или путь некорректен: \"{FilePath}\"", filePath);
                 }
-                return Task.FromResult((false, 0));
+
+                return (false, 0);
             }
 
-            return Task.Run(() =>
+            return await Task.Run(() =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 bool success = TryGetPagesCountInPdf(filePath, out int pagesCount);
                 return (success, pagesCount);
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        public Task<(bool Success, int PagesCount)> TryGetPagesCountInPdfAsync(Stream stream, CancellationToken cancellationToken = default)
+        public async Task<(bool Success, int PagesCount)> TryGetPagesCountInPdfAsync(Stream stream, CancellationToken cancellationToken = default)
         {
             if (stream is null || !stream.CanRead)
             {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
-                {
-                    _logger.LogDebug("Поток равен null или не поддерживает чтение");
-                }
-                return Task.FromResult((false, 0));
+                _logger?.LogDebug("Поток равен null или не поддерживает чтение");
+                return (false, 0);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.Run(() =>
+            return await Task.Run(() =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 bool success = TryGetPagesCountInPdf(stream, out int pagesCount);
                 return (success, pagesCount);
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         #endregion
 
         #region Private Methods
 
+        /// <summary>
+        /// Определяет, является ли исключение ожидаемым при обработке PDF.
+        /// </summary>
         private static bool IsPdfProcessingException(Exception ex)
         {
-            return ex is BadPasswordException
-                || ex is PdfException
-                || ex is IOException
-                || ex is ArgumentException;
+            return ex is PdfDocumentFormatException
+                or IOException
+                or ArgumentException
+                or UnauthorizedAccessException;
         }
 
         #endregion

@@ -1,11 +1,11 @@
-@using Glazecs.Modules.FMMS.Abstractions.Models
 @using Glazecs.Modules.FMMS.Models
 @using Glazecs.Modules.FMMS.Resources.Languages
 @using Microsoft.Extensions.Localization
 @using MudBlazor
 @inject IStringLocalizer<FmmsResources> L
+@typeparam T
 
-<TemplateColumn T="ScannedFile" Title="@L[Config.HeaderKey]">
+<TemplateColumn T="T" Title="@L[Config.HeaderKey]">
     <CellTemplate>
         <MudText Typo="Typo.body2">
             @Config.ValueSelector(context.Item)
@@ -14,5 +14,5 @@
 </TemplateColumn>
 
 @code {
-    [Parameter] public ColumnConfig Config { get; set; } = default!;
+    [Parameter] public ColumnConfig<T> Config { get; set; } = default!;
 }

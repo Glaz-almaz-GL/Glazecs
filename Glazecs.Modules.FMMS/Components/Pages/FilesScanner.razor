@@ -1,13 +1,8 @@
-﻿@using System.Diagnostics
-@using System.Text
-@using CommunityToolkit.Maui.Storage
-@using Glazecs.Shared.Core.Extensions
-@using Glazecs.Modules.FMMS.Abstractions.Enums
-@using Glazecs.Modules.FMMS.Abstractions.Interfaces
+﻿@using Glazecs.Modules.FMMS.Abstractions.Interfaces
 @using Glazecs.Modules.FMMS.Abstractions.Models
-@using Glazecs.Modules.FMMS.Models
 @using Glazecs.Modules.FMMS.Resources.Languages
 @using Glazecs.Modules.FMMS.Services
+@using Glazecs.Shared.Core.Platforms
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.Extensions.Localization
 @using MudBlazor
@@ -18,46 +13,69 @@
 @page "/modules/fmms/files_scanner"
 
 <MudContainer @onkeydown="OnDataGridKeyDown" tabindex="0" MaxWidth="MaxWidth.False" Class="mt-4">
-	<MudStack Spacing="3">
+    <MudStack Spacing="3">
 
-		<!-- Панель управления -->
-		<MudCard Outlined="true">
-			<MudCardContent>
-				<MudStack Row="true" Spacing="2">
-					<MudTextField T="string"
-									@bind-Value="_dirPath"
-									Placeholder="@L["Scanner_FolderPath"]"
-									Disabled="@_isScanning"
-									Variant="Variant.Outlined"/>
+        <!-- Панель управления -->
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudStack Row="true" Spacing="2">
+                    <MudTextField T="string"
+                                  @bind-Value="_dirPath"
+                                  Placeholder="@L["Scanner_FolderPath"]"
+                                  Disabled="@_isScanning"
+                                  Variant="Variant.Outlined"
+                                  Style="flex-grow: 1;" />
 
-					<MudIconButton Icon="@Icons.Material.Filled.FolderOpen" Disabled="@(_isScanning || !_isSupportedPlatform)" Style="width: 56px; height: 56px;" Variant="Variant.Outlined" Color="Color.Primary" OnClick="SelectFolderAsync" />
+                    <MudTooltip Text="@(PlatformSupport.IsFolderPickerSupported
+                                                        ? L["Tooltip_Select_Folder"].Value
+                                                        : L["Tooltip_Folder_Picker_Not_Supported"].Value)">
+                        <MudIconButton Icon="@Icons.Material.Filled.FolderOpen"
+                                       Disabled="@_isScanning"
+                                       Style="width: 56px; height: 56px;"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       OnClick="SelectFolderAsync" />
+                    </MudTooltip>
 
-					@if (!_isScanning)
-					{
-						<MudIconButton Icon="@Icons.Material.Filled.Start" Style="width: 56px; height: 56px;" Variant="Variant.Filled" Color="Color.Primary" OnClick="StartScanningAsync" Disabled="@(string.IsNullOrWhiteSpace(_dirPath) || !Directory.Exists(_dirPath))" />
-					}
-					else
-					{
-						<MudIconButton Icon="@Icons.Material.Filled.Cancel" Style="width: 56px; height: 56px;" Variant="Variant.Filled" Color="Color.Error" OnClick="CancelScanning" />
-					}
-				</MudStack>
+                    @if (!_isScanning)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Start"
+                                       Style="width: 56px; height: 56px;"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="StartScanningAsync"
+                                       Disabled="@(string.IsNullOrWhiteSpace(_dirPath) || !Directory.Exists(_dirPath))" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                       Style="width: 56px; height: 56px;"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Error"
+                                       OnClick="CancelScanning" />
+                    }
+                </MudStack>
 
-				@if (_isScanning || _processedFilesCount > 0)
-				{
-					<MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
-                        <MudText Typo="Typo.body2">@L["Scanner_Processed"]: @_processedFilesCount</MudText>
-                        <!-- Индикатор активности, так как точный процент неизвестен -->
-                        <MudProgressLinear Color="Color.Primary" Value="100" Indeterminate="@_isScanning" Style="flex-grow: 1;" />
-					</MudStack>
-				}
-			</MudCardContent>
-		</MudCard>
+                @if (_isScanning || _processedFilesCount > 0)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
+                        <MudText Typo="Typo.body2" Style="min-width: 180px;">
+                            @L["Scanner_Processed"]: <strong>@_processedFilesCount</strong>
+                        </MudText>
+                        <MudProgressLinear Color="Color.Primary"
+                                           Value="@_processedFilesCount"
+                                           Indeterminate="@(_processedFilesCount == 0)"
+                                           Style="flex-grow: 1;" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
 
-		<!-- Таблица результатов с горизонтальной прокруткой -->
-		<MudCard Outlined="true">
-			<MudCardContent Style="padding: 0;">
-				<div style="overflow-x: auto; max-height: 100%; overflow-y: auto;">
-					<MudDataGrid T="ScannedFile"
+        <!-- Таблица результатов -->
+        <MudCard Outlined="true">
+            <MudCardContent Style="padding: 0;">
+                <div style="overflow-x: auto; max-height: 100%; overflow-y: auto;">
+                    <MudDataGrid T="ScannedFile"
                                  Items="@_scannedFiles"
                                  SelectedItems="@_selectedRows"
                                  SelectedItemsChanged="@SelectedItemsChanged"
@@ -76,459 +94,121 @@
                                  Bordered="true"
                                  RowContextMenuClick="@OpenMenuContent"
                                  RowsPerPage="20">
-						<Columns>
-							<SelectColumn />
+                        <Columns>
+                            <SelectColumn />
 
-                            <!-- Динамические колонки на основе настроек видимости -->
                             @foreach (var column in GetVisibleColumnsConfig())
                             {
                                 <DynamicColumn Config="@column" />
                             }
-						</Columns>
-						<PagerContent>
-							<MudDataGridPager T="ScannedFile" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
-						</PagerContent>
-					</MudDataGrid>
+                        </Columns>
+                        <PagerContent>
+                            <MudDataGridPager T="ScannedFile" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
+                        </PagerContent>
+                    </MudDataGrid>
 
-					<MudMenu Dense="true" DropShadow="true" PositionAtCursor="true" @ref="_contextMenu" Class="custom-context-menu">
-						<!-- Группа 1: Открытие -->
-						<MudMenuItem OnClick="@(() => OpenFile(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FileOpen">
-							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@L["Menu_Open_File"]</MudText>
-								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + O</MudChip>
-							</MudStack>
-						</MudMenuItem>
+                    <!-- Контекстное меню -->
+                    <MudMenu Dense="true"
+                             DropShadow="true"
+                             PositionAtCursor="true"
+                             @ref="_contextMenu"
+                             Class="custom-context-menu">
+                        <!-- Группа 1: Открытие -->
+                        <MudMenuItem OnClick="@(() => OpenFile(_contextRow?.FullPath))"
+                                     Icon="@Icons.Material.Outlined.FileOpen">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                <MudText Typo="Typo.body2">@L["Menu_Open_File"]</MudText>
+                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + O</MudChip>
+                            </MudStack>
+                        </MudMenuItem>
 
-						<MudMenuItem OnClick="@(() => OpenFileDirectory(_contextRow?.FullPath))" Icon="@Icons.Material.Outlined.FolderOpen">
-							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@L["Menu_Open_Folder"]</MudText>
-								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + O</MudChip>
-							</MudStack>
-						</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => OpenFileDirectory(_contextRow?.FullPath))"
+                                     Icon="@Icons.Material.Outlined.FolderOpen">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                <MudText Typo="Typo.body2">@L["Menu_Open_Folder"]</MudText>
+                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + O</MudChip>
+                            </MudStack>
+                        </MudMenuItem>
 
-						<MudDivider Class="my-1" />
+                        <MudDivider Class="my-1" />
 
-						<!-- Группа 2: Копирование (Одиночное) -->
-						<MudMenuItem OnClick="@CopySingleInfoAsync" Icon="@Icons.Material.Outlined.FileCopy">
-							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@L["Menu_Copy_Info"]</MudText>
-								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
-							</MudStack>
-						</MudMenuItem>
+                        <!-- Группа 2: Копирование (одиночное) -->
+                        <MudMenuItem OnClick="@CopySingleInfoAsync"
+                                     Icon="@Icons.Material.Outlined.FileCopy">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info"]</MudText>
+                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
+                            </MudStack>
+                        </MudMenuItem>
 
-						<MudMenuItem OnClick="@CopySingleInfoTsvAsync" Icon="@Icons.Material.TwoTone.FileCopy">
-							<MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
-								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV"]</MudText>
-								<MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
-							</MudStack>
-						</MudMenuItem>
+                        <MudMenuItem OnClick="@CopySingleInfoTsvAsync"
+                                     Icon="@Icons.Material.TwoTone.FileCopy">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV"]</MudText>
+                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
+                            </MudStack>
+                        </MudMenuItem>
 
-						@if (_selectedRows != null && _selectedRows.Count > 1)
-						{
-							<MudDivider Class="my-1" />
+                        @if (_selectedRows != null && _selectedRows.Count > 1)
+                        {
+                            <MudDivider Class="my-1" />
 
-							<!-- Группа 3: Массовые операции -->
-							<MudMenuItem OnClick="@CopySelectedInfoAsync" Icon="@Icons.Material.Outlined.CopyAll">
-								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"] (@_selectedRows.Count)</MudText>
-							</MudMenuItem>
+                            <!-- Группа 3: Массовые операции -->
+                            <MudMenuItem OnClick="@CopySelectedInfoAsync"
+                                         Icon="@Icons.Material.Outlined.CopyAll">
+                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"] (@_selectedRows.Count)</MudText>
+                            </MudMenuItem>
 
-							<MudMenuItem OnClick="@CopySelectedInfoTsvAsync" Icon="@Icons.Material.TwoTone.CopyAll">
-								<MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"] (@_selectedRows.Count)</MudText>
-							</MudMenuItem>
-						}
-					</MudMenu>
-				</div>
-			</MudCardContent>
-		</MudCard>
-	</MudStack>
+                            <MudMenuItem OnClick="@CopySelectedInfoTsvAsync"
+                                         Icon="@Icons.Material.TwoTone.CopyAll">
+                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"] (@_selectedRows.Count)</MudText>
+                            </MudMenuItem>
+                        }
+                    </MudMenu>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudStack>
 </MudContainer>
 
-@code {
-	private string _dirPath = string.Empty;
-	private bool _isScanning;
-    private int _processedFilesCount; // Изменено на int
-	private CancellationTokenSource? _cts;
-	private ScannedFile? _contextRow;
-	private MudMenu _contextMenu = null!;
-	private List<ScannedFile> _scannedFiles = new();
-	private HashSet<ScannedFile>? _selectedRows = null;
-    private List<ColumnConfig>? _visibleColumnsCache;
-	private const int ThrottleIntervalMs = 150;
-
-	private bool _isSupportedPlatform => !OperatingSystem.IsBrowser();
-	private FileSizeType DisplayedSizeType => SettingsService.FilesScanningSettings.DisplayedSizeType;
-
-	private async Task SelectFolderAsync()
-	{
-		var result = await FolderPicker.Default.PickAsync();
-		if (result != null && !string.IsNullOrEmpty(result.Folder?.Path))
-		{
-			_dirPath = result.Folder.Path;
-		}
-	}
-
-	private async Task StartScanningAsync()
-	{
-		_isScanning = true;
-		_processedFilesCount = 0;
-		_scannedFiles.Clear();
-        _selectedRows?.Clear();
-		_cts = new CancellationTokenSource();
-
-		long lastUiUpdateTime = Environment.TickCount64;
-
-        // Используем Progress<int> в соответствии с интерфейсом сервиса
-		var progress = new Progress<int>(count =>
-		{
-			_processedFilesCount = count;
-
-			long currentTime = Environment.TickCount64;
-
-			// Проверяем, прошло ли достаточно времени с последнего обновления
-			if (currentTime - lastUiUpdateTime >= ThrottleIntervalMs)
-			{
-				lastUiUpdateTime = currentTime;
-				InvokeAsync(StateHasChanged);
-			}
-		});
-
-		try
-		{
-			List<ScannedFile> tempList = new List<ScannedFile>(capacity: 250);
-
-			await foreach (var file in ScannerService.ScanDirectoryAsync(
-				_dirPath,
-				SettingsService.FilesScanningSettings,
-				progress,
-				_cts.Token))
-			{
-				tempList.Add(file);
-
-				if (tempList.Count >= 250)
-				{
-					_scannedFiles.AddRange(tempList);
-					tempList.Clear();
-					await InvokeAsync(StateHasChanged);
-				}
-			}
-
-			if (tempList.Count > 0)
-			{
-				_scannedFiles.AddRange(tempList);
-				await InvokeAsync(StateHasChanged);
-			}
-
-			Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success);
-		}
-		catch (OperationCanceledException)
-		{
-			Snackbar.Add(L["Scanner_Cancelled"], Severity.Warning);
-		}
-		catch (Exception ex)
-		{
-			Snackbar.Add($"{L["Common_Error"]}: {ex.Message}", Severity.Error);
-		}
-		finally
-		{
-			_isScanning = false;
-			_cts?.Dispose();
-			_cts = null;
-			await InvokeAsync(StateHasChanged);
-		}
-	}
-
-	private void CancelScanning()
-	{
-		_cts?.Cancel();
-	}
-
-	private async Task OpenMenuContent(DataGridRowClickEventArgs<ScannedFile> args)
-	{
-		_contextRow = args.Item;
-		await _contextMenu.OpenMenuAsync(args.MouseEventArgs);
-	}
-
-	private void SelectedItemsChanged(HashSet<ScannedFile> items)
-	{
-		_selectedRows = items;
-	}
-
-	public string FormatSize(double size)
-	{
-		return DisplayedSizeType switch
-		{
-			FileSizeType.Bit => $"{size.ToBits():F0} Bit",
-			FileSizeType.B   => $"{size:F0} B",
-			FileSizeType.KB  => $"{size.ToKiloBytes():F2} KB",
-			FileSizeType.MB  => $"{size.ToMegaBytes():F2} MB",
-			FileSizeType.GB => $"{size.ToGigaBytes():F2} GB",
-			FileSizeType.TB => $"{size.ToTeraBytes():F2} TB",
-			FileSizeType.PB => $"{size.ToPetaBytes():F2} PB",
-			_ => $"{size:F0} B"
-		};
-	}
-
-    /// <summary>
-    /// Безопасное получение хеша из словаря
-    /// </summary>
-    private string GetHashValue(ScannedFile file, string algorithmName)
-    {
-        if (file.Hashes != null && file.Hashes.TryGetValue(algorithmName, out var hash))
-        {
-            return hash;
-        }
-        return "-";
-    }
-
-    /// <summary>
-    /// Получает конфигурацию видимых колонок на основе настроек и зарегистрированных алгоритмов хеширования
-    /// </summary>
-   private List<ColumnConfig> GetVisibleColumnsConfig()
-    {
-        if (_visibleColumnsCache != null) return _visibleColumnsCache;
-
-        var settings = SettingsService.FilesScanningSettings;
-        var visibleSettings = settings.Columns;
-        var hashSettings = settings.Hashing;
-        var hashVisibility = settings.Columns.HashColumns;
-
-        var configs = new List<ColumnConfig>();
-
-        // Стандартные колонки
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.Id, true))
-            configs.Add(new ColumnConfig("Table_Id", f => (_scannedFiles.IndexOf(f) + 1).ToString()));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.Name, true))
-            configs.Add(new ColumnConfig("Table_Name", f => f.Name));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.Extension, true))
-            configs.Add(new ColumnConfig("Table_Extension", f => f.Extension));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.Size, true))
-            configs.Add(new ColumnConfig("Table_Size", f => FormatSize(f.Size)));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.PagesCount, true))
-            configs.Add(new ColumnConfig("Table_Pages_Count", f => f.PagesCount > 0 ? f.PagesCount.ToString() : "-"));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.IsArchive, false))
-            configs.Add(new ColumnConfig("Table_Is_Archive", f => f.IsArchive ? "Yes" : "No"));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.IsArchiveEntry, false))
-            configs.Add(new ColumnConfig("Table_Is_Archive_Entry", f => f.IsArchiveEntry ? "Yes" : "No"));
-
-        if (visibleSettings.StandardColumns.GetValueOrDefault(FileColumn.FullPath, false))
-            configs.Add(new ColumnConfig("Table_Full_Path", f => f.FullPath));
-
-        // Динамические колонки хешей
-        foreach (var algo in hashSettings.AlgorithmsToCalculate)
-        {
-            if (hashVisibility.TryGetValue(algo, out bool isVisible) && isVisible)
-            {
-                configs.Add(new ColumnConfig(algo.Replace("-", " "), f => GetHashValue(f, algo)));
-            }
-        }
-
-        _visibleColumnsCache = configs;
-        return configs;
-    }
-
-    #region ScannedFileActions
-
-	private void OpenFile(string? filePath)
-	{
-		if (string.IsNullOrEmpty(filePath)) return;
-		try
-		{
-			Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
-		}
-		catch (Exception ex)
-		{
-			Snackbar.Add(ex.Message, Severity.Error, config => config.RequireInteraction = true);
-		}
-	}
-
-	private void OpenFileDirectory(string? filePath)
-	{
-		if (string.IsNullOrEmpty(filePath)) return;
-		try
-		{
-            // Проверка ОС для корректной команды открытия папки
-            if (OperatingSystem.IsWindows())
-            {
-                Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{filePath}\"") { UseShellExecute = true });
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                Process.Start("open", $"-R \"{filePath}\"");
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                Process.Start("xdg-open", Path.GetDirectoryName(filePath) ?? ".");
-            }
-		}
-		catch (Exception ex)
-		{
-			Snackbar.Add(ex.Message, Severity.Error, config => config.RequireInteraction = true);
-		}
-	}
-
-	/// <summary>
-	/// Формирует строку данных для одного файла в формате Human Readable
-	/// </summary>
-	private string GetFileInfoFormatted(ScannedFile file)
-	{
-		var sb = new StringBuilder();
-		var configs = GetVisibleColumnsConfig();
-
-		foreach (var config in configs)
-		{
-			string header = L[config.HeaderKey];
-			// Делегат сам знает, как получить значение (включая вычисление индекса для ID)
-			string value = config.ValueSelector(file);
-
-			sb.Append($"{header}: {value} | ");
-		}
-
-		// Удаляем последний разделитель " | "
-		return sb.Length > 3 ? sb.ToString(0, sb.Length - 3) : sb.ToString();
-	}
-
-	/// <summary>
-	/// Формирует строку TSV для одного файла (только значения)
-	/// </summary>
-	private string GetFileInfoTsv(ScannedFile file)
-	{
-		var configs = GetVisibleColumnsConfig();
-
-		// Извлекаем значения через делегаты
-		var values = configs.Select(c => c.ValueSelector(file));
-
-		return string.Join("\t", values);
-	}
-
-	/// <summary>
-	/// Получает строку заголовков для TSV
-	/// </summary>
-	private string GetTsvHeaders()
-	{
-		var configs = GetVisibleColumnsConfig();
-
-		// Извлекаем локализованные заголовки
-		var headers = configs.Select(c => L[c.HeaderKey].ToString());
-
-		return string.Join("\t", headers);
-	}
-
-	// Действия контекстного меню
-	private async Task CopySingleInfoAsync()
-	{
-        ScannedFile? file = _contextRow ?? (_selectedRows?.Count == 1 ? _selectedRows.FirstOrDefault() : null);
-
-		if (file != null)
-		{
-			var info = GetFileInfoFormatted(file);
-			await Clipboard.Default.SetTextAsync(info);
-			Snackbar.Add(L["Common_Copied"], Severity.Info);
-		}
-	}
-
-	private async Task CopySingleInfoTsvAsync()
-	{
-        ScannedFile? file = _contextRow ?? (_selectedRows?.Count == 1 ? _selectedRows.FirstOrDefault() : null);
-
-		if (file != null)
-		{
-			var sb = new StringBuilder();
-			sb.AppendLine(GetTsvHeaders());
-			sb.AppendLine(GetFileInfoTsv(file));
-
-			await Clipboard.Default.SetTextAsync(sb.ToString());
-			Snackbar.Add(L["Common_Copied"], Severity.Info);
-		}
-	}
-
-	private async Task CopySelectedInfoAsync()
-	{
-		if (_selectedRows == null || _selectedRows.Count == 0) return;
-
-        // Оптимизация: создаем словарь для быстрого поиска индекса, чтобы избежать O(N^2)
-        var fileIndexMap = new Dictionary<ScannedFile, int>();
-        for (int i = 0; i < _scannedFiles.Count; i++)
-        {
-            fileIndexMap[_scannedFiles[i]] = i;
-        }
-
-        var sortedFiles = _selectedRows
-            .Where(f => fileIndexMap.ContainsKey(f))
-            .OrderBy(f => fileIndexMap[f])
-            .ToList();
-
-		var sb = new StringBuilder();
-
-		foreach (var file in sortedFiles)
-		{
-			sb.AppendLine(GetFileInfoFormatted(file));
-		}
-
-		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(L["Common_Copied"], Severity.Info);
-	}
-
-	private async Task CopySelectedInfoTsvAsync()
-	{
-		if (_selectedRows == null || _selectedRows.Count == 0) return;
-
-        var fileIndexMap = new Dictionary<ScannedFile, int>();
-        for (int i = 0; i < _scannedFiles.Count; i++)
-        {
-            fileIndexMap[_scannedFiles[i]] = i;
-        }
-
-        var sortedFiles = _selectedRows
-            .Where(f => fileIndexMap.ContainsKey(f))
-            .OrderBy(f => fileIndexMap[f])
-            .ToList();
-
-		var sb = new StringBuilder();
-		sb.AppendLine(GetTsvHeaders());
-
-		foreach (var file in sortedFiles)
-		{
-			sb.AppendLine(GetFileInfoTsv(file));
-		}
-
-		await Clipboard.Default.SetTextAsync(sb.ToString());
-		Snackbar.Add(L["Common_Copied"], Severity.Info);
-	}
-
-	#endregion
-
-	private async Task OnDataGridKeyDown(KeyboardEventArgs e)
-	{
-        // Игнорируем, если фокус не в контейнере или идет сканирование
-        if (_isScanning) return;
-
-		if (e.CtrlKey && e.ShiftKey && (e.Code == "KeyC" || e.Key == "C"))
-		{
-			await CopySingleInfoTsvAsync();
-		}
-		else if (e.CtrlKey && (e.Code == "KeyC" || e.Key == "C"))
-		{
-			await CopySingleInfoAsync();
-		}
-
-        ScannedFile? activeFile = _contextRow ?? (_selectedRows?.Count == 1 ? _selectedRows.FirstOrDefault() : null);
-
-		if (activeFile != null)
-		{
-			if (e.CtrlKey && e.ShiftKey && (e.Code == "KeyO" || e.Key == "O"))
-			{
-				OpenFileDirectory(activeFile.FullPath);
-			}
-			else if (e.CtrlKey && (e.Code == "KeyO" || e.Key == "O"))
-			{
-				OpenFile(activeFile.FullPath);
-			}
-		}
-	}
-}
+<MudDialog @bind-Visible="_showManualPathDialog"
+            Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@L["Dialog_Enter_Path_Title"]</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+            @L["Dialog_Enter_Path_Description"]
+        </MudText>
+        <MudTextField @bind-Value="_manualPathInput"
+                      Label="@L["Dialog_Path_Label"]"
+                      Placeholder="/path/to/folder"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Immediate="true"
+                      OnKeyDown="@(async (KeyboardEventArgs e) =>
+                      {
+                          if (e.Key == "Enter")
+                          {
+                              ConfirmManualPath();
+                          }
+                          else if (e.Key == "Escape")
+                          {
+                              CancelManualPath();
+                          }
+                      })" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CancelManualPath"
+                    Color="Color.Default"
+                    Variant="Variant.Text">
+            @L["Common_Cancel"]
+        </MudButton>
+        <MudButton OnClick="ConfirmManualPath"
+                    Color="Color.Primary"
+                    Variant="Variant.Filled"
+                    Disabled="@(string.IsNullOrWhiteSpace(_manualPathInput) || !Directory.Exists(_manualPathInput))">
+            @L["Common_Confirm"]
+        </MudButton>
+    </DialogActions>
+</MudDialog>

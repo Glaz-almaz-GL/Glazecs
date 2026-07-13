@@ -264,4 +264,7 @@
   <data name="SourceDirectoryPlaceholder" xml:space="preserve">
     <value>Введите путь или выберите папку</value>
   </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Отменить</value>
+  </data>
 </root>
