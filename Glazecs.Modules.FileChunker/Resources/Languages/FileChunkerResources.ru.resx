@@ -175,7 +175,7 @@
     <value>Индекс итогового чанка</value>
   </data>
   <data name="PlaceholderDate" xml:space="preserve">
-    <value>Дата и время генерации (yyyy-MM-dd HH:mm:ss)</value>
+    <value>Дата генерации (yyyy-MM-dd)</value>
   </data>
   <data name="PlaceholderFileName" xml:space="preserve">
     <value>Имя файла (без пути)</value>
@@ -266,5 +266,11 @@
   </data>
   <data name="CancelButton" xml:space="preserve">
     <value>Отменить</value>
+  </data>
+  <data name="PlaceholderDateTime" xml:space="preserve">
+    <value>Дата и время генерации (yyyy-MM-dd HH:mm:ss)</value>
+  </data>
+  <data name="SourceDirectoryHelper" xml:space="preserve">
+    <value>Можно ввести путь вручную или выбрать папку кнопкой справа</value>
   </data>
 </root>

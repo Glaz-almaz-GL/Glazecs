@@ -266,6 +266,11 @@
   </data>
   <data name="CancelButton" xml:space="preserve">
     <value>CancelButton</value>
-    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
+  <data name="PlaceholderDateTime" xml:space="preserve">
+    <value>Generation date and time (yyyy-MM-dd HH:mm:ss)</value>
+  </data>
+  <data name="SourceDirectoryHelper" xml:space="preserve">
+    <value>You can enter the path manually or select a folder using the button on the right</value>
   </data>
 </root>

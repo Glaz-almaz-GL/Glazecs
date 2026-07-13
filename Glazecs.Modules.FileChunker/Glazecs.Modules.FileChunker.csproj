@@ -8,17 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="Resources\Languages\FileChunkerResources.ru.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Resources\Languages\FileChunkerResources.ru.resx">
-      <Generator></Generator>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +33,9 @@
     <EmbeddedResource Update="Resources\Languages\FileChunkerResources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>FileChunkerResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Languages\FileChunkerResources.ru.resx">
+      <Generator></Generator>
     </EmbeddedResource>
   </ItemGroup>
 

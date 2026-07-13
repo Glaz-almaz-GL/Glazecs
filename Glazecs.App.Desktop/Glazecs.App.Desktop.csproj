@@ -79,6 +79,22 @@
     <ItemGroup>
       <ProjectReference Include="..\Glazecs.Modules.FileChunker\Glazecs.Modules.FileChunker.csproj" />
       <ProjectReference Include="..\Glazecs.Modules.FMMS\Glazecs.Modules.FMMS.csproj" />
+      <ProjectReference Include="..\Glazecs.Shared.UI\Glazecs.Shared.UI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Resources\Languages\DesktopResources.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>DesktopResources.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\Languages\DesktopResources.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>DesktopResources.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@
 @inject IEnumerable<IFileChunker> FileChunkers
 @inject ISnackbar Snackbar
 @inject IStringLocalizer<FileChunkerResources> L
-@page "/modules/file-chunker"
+@page "/modules/file-chunker/document_chunker"
 
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     <MudGrid>
@@ -175,7 +175,7 @@
                                                Color="Color.Error"
                                                Size="Size.Small"
                                                OnClick="@(() => RemoveFile(context))"
-                                               Title="@L["RemoveFileTitle"]" />
+                                               title="@L["RemoveFileTitle"]" />
                             </MudTd>
                         </RowTemplate>
                     </MudTable>

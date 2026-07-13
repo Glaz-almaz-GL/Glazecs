@@ -103,7 +103,7 @@
                             }
                         </Columns>
                         <PagerContent>
-                            <MudDataGridPager T="ScannedFile" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
+                            <MudDataGridPager T="ScannedFile" RowsPerPageString="@L["Rows_Per_Page"]" PageSizeOptions="@(new int[] { 20, 50, 100 })" />
                         </PagerContent>
                     </MudDataGrid>
 
@@ -113,6 +113,7 @@
                              PositionAtCursor="true"
                              @ref="_contextMenu"
                              Class="custom-context-menu">
+
                         <!-- Группа 1: Открытие -->
                         <MudMenuItem OnClick="@(() => OpenFile(_contextRow?.FullPath))"
                                      Icon="@Icons.Material.Outlined.FileOpen">

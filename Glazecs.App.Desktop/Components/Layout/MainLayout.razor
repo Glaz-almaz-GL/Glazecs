@@ -1,7 +1,15 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Globalization
+@using Glazecs.App.Desktop.Resources.Languages
+@using Glazecs.Shared.UI.Interfaces
+@using Glazecs.Shared.UI.Models
+@using Microsoft.Extensions.Localization
+@inherits LayoutComponentBase
+@inject NavigationManager NavManager
+@inject IAppSettingsService AppSettings
+@inject IStringLocalizer<DesktopResources> L
 
 @* Required *@
-<MudThemeProvider />
+<MudThemeProvider @ref="_mudThemeProvider" Theme="_customTheme" @bind-IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -11,11 +19,61 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+    <MudAppBar Dense="true"
+               Elevation="1"
+               Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())" />
+
         <MudText Typo="Typo.h5" Class="ml-3">Glazecs</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+
+        <!-- Переключатель языка -->
+        <MudFabMenu StartIcon="@Icons.Material.Filled.Language"
+                    Direction="Direction.Bottom"
+                    Color="Color.Secondary"
+                    Size="Size.Small"
+                    Class="mr-2">
+
+            <MudFabMenuItem StartIcon="@Icons.Material.Filled.Translate"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            Title="Русский"
+                            OnClick="async () => { await ToggleCultureAsync(RussianCulture); }" />
+
+            <MudFabMenuItem StartIcon="@Icons.Material.Filled.Translate"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            Title="English"
+                            OnClick="async () => { await ToggleCultureAsync(EnglishCulture); }" />
+
+        </MudFabMenu>
+
+        <!-- Переключатель темы -->
+        <MudFabMenu StartIcon="@Icons.Material.Filled.Mode"
+                    Direction="Direction.Bottom"
+                    Color="Color.Secondary"
+                    Size="Size.Small">
+            <MudFabMenuItem StartIcon="@Icons.Material.Filled.DarkMode"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            Title="@L["Theme_Dark"]"
+                            OnClick="async () => { await ToggleThemeAsync(ThemeMode.Dark); }" />
+
+            <MudFabMenuItem StartIcon="@Icons.Material.Filled.LightMode"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            Title="@L["Theme_Light"]"
+                            OnClick="async () => { await ToggleThemeAsync(ThemeMode.Light); }" />
+
+            <MudFabMenuItem StartIcon="@Icons.Material.Filled.AutoMode"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            Title="@L["Theme_System"]"
+                            OnClick="async () => { await ToggleThemeAsync(ThemeMode.System); }" />
+        </MudFabMenu>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <MudDrawerHeader>
@@ -28,15 +86,15 @@
             <MudNavGroup Icon="@Icons.Material.Filled.PieChart" Title="Modules">
                 <MudNavGroup Icon="@Icons.Material.Filled.FilePresent" Title="FMMS">
                     <MudNavLink Href="/modules/fmms/files_scanner" Icon="@Icons.Material.Filled.Dashboard">
-                        Files Scanner
+                        @L["Fmms_Files_Scanner"]
                     </MudNavLink>
 
                     <MudNavLink Href="/modules/fmms/directory_scanner" Icon="@Icons.Material.Filled.FilterNone">
-                        Directory Scanner
+                        @L["Fmms_Directory_Scanner"]
                     </MudNavLink>
                 </MudNavGroup>
-                <MudNavLink Href="/modules/file-chunker" Icon="@Icons.Custom.FileFormats.FileDocument">
-                    Document Chunker
+                <MudNavLink Href="/modules/file-chunker/document_chunker" Icon="@Icons.Custom.FileFormats.FileDocument">
+                    @L["FC_Document_Chunker"]
                 </MudNavLink>
             </MudNavGroup>
         </MudDrawerContainer>

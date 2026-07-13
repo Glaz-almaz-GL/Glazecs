@@ -117,160 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ColumnFileName" xml:space="preserve">
-    <value>File Name</value>
+  <data name="Fmms_Files_Scanner" xml:space="preserve">
+    <value>File analysis</value>
   </data>
-  <data name="ColumnPath" xml:space="preserve">
-    <value>Path</value>
+  <data name="Fmms_Directory_Scanner" xml:space="preserve">
+    <value>Directory analysis</value>
   </data>
-  <data name="ColumnSize" xml:space="preserve">
-    <value>Size</value>
+  <data name="FC_Document_Chunker" xml:space="preserve">
+    <value>Document Portioner</value>
   </data>
-  <data name="ColumnSourceFiles" xml:space="preserve">
-    <value>Source Files</value>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>Dark theme</value>
   </data>
-  <data name="FormatAll" xml:space="preserve">
-    <value>All Supported</value>
+  <data name="Theme_Light" xml:space="preserve">
+    <value>Light theme</value>
   </data>
-  <data name="FormatHelper" xml:space="preserve">
-    <value>Select which files will be processed</value>
-  </data>
-  <data name="FormatLabel" xml:space="preserve">
-    <value>Processing Format</value>
-  </data>
-  <data name="FormatPdf" xml:space="preserve">
-    <value>PDF (.pdf)</value>
-  </data>
-  <data name="FormatWord" xml:space="preserve">
-    <value>Word (.docx)</value>
-  </data>
-  <data name="FoundFilesTitle" xml:space="preserve">
-    <value>Found Files</value>
-  </data>
-  <data name="HeaderTemplateLabel" xml:space="preserve">
-    <value>Шаблон заголовка</value>
-  </data>
-  <data name="HeaderTemplatePlaceholder" xml:space="preserve">
-    <value>{FileName} - Part {FilePart}</value>
-  </data>
-  <data name="MaxChunkSizeLabel" xml:space="preserve">
-    <value>Max chunk size (MB)</value>
-  </data>
-  <data name="NoFilesFound" xml:space="preserve">
-    <value>No files found. Specify a folder and click "Scan".</value>
-  </data>
-  <data name="OutputDirectoryHelper" xml:space="preserve">
-    <value>You can enter the path manually or select a folder using the button on the right</value>
-  </data>
-  <data name="OutputDirectoryLabel" xml:space="preserve">
-    <value>Output Directory</value>
-  </data>
-  <data name="OutputDirectoryPlaceholder" xml:space="preserve">
-    <value>Enter path or select folder</value>
-  </data>
-  <data name="PageTitle" xml:space="preserve">
-    <value>File Chunking Settings</value>
-  </data>
-  <data name="PlaceholderChunkIndex" xml:space="preserve">
-    <value>Final chunk index</value>
-  </data>
-  <data name="PlaceholderDate" xml:space="preserve">
-    <value>Generation date (yyyy-MM-dd)</value>
-  </data>
-  <data name="PlaceholderFileName" xml:space="preserve">
-    <value>File name (without path)</value>
-  </data>
-  <data name="PlaceholderFilePart" xml:space="preserve">
-    <value>Current file part number</value>
-  </data>
-  <data name="PlaceholderFileSize" xml:space="preserve">
-    <value>File size in bytes (with separators)</value>
-  </data>
-  <data name="PlaceholderOriginalPath" xml:space="preserve">
-    <value>Full original path to file</value>
-  </data>
-  <data name="PlaceholdersCaption" xml:space="preserve">
-    <value>Available placeholders (click to insert):</value>
-  </data>
-  <data name="PlaceholderTotalParts" xml:space="preserve">
-    <value>Total number of file parts</value>
-  </data>
-  <data name="ProcessButton" xml:space="preserve">
-    <value>Start Processing</value>
-  </data>
-  <data name="RemovePunctuationLabel" xml:space="preserve">
-    <value>Remove punctuation</value>
-  </data>
-  <data name="ResultsTitle" xml:space="preserve">
-    <value>Processing Results</value>
-  </data>
-  <data name="RulesSectionTitle" xml:space="preserve">
-    <value>Processing Rules</value>
-  </data>
-  <data name="ScanButton" xml:space="preserve">
-    <value>Scan Folder</value>
-  </data>
-  <data name="ScanSubfoldersLabel" xml:space="preserve">
-    <value>Scan subfolders (recursively)</value>
-  </data>
-  <data name="StopWordsHelper" xml:space="preserve">
-    <value>Enter words separated by commas</value>
-  </data>
-  <data name="StopWordsLabel" xml:space="preserve">
-    <value>Stop words (comma separated)</value>
-  </data>
-  <data name="UseStopWordsLabel" xml:space="preserve">
-    <value>Apply stop words filter</value>
-  </data>
-  <data name="NoResults" xml:space="preserve">
-    <value>No data. Start file processing.</value>
-  </data>
-  <data name="ProcessingOverlay" xml:space="preserve">
-    <value>Processing files...</value>
-  </data>
-  <data name="WarningSelectFilesAndFolder" xml:space="preserve">
-    <value>Select files and output folder.</value>
-  </data>
-  <data name="WarningSelectExistingFolder" xml:space="preserve">
-    <value>Specify an existing source folder.</value>
-  </data>
-  <data name="SuccessScan" xml:space="preserve">
-    <value>Files found: {0}.</value>
-  </data>
-  <data name="InfoNoFilesInFormat" xml:space="preserve">
-    <value>No files of format "{0}" found in folder.</value>
-  </data>
-  <data name="SuccessProcessing" xml:space="preserve">
-    <value>Processing completed. Chunks created: {0}</value>
-  </data>
-  <data name="ErrorSelectFiles" xml:space="preserve">
-    <value>Error selecting files: {0}</value>
-  </data>
-  <data name="ErrorSelectFolder" xml:space="preserve">
-    <value>Error selecting folder: {0}</value>
-  </data>
-  <data name="ErrorScanFolder" xml:space="preserve">
-    <value>Error scanning folder: {0}</value>
-  </data>
-  <data name="ErrorProcessing" xml:space="preserve">
-    <value>Error processing: {0}</value>
-  </data>
-  <data name="WarningNoChunker" xml:space="preserve">
-    <value>No registered chunker for extension {0}. Files skipped.</value>
-  </data>
-  <data name="RemoveFileTitle" xml:space="preserve">
-    <value>Remove from list</value>
-  </data>
-  <data name="SourceDirectoryPlaceholder" xml:space="preserve">
-    <value>Enter path or select folder</value>
-  </data>
-  <data name="CancelButton" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="PlaceholderDateTime" xml:space="preserve">
-    <value>Generation date and time (yyyy-MM-dd HH:mm:ss)</value>
-  </data>
-  <data name="SourceDirectoryHelper" xml:space="preserve">
-    <value>You can enter the path manually or select a folder using the button on the right</value>
+  <data name="Theme_System" xml:space="preserve">
+    <value>System theme</value>
   </data>
 </root>

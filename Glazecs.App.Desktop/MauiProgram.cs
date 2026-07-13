@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Maui;
+using Glazecs.App.Desktop.Services;
 using Glazecs.Modules.FileChunker.Extensions;
 using Glazecs.Modules.FMMS.Extensions;
+using Glazecs.Shared.UI.Interfaces;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
@@ -17,6 +19,9 @@ namespace Glazecs.App.Desktop
             }).UseMauiCommunityToolkit();
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
+            builder.Services.AddLocalization();
+
             builder.Services.AddMudServices();
             builder.Services.AddFmmsServices();
             builder.Services.AddFileChunkerServices();

@@ -8,7 +8,6 @@ namespace Glazecs.Modules.FileChunker.Extensions
     {
         public static void AddFileChunkerServices(this IServiceCollection services)
         {
-            services.AddLocalization();
             services.AddMudServices();
             services.AddSingleton<IHeaderFormatter, TemplateHeaderFormatter>();
             services.AddTransient<IFileChunker, FileChunker.Services.WordFileChunker>();

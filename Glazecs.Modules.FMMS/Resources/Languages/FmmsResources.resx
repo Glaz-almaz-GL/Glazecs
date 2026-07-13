@@ -340,4 +340,8 @@
     <value>Scanner_Processed</value>
     <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FilesScanner.razor document</comment>
   </data>
+  <data name="Rows_Per_Page" xml:space="preserve">
+    <value>Rows_Per_Page</value>
+    <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FilesScanner.razor document</comment>
+  </data>
 </root>

@@ -17,7 +17,6 @@ namespace Glazecs.Modules.FMMS.Extensions
         public static void AddFmmsServices(this IServiceCollection services)
         {
             services.AddMudServices();
-            services.AddLocalization();
             services.AddSingleton<FmmsSettingsService>();
             services.AddTransient<IFileScannerService, FileScannerService>();
             services.AddTransient<IDirectoryScannerService, DirectoryScannerService>();

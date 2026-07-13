@@ -61,6 +61,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на CancelButton.
+        /// </summary>
+        public static string CancelButton {
+            get {
+                return ResourceManager.GetString("CancelButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на File Name.
         /// </summary>
         public static string ColumnFileName {
@@ -295,6 +304,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Generation date and time (yyyy-MM-dd HH:mm:ss).
+        /// </summary>
+        public static string PlaceholderDateTime {
+            get {
+                return ResourceManager.GetString("PlaceholderDateTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на File name (without path).
         /// </summary>
         public static string PlaceholderFileName {
@@ -417,6 +435,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string ScanSubfoldersLabel {
             get {
                 return ResourceManager.GetString("ScanSubfoldersLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на You can enter the path manually or select a folder using the button on the right.
+        /// </summary>
+        public static string SourceDirectoryHelper {
+            get {
+                return ResourceManager.GetString("SourceDirectoryHelper", resourceCulture);
             }
         }
         

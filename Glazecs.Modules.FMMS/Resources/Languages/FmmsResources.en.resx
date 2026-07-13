@@ -339,4 +339,7 @@
   <data name="Scanner_Processed" xml:space="preserve">
     <value>Processed</value>
   </data>
+  <data name="Rows_Per_Page" xml:space="preserve">
+    <value>Rows per page</value>
+  </data>
 </root>

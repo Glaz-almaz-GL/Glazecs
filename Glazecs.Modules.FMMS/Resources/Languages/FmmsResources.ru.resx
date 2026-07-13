@@ -339,4 +339,7 @@
   <data name="Scanner_Processed" xml:space="preserve">
     <value>Обработано</value>
   </data>
+  <data name="Rows_Per_Page" xml:space="preserve">
+    <value>Строк на страницу</value>
+  </data>
 </root>
