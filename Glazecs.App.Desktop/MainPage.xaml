@@ -1,13 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:Glazecs.App.Desktop"
-             xmlns:components="clr-namespace:Glazecs.App.Desktop.Components"
-             x:Class="Glazecs.App.Desktop.MainPage">
+<ContentPage
+    x:Class="Glazecs.App.Desktop.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:Glazecs.App.Desktop.Components"
+    xmlns:local="clr-namespace:Glazecs.App.Desktop">
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>
-            <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
+            <RootComponent ComponentType="{x:Type components:Routes}" Selector="#app" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
 

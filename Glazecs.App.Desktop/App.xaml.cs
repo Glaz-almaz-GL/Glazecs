@@ -9,7 +9,7 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new MainPage()) { Title = "Glazecs.App.Desktop" };
+            return new Window(new MainPage()) { Title = "Glazecs" };
         }
     }
 }

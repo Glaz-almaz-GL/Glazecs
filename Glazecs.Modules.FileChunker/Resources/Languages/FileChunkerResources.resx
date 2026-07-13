@@ -273,4 +273,14 @@
   <data name="SourceDirectoryHelper" xml:space="preserve">
     <value>You can enter the path manually or select a folder using the button on the right</value>
   </data>
+  <data name="PlatformNotSupported" xml:space="preserve">
+    <value>Platform not supported</value>
+  </data>
+  <data name="ErrorUnknownFormat" xml:space="preserve">
+    <value>Unknown file format: {0}</value>
+  </data>
+  <data name="SourceDirectoryLabel" xml:space="preserve">
+    <value>Folder with files for chunking</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
 </root>

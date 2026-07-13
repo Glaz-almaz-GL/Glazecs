@@ -142,6 +142,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Unknown file format: {0}.
+        /// </summary>
+        public static string ErrorUnknownFormat {
+            get {
+                return ResourceManager.GetString("ErrorUnknownFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на All Supported.
         /// </summary>
         public static string FormatAll {
@@ -367,6 +376,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Platform not supported.
+        /// </summary>
+        public static string PlatformNotSupported {
+            get {
+                return ResourceManager.GetString("PlatformNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Start Processing.
         /// </summary>
         public static string ProcessButton {
@@ -444,6 +462,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string SourceDirectoryHelper {
             get {
                 return ResourceManager.GetString("SourceDirectoryHelper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Folder with files for chunking.
+        /// </summary>
+        public static string SourceDirectoryLabel {
+            get {
+                return ResourceManager.GetString("SourceDirectoryLabel", resourceCulture);
             }
         }
         

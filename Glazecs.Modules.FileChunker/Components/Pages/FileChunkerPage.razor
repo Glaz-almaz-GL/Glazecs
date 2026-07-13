@@ -83,7 +83,7 @@
                             @L["PlaceholdersCaption"]
                         </MudText>
 
-                        <MudChipSet T="string" Dense="true">
+                        <MudChipSet T="string" Size="Size.Medium">
                             @foreach (var placeholder in _placeholders)
                             {
                                 <MudChip T="string"
@@ -163,7 +163,7 @@
                         <RowTemplate>
                             <MudTd DataLabel="№">@(_selectedFiles.IndexOf(context) + 1)</MudTd>
                             <MudTd DataLabel="@L["ColumnFileName"]">
-                                <MudText Typo="Typo.body2" Style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" Title="@context.Path">
+                                <MudText Typo="Typo.body2" Style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@context.Path">
                                     @context.Name
                                 </MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -244,7 +244,7 @@
                         <MudTd DataLabel="@L["ColumnFileName"]">@context.OutputFileName</MudTd>
                         <MudTd DataLabel="@L["ColumnSize"]">@context.SizeInBytes.ToHumanReadableSize()</MudTd>
                         <MudTd DataLabel="@L["ColumnSourceFiles"]">
-                            <MudText Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" Title="@string.Join(", ", context.SourceFileNames)">
+                            <MudText Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@string.Join(", ", context.SourceFileNames)">
                                 @string.Join(", ", context.SourceFileNames)
                             </MudText>
                         </MudTd>

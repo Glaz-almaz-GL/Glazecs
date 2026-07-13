@@ -342,4 +342,19 @@
   <data name="Rows_Per_Page" xml:space="preserve">
     <value>Строк на страницу</value>
   </data>
+  <data name="Tooltip_Select_Folder" xml:space="preserve">
+    <value>Выбрать папку</value>
+  </data>
+  <data name="Tooltip_Folder_Picker_Not_Supported" xml:space="preserve">
+    <value>Выбор папки не поддерживается</value>
+  </data>
+  <data name="Dialog_Enter_Path_Title" xml:space="preserve">
+    <value>Введите путь</value>
+  </data>
+  <data name="Dialog_Enter_Path_Description" xml:space="preserve">
+    <value>Выбор папок не поддерживается в вашей операционной системе.</value>
+  </data>
+  <data name="Dialog_Path_Label" xml:space="preserve">
+    <value>Путь до папки</value>
+  </data>
 </root>

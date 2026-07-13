@@ -1,5 +1,4 @@
-﻿@using System.Globalization
-@using Glazecs.App.Desktop.Resources.Languages
+﻿@using Glazecs.App.Desktop.Resources.Languages
 @using Glazecs.Shared.UI.Interfaces
 @using Glazecs.Shared.UI.Models
 @using Microsoft.Extensions.Localization
@@ -40,13 +39,13 @@
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.Translate"
                             Color="Color.Primary"
                             Size="Size.Small"
-                            Title="Русский"
+                            title="Русский"
                             OnClick="async () => { await ToggleCultureAsync(RussianCulture); }" />
 
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.Translate"
                             Color="Color.Primary"
                             Size="Size.Small"
-                            Title="English"
+                            title="English"
                             OnClick="async () => { await ToggleCultureAsync(EnglishCulture); }" />
 
         </MudFabMenu>
@@ -59,19 +58,19 @@
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.DarkMode"
                             Color="Color.Primary"
                             Size="Size.Small"
-                            Title="@L["Theme_Dark"]"
+                            title="@L["Theme_Dark"]"
                             OnClick="async () => { await ToggleThemeAsync(ThemeMode.Dark); }" />
 
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.LightMode"
                             Color="Color.Primary"
                             Size="Size.Small"
-                            Title="@L["Theme_Light"]"
+                            title="@L["Theme_Light"]"
                             OnClick="async () => { await ToggleThemeAsync(ThemeMode.Light); }" />
 
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.AutoMode"
                             Color="Color.Primary"
                             Size="Size.Small"
-                            Title="@L["Theme_System"]"
+                            title="@L["Theme_System"]"
                             OnClick="async () => { await ToggleThemeAsync(ThemeMode.System); }" />
         </MudFabMenu>
     </MudAppBar>

@@ -148,13 +148,13 @@
     <value>Найденные файлы</value>
   </data>
   <data name="HeaderTemplateLabel" xml:space="preserve">
-    <value>Header Template</value>
+    <value>Шаблон заголовка</value>
   </data>
   <data name="HeaderTemplatePlaceholder" xml:space="preserve">
     <value>{FileName} - Часть {FilePart}</value>
   </data>
   <data name="MaxChunkSizeLabel" xml:space="preserve">
-    <value>Макс. размер чанка (МБ)</value>
+    <value>Макс. размер файла (МБ)</value>
   </data>
   <data name="NoFilesFound" xml:space="preserve">
     <value>Файлы не найдены. Укажите папку и нажмите «Сканировать».</value>
@@ -169,10 +169,10 @@
     <value>Введите путь или выберите папку</value>
   </data>
   <data name="PageTitle" xml:space="preserve">
-    <value>Настройки чанкинга файлов</value>
+    <value>Настройки порционирования файлов</value>
   </data>
   <data name="PlaceholderChunkIndex" xml:space="preserve">
-    <value>Индекс итогового чанка</value>
+    <value>Индекс итогового фрагмента</value>
   </data>
   <data name="PlaceholderDate" xml:space="preserve">
     <value>Дата генерации (yyyy-MM-dd)</value>
@@ -241,7 +241,7 @@
     <value>В папке не найдено файлов формата «{0}».</value>
   </data>
   <data name="SuccessProcessing" xml:space="preserve">
-    <value>Обработка завершена. Создано чанков: {0}</value>
+    <value>Обработка завершена. Создано файлов: {0}</value>
   </data>
   <data name="ErrorSelectFiles" xml:space="preserve">
     <value>Ошибка при выборе файлов: {0}</value>
@@ -256,7 +256,7 @@
     <value>Ошибка при обработке: {0}</value>
   </data>
   <data name="WarningNoChunker" xml:space="preserve">
-    <value>Нет зарегистрированного чанкера для расширения {0}. Файлы пропущены.</value>
+    <value>Нет зарегистрированного порционатора для расширения {0}. Файлы пропущены.</value>
   </data>
   <data name="RemoveFileTitle" xml:space="preserve">
     <value>Удалить из списка</value>
@@ -272,5 +272,14 @@
   </data>
   <data name="SourceDirectoryHelper" xml:space="preserve">
     <value>Можно ввести путь вручную или выбрать папку кнопкой справа</value>
+  </data>
+  <data name="PlatformNotSupported" xml:space="preserve">
+    <value>Платформа не поддерживается</value>
+  </data>
+  <data name="ErrorUnknownFormat" xml:space="preserve">
+    <value>Неизвестный формат файла: {0}</value>
+  </data>
+  <data name="SourceDirectoryLabel" xml:space="preserve">
+    <value>Папка с файлами для порционирования</value>
   </data>
 </root>

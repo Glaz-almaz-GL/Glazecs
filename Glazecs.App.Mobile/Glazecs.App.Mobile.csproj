@@ -29,7 +29,7 @@
         <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
         <!-- Display name -->
-        <ApplicationTitle>Glazecs.App.Mobile</ApplicationTitle>
+        <ApplicationTitle>Glazecs</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.glazecs.app.mobile</ApplicationId>
