@@ -1,4 +1,5 @@
-﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+﻿using CommunityToolkit.Maui.Storage;
+using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
 using Glazecs.Modules.FileChunker.Abstractions.Models;
 using Glazecs.Modules.FileChunker.Abstractions.Rules;
 using Glazecs.Modules.FileChunker.Resources.Languages;
@@ -111,7 +112,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             try
             {
 #pragma warning disable CA1416
-                var result = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
+                FolderPickerResult result = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
 #pragma warning restore CA1416
 
                 if (result.IsSuccessful)

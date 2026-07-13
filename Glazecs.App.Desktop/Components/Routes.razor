@@ -1,5 +1,4 @@
 ﻿@using System.Reflection
-@using System.Diagnostics
 
 <Router AppAssembly="typeof(MauiProgram).Assembly" NotFoundPage="typeof(Pages.NotFound)" AdditionalAssemblies="AdditionalAssemblies">
     <Found Context="routeData">
@@ -15,14 +14,4 @@
 	private IEnumerable<Assembly> AdditionalAssemblies =>
 		AppDomain.CurrentDomain.GetAssemblies()
 			.Where(a => a.GetName().Name?.StartsWith("Glazecs.Modules") == true);
-
-	protected override void OnInitialized()
-	{
-		foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-		{
-			Debug.WriteLine($"Loaded assembly: {assembly.GetName().Name}");
-		}
-
-		base.OnInitialized();
-	}
 }

@@ -1,8 +1,4 @@
 ﻿using Glazecs.Modules.FileChunker.Abstractions.Models;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 
 namespace Glazecs.Modules.FileChunker.Abstractions.Interfaces
 {

@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Glazecs.Modules.FMMS.Abstractions.Models;
+﻿using Glazecs.Modules.FMMS.Abstractions.Models;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -88,10 +88,14 @@ namespace Glazecs.Modules.FMMS.Services
             if (savedSettings != null)
             {
                 if (savedSettings.FilesScanningSettings != null)
+                {
                     FilesScanningSettings = savedSettings.FilesScanningSettings;
+                }
 
                 if (savedSettings.DirectoryScanningSettings != null)
+                {
                     DirectoryScanningSettings = savedSettings.DirectoryScanningSettings;
+                }
 
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
@@ -111,7 +115,7 @@ namespace Glazecs.Modules.FMMS.Services
                     Directory.CreateDirectory(directory);
                 }
 
-                var container = new SavedSettingsContainer
+                SavedSettingsContainer container = new()
                 {
                     FilesScanningSettings = FilesScanningSettings,
                     DirectoryScanningSettings = DirectoryScanningSettings

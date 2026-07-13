@@ -1,5 +1,4 @@
 ﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
-using System;
 using System.Text.RegularExpressions;
 
 namespace Glazecs.Modules.FileChunker.Abstractions.Rules
@@ -22,12 +21,7 @@ namespace Glazecs.Modules.FileChunker.Abstractions.Rules
         /// </remarks>
         public string Apply(string content)
         {
-            if (string.IsNullOrEmpty(content))
-            {
-                return content;
-            }
-
-            return PunctuationRegex().Replace(content, string.Empty);
+            return string.IsNullOrEmpty(content) ? content : PunctuationRegex().Replace(content, string.Empty);
         }
 
         /// <summary>

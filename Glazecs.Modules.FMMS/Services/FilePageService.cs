@@ -1,9 +1,5 @@
 ﻿using Glazecs.Modules.FMMS.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Core;
 
@@ -153,12 +149,9 @@ namespace Glazecs.Modules.FMMS.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException("PDF-файл не найден", filePath);
-            }
-
-            return await Task.Run(() =>
+            return !File.Exists(filePath)
+                ? throw new FileNotFoundException("PDF-файл не найден", filePath)
+                : await Task.Run(() =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 return GetPagesCountInPdf(filePath);

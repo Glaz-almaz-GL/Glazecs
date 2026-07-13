@@ -70,7 +70,7 @@ namespace Glazecs.Modules.FileChunker.Abstractions.Formatters
         /// <inheritdoc />
         public bool ValidateTemplate(string template, out IReadOnlyCollection<string> unknownPlaceholders)
         {
-            var unknown = new List<string>();
+            List<string> unknown = [];
 
             if (string.IsNullOrEmpty(template))
             {
@@ -79,7 +79,7 @@ namespace Glazecs.Modules.FileChunker.Abstractions.Formatters
             }
 
             MatchCollection matches = PlaceholderRegex().Matches(template);
-            var allKnownPlaceholders = _placeholders.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> allKnownPlaceholders = _placeholders.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (string? placeholder in matches.Select(m => m.Value)
                 .Where(placeholder => !allKnownPlaceholders
                 .Contains(placeholder)))

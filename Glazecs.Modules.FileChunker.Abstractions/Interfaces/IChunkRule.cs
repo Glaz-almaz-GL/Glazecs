@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Glazecs.Modules.FileChunker.Abstractions.Interfaces
+﻿namespace Glazecs.Modules.FileChunker.Abstractions.Interfaces
 {
     /// <summary>
     /// Интерфейс правила трансформации текстового содержимого.
