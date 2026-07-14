@@ -364,4 +364,37 @@
     <value>Path to the folder</value>
     <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FilesScanner.razor document</comment>
   </data>
+  <data name="Settings_Hashing_Algorithms" xml:space="preserve">
+    <value>Available hash algorithms</value>
+  </data>
+  <data name="Settings_Hashing_MaxSize" xml:space="preserve">
+    <value>Max. file size for hash</value>
+    <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FmmsSettingsView.razor document</comment>
+  </data>
+  <data name="Settings_Hashing_Parallel" xml:space="preserve">
+    <value>Calculate the hash in parallel</value>
+    <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FmmsSettingsView.razor document</comment>
+  </data>
+  <data name="Settings_Hashing_MaxParallelism" xml:space="preserve">
+    <value>Max. parallel processes</value>
+    <comment>Used in Glazecs.Modules.FMMS\Components\Pages\FmmsSettingsView.razor document</comment>
+  </data>
+  <data name="Settings_InvalidExtension" xml:space="preserve">
+    <value>Invalid file extension</value>
+  </data>
+  <data name="SizeType_Bit" xml:space="preserve">
+    <value>Bits (Bit)</value>
+  </data>
+  <data name="SizeType_TB" xml:space="preserve">
+    <value>Terabytes (TB)</value>
+  </data>
+  <data name="SizeType_PB" xml:space="preserve">
+    <value>Petabyte (PB)</value>
+  </data>
+  <data name="Settings_Hashing_MaxSize_Description" xml:space="preserve">
+    <value>Size in bytes (B). 0 to remove limits.</value>
+  </data>
+  <data name="Settings_Hashing_MaxParallelism_Description" xml:space="preserve">
+    <value>0 to lift restrictions.</value>
+  </data>
 </root>

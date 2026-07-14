@@ -117,15 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Fmms_Files_Scanner" xml:space="preserve">
+  <data name="Page_Fmms_Files_Scanner" xml:space="preserve">
     <value>File analysis</value>
     <comment>Used in Glazecs.App.Desktop\Components\Layout\MainLayout.razor document</comment>
   </data>
-  <data name="Fmms_Directory_Scanner" xml:space="preserve">
+  <data name="Page_Fmms_Directory_Scanner" xml:space="preserve">
     <value>Directory analysis</value>
     <comment>Used in Glazecs.App.Desktop\Components\Layout\MainLayout.razor document</comment>
   </data>
-  <data name="FC_Document_Chunker" xml:space="preserve">
+  <data name="Page_FC_Document_Chunker" xml:space="preserve">
     <value>Document Portioner</value>
     <comment>Used in Glazecs.App.Desktop\Components\Layout\MainLayout.razor document</comment>
   </data>
@@ -140,5 +140,22 @@
   <data name="Theme_System" xml:space="preserve">
     <value>System theme</value>
     <comment>Used in Glazecs.App.Desktop\Components\Layout\MainLayout.razor document</comment>
+  </data>
+  <data name="Page_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Page_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Group_Modules" xml:space="preserve">
+    <value>Modules</value>
+  </data>
+  <data name="Settings_Tab_General" xml:space="preserve">
+    <value>Glazecs</value>
+    <comment>Used in Glazecs.App.Desktop\Components\Pages\Settings.razor document</comment>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Used in Glazecs.App.Desktop\Components\Pages\Settings.razor document</comment>
   </data>
 </root>

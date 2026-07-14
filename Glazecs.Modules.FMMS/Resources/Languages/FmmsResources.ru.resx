@@ -357,4 +357,34 @@
   <data name="Dialog_Path_Label" xml:space="preserve">
     <value>Путь до папки</value>
   </data>
+  <data name="Settings_Hashing_Algorithms" xml:space="preserve">
+    <value>Доступные алгоритмы хеширования</value>
+  </data>
+  <data name="Settings_Hashing_MaxSize" xml:space="preserve">
+    <value>Макс. размер файла для хеша</value>
+  </data>
+  <data name="Settings_Hashing_Parallel" xml:space="preserve">
+    <value>Вычислять хеш параллельно</value>
+  </data>
+  <data name="Settings_Hashing_MaxParallelism" xml:space="preserve">
+    <value>Макс. параллельных обработок</value>
+  </data>
+  <data name="Settings_InvalidExtension" xml:space="preserve">
+    <value>Недопустимое расширение файла</value>
+  </data>
+  <data name="SizeType_Bit" xml:space="preserve">
+    <value>Биты (Бит)</value>
+  </data>
+  <data name="SizeType_TB" xml:space="preserve">
+    <value>Терабайты (ТБ)</value>
+  </data>
+  <data name="SizeType_PB" xml:space="preserve">
+    <value>Петабайты (ПБ)</value>
+  </data>
+  <data name="Settings_Hashing_MaxSize_Description" xml:space="preserve">
+    <value>Размер в байтах (Б). 0 - для снятия ограничений</value>
+  </data>
+  <data name="Settings_Hashing_MaxParallelism_Description" xml:space="preserve">
+    <value>0 - для снятия ограничений</value>
+  </data>
 </root>

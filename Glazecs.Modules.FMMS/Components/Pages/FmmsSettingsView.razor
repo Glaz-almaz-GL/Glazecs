@@ -1,6 +1,4 @@
 ﻿@using System.Diagnostics
-@using System.Text.RegularExpressions
-@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.Extensions.Localization
 @using MudBlazor
 @using Glazecs.Modules.FMMS.Abstractions.Enums
@@ -22,28 +20,27 @@
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
-            <MudStack Spacing="3">
-                <MudSwitch T="bool"
-                           ValueChanged="OnArchiveSettingsChanged"
-                           Label="@L["Settings_ScanArchives"]"
-                           Color="Color.Primary" />
-
+            <MudStack Spacing="2">
                 <MudSelect T="FileSizeType"
-                           ValueChanged="OnSizeTypeSettingChanged"
-                           Label="@L["Settings_DisplayedSizeType"]"
-                           Variant="Variant.Outlined" Dense="true">
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.Bit">Bit</MudSelectItem>
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.B">B</MudSelectItem>
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.KB">KB</MudSelectItem>
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.MB">MB</MudSelectItem>
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.GB">GB</MudSelectItem>
-                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.TB">TB</MudSelectItem>
+                            ValueChanged="OnSizeTypeSettingChanged"
+                            Value="SettingsService.FilesScanningSettings.DisplayedSizeType"
+                            Label="@L["Settings_DisplayedSizeType"]"
+                            FullWidth="true"
+                            Variant="Variant.Outlined" Dense="true">
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.Bit">@L["SizeType_Bit"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.B">@L["SizeType_B"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.KB">@L["SizeType_KB"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.MB">@L["SizeType_MB"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.GB">@L["SizeType_GB"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.TB">@L["SizeType_TB"]</MudSelectItem>
+                    <MudSelectItem T="FileSizeType" Value="@FileSizeType.PB">@L["SizeType_PB"]</MudSelectItem>
                 </MudSelect>
 
-                <MudNumericField T="int"
-                                 ValueChanged="OnMaxFilesSettingsChanged"
-                                 Label="@L["Settings_MaxConcurrentFiles"]"
-                                 Min="1" Variant="Variant.Outlined" Style="max-width: 200px;" />
+                <MudSwitch T="bool"
+                           ValueChanged="OnArchiveSettingsChanged"
+                           Value="SettingsService.FilesScanningSettings.ScanArchives"
+                           Label="@L["Settings_ScanArchives"]"
+                           Color="Color.Primary" />
             </MudStack>
         </MudCardContent>
     </MudCard>
@@ -66,10 +63,7 @@
 
                     @foreach (var algo in _availableAlgorithms.Order())
                     {
-                        Debug.WriteLine("Availabled alghorithms: " + algo);
                         var isCalculated = SettingsService.FilesScanningSettings.Hashing.AlgorithmsToCalculate.Contains(algo);
-
-                        Debug.WriteLine("Alghorithms to calculate: " + isCalculated);
 
                         <MudItem xs="12" sm="6" md="4">
                             <MudSwitch T="bool"
@@ -83,21 +77,28 @@
 
                 <MudDivider />
 
-                <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap">
+                <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                     <MudNumericField T="long"
+                                     Value="SettingsService.FilesScanningSettings.Hashing.MaxFileSizeBytes"
                                      ValueChanged="OnMaxSizeSettingsChanged"
                                      Label="@L["Settings_Hashing_MaxSize"]"
-                                     Min="0" Variant="Variant.Outlined" Style="max-width: 200px;" />
+                                     HelperText="@L["Settings_Hashing_MaxSize_Description"]"
+                                     Min="0" Variant="Variant.Outlined"
+                                     Style="max-width: 200px;" />
 
                     <MudSwitch T="bool"
                                ValueChanged="OnCalculateSettingsChanged"
+                               Value="SettingsService.FilesScanningSettings.Hashing.CalculateInParallel"
                                Label="@L["Settings_Hashing_Parallel"]"
                                Color="Color.Primary" />
 
                     <MudNumericField T="int"
                                      ValueChanged="OnParallelismSettingsChanged"
+                                     Value="SettingsService.FilesScanningSettings.Hashing.MaxDegreeOfParallelism"
                                      Label="@L["Settings_Hashing_MaxParallelism"]"
-                                     Min="1" Variant="Variant.Outlined" Style="max-width: 200px;" />
+                                     HelperText="@L["Settings_Hashing_MaxParallelism_Description"]"
+                                     Min="1" Variant="Variant.Outlined"
+                                     Style="max-width: 200px;" />
                 </MudStack>
             </MudStack>
         </MudCardContent>
@@ -112,7 +113,6 @@
         </MudCardHeader>
         <MudCardContent>
             <MudStack Spacing="3">
-                <MudText Typo="Typo.subtitle2">@L["Settings_Columns_Standard"]</MudText>
                 <MudGrid>
                     @foreach (var kvp in SettingsService.FilesScanningSettings.Columns.StandardColumns)
                     {
@@ -121,22 +121,6 @@
                                        Value="@kvp.Value"
                                        ValueChanged="@(val => OnStandardColumnToggled(kvp.Key, val))"
                                        Label="@GetLocalizedColumnName(kvp.Key)"
-                                       Color="Color.Primary" />
-                        </MudItem>
-                    }
-                </MudGrid>
-
-                <MudDivider Class="my-2" />
-
-                <MudText Typo="Typo.subtitle2">@L["Settings_Columns_Hashes"]</MudText>
-                <MudGrid>
-                    @foreach (var kvp in SettingsService.FilesScanningSettings.Columns.HashColumns)
-                    {
-                        <MudItem xs="12" sm="6" md="4">
-                            <MudSwitch T="bool"
-                                       Value="@kvp.Value"
-                                       ValueChanged="@(val => OnHashColumnToggled(kvp.Key, val))"
-                                       Label="@kvp.Key"
                                        Color="Color.Primary" />
                         </MudItem>
                     }
@@ -157,13 +141,19 @@
                 <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
                     <MudTextField T="string"
                                   @bind-Value="_newRuleExt"
+                                  Placeholder=".png"
                                   Label="@L["Settings_PagesRules_Extension"]"
-                                  Variant="Variant.Outlined" Style="max-width: 150px;"
+                                  FullWidth="false"
+                                  Variant="Variant.Outlined"
+                                  Style="max-width: 150px;"
                                   OnKeyDown="@HandleEnterKeyPages" />
                     <MudNumericField T="int"
                                      @bind-Value="_newRulePages"
                                      Label="@L["Settings_PagesRules_Value"]"
-                                     Min="1" Variant="Variant.Outlined" Style="max-width: 150px;" />
+                                     Min="1"
+                                     FullWidth="false"
+                                     Variant="Variant.Outlined"
+                                     Style="max-width: 150px;" />
                     <MudSpacer />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddPageRule">
                         @L["Common_Add"]
@@ -172,7 +162,10 @@
 
                 @if (SettingsService.FilesScanningSettings.PagesCountCustomRules.Any())
                 {
-                    <MudTable Items="SettingsService.FilesScanningSettings.PagesCountCustomRules.ToList()" Hover="true" Striped="true" Elevation="0">
+                    <MudTable Items="SettingsService.FilesScanningSettings.PagesCountCustomRules.ToList()"
+                              Hover="true"
+                              Striped="true"
+                              Elevation="0">
                         <HeaderContent>
                             <MudTh>@L["Settings_PagesRules_Extension"]</MudTh>
                             <MudTh>@L["Settings_PagesRules_Value"]</MudTh>
@@ -182,7 +175,10 @@
                             <MudTd DataLabel="Ext">@context.Key</MudTd>
                             <MudTd DataLabel="Val">@context.Value</MudTd>
                             <MudTd>
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemovePageRule(context.Key))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemovePageRule(context.Key))" />
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
@@ -208,17 +204,26 @@
                     <MudTextField T="string"
                                   @bind-Value="_newArchiveExt"
                                   Label="@L["Settings_PagesRules_Extension"]"
-                                  Placeholder=".rar" Variant="Variant.Outlined" Style="max-width: 200px;"
+                                  Placeholder=".rar"
+                                  Style="max-width: 200px;"
+                                  FullWidth="false"
+                                  Variant="Variant.Outlined"
                                   OnKeyDown="@HandleEnterKey" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddArchiveExtension">
                         @L["Common_Add"]
                     </MudButton>
                 </MudStack>
 
+                <MudDivider/>
+
                 <MudChipSet T="string">
                     @foreach (var ext in SettingsService.FilesScanningSettings.CustomArchiveExtensions.Order())
                     {
-                        <MudChip T="string" Text="@ext" Color="Color.Primary" OnClose="@(() => RemoveArchiveExtension(ext))" CloseIcon="@Icons.Material.Filled.Close" />
+                        <MudChip T="string"
+                                 Text="@ext"
+                                 Color="Color.Primary"
+                                 OnClose="@(() => RemoveArchiveExtension(ext))"
+                                 CloseIcon="@Icons.Material.Filled.Close" />
                     }
                 </MudChipSet>
             </MudStack>
@@ -236,6 +241,7 @@
             <MudStack Spacing="3">
                 <MudSwitch T="bool"
                            ValueChanged="OnIncludeHiddenSettingsChanged"
+                           Value="SettingsService.DirectoryScanningSettings.IncludeHidden"
                            Label="@L["Settings_IncludeHiddenFolders"]"
                            Color="Color.Primary" />
             </MudStack>
@@ -249,197 +255,3 @@
         </MudButton>
     </MudStack>
 </MudStack>
-
-<div style="height: 50px;" />
-
-@code {
-    private string _newArchiveExt = "";
-    private string _newRuleExt = "";
-    private int _newRulePages = 1;
-    private List<string> _availableAlgorithms = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        _availableAlgorithms = HashProviderFactory.GetAvailableAlgorithms().ToList();
-    }
-
-    private string GetLocalizedColumnName(FileColumn column)
-    {
-        return L[$"Column_{column}"]?.Value ?? column.ToString();
-    }
-
-    #region Hashing Logic
-
-    private async Task OnAlgorithmToggled(string algorithm, bool isChecked)
-    {
-        var hashSettings = SettingsService.FilesScanningSettings.Hashing;
-        var columnsSettings = SettingsService.FilesScanningSettings.Columns;
-
-        if (isChecked)
-        {
-            hashSettings.AlgorithmsToCalculate.Add(algorithm);
-
-            // Автоматически добавляем колонку в настройки видимости
-            if (!columnsSettings.HashColumns.ContainsKey(algorithm))
-            {
-                columnsSettings.HashColumns[algorithm] = true;
-            }
-        }
-        else
-        {
-            hashSettings.AlgorithmsToCalculate.Remove(algorithm);
-        }
-
-        await SaveAsync();
-    }
-
-    #endregion
-
-    #region Columns Logic
-
-    private async Task OnStandardColumnToggled(FileColumn column, bool isVisible)
-    {
-        SettingsService.FilesScanningSettings.Columns.StandardColumns[column] = isVisible;
-        await SaveAsync();
-    }
-
-    private async Task OnHashColumnToggled(string algorithm, bool isVisible)
-    {
-        SettingsService.FilesScanningSettings.Columns.HashColumns[algorithm] = isVisible;
-        await SaveAsync();
-    }
-
-    #endregion
-
-    #region Archive Extensions Logic
-
-    private async Task AddArchiveExtension()
-    {
-        if (TryNormalizeExtension(_newArchiveExt, out var ext))
-        {
-            if (SettingsService.FilesScanningSettings.CustomArchiveExtensions.Add(ext))
-            {
-                _newArchiveExt = "";
-                await SaveAsync();
-            }
-        }
-    }
-
-    private async Task RemoveArchiveExtension(string ext)
-    {
-        SettingsService.FilesScanningSettings.CustomArchiveExtensions.Remove(ext);
-        await SaveAsync();
-    }
-
-    #endregion
-
-    #region Page Rules Logic
-
-    private async Task AddPageRule()
-    {
-        if (TryNormalizeExtension(_newRuleExt, out var ext))
-        {
-            SettingsService.FilesScanningSettings.PagesCountCustomRules[ext] = _newRulePages;
-            _newRuleExt = "";
-            _newRulePages = 1;
-            await SaveAsync();
-        }
-    }
-
-    private async Task RemovePageRule(string key)
-    {
-        SettingsService.FilesScanningSettings.PagesCountCustomRules.Remove(key);
-        await SaveAsync();
-    }
-
-    #endregion
-
-    #region Helpers & Validation
-
-    /// <summary>
-    /// Нормализует и валидирует расширение файла.
-    /// </summary>
-    private bool TryNormalizeExtension(string input, out string normalizedExt)
-    {
-        normalizedExt = string.Empty;
-        if (string.IsNullOrWhiteSpace(input)) return false;
-
-        var ext = input.Trim().ToLowerInvariant();
-        if (!ext.StartsWith(".")) ext = "." + ext;
-
-        // Проверка: только буквы, цифры и точка в начале, длина от 2 до 10 символов
-        if (!Regex.IsMatch(ext, @"^\.[a-z0-9]{1,9}$"))
-        {
-            Snackbar.Add(L["Settings_InvalidExtension"], Severity.Warning);
-            return false;
-        }
-
-        normalizedExt = ext;
-        return true;
-    }
-
-    private async Task OnIncludeHiddenSettingsChanged(bool value)
-    {
-        SettingsService.DirectoryScanningSettings.IncludeHidden = value;
-        await SaveAsync();
-    }
-
-    private async Task OnParallelismSettingsChanged(int value)
-    {
-        SettingsService.FilesScanningSettings.Hashing.MaxDegreeOfParallelism = value;
-        await SaveAsync();
-    }
-
-    private async Task OnCalculateSettingsChanged(bool value)
-    {
-        SettingsService.FilesScanningSettings.Hashing.CalculateInParallel = value;
-        await SaveAsync();
-    }
-
-    private async Task OnMaxSizeSettingsChanged(long value)
-    {
-        SettingsService.FilesScanningSettings.Hashing.MaxFileSizeBytes = value;
-        await SaveAsync();
-    }
-
-    private async Task OnMaxFilesSettingsChanged(int value)
-    {
-        SettingsService.FilesScanningSettings.MaxConcurrentFileProcessing = value;
-        await SaveAsync();
-    }
-
-    private async Task OnSizeTypeSettingChanged(FileSizeType value)
-    {
-        SettingsService.FilesScanningSettings.DisplayedSizeType = value;
-        await SaveAsync();
-    }
-
-    private async Task OnArchiveSettingsChanged(bool value)
-    {
-        SettingsService.FilesScanningSettings.ScanArchives = value;
-        await SaveAsync();
-    }
-
-    private async Task SaveAsync()
-    {
-        await SettingsService.SaveAsync();
-    }
-
-    private async Task SaveExplicitly()
-    {
-        await SettingsService.SaveAsync();
-        Snackbar.Add(L["Settings_Saved_Success"], Severity.Success);
-    }
-
-    private async Task HandleEnterKey(KeyboardEventArgs args)
-    {
-        if (args.Key == "Enter") await AddArchiveExtension();
-    }
-
-    private async Task HandleEnterKeyPages(KeyboardEventArgs args)
-    {
-        if (args.Key == "Enter") await AddPageRule();
-    }
-
-    #endregion
-}

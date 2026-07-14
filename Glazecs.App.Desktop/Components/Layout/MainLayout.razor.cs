@@ -7,7 +7,7 @@ namespace Glazecs.App.Desktop.Components.Layout
 {
     public sealed partial class MainLayout : LayoutComponentBase
     {
-        private bool _drawerOpen = false;
+        private bool _drawerOpen = true;
         private bool _isDarkMode = false;
         private bool _isLoaded = false;
         private MudThemeProvider? _mudThemeProvider;

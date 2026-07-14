@@ -23,19 +23,5 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
             { FileColumn.UnCompressedSize, false },
             { FileColumn.Size, true }
         };
-
-        /// <summary>
-        /// Видимость колонок хешей (ключ = имя алгоритма из HashingSettings.AlgorithmsToCalculate)
-        /// </summary>
-        /// <remarks>
-        /// Колонки хешей формируются динамически на основе выбранных алгоритмов.
-        /// Этот словарь позволяет пользователю скрывать ненужные колонки хешей.
-        /// </remarks>
-        public Dictionary<string, bool> HashColumns { get; set; } = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "SHA-256", true },
-            { "MD5", false },
-            { "SHA-512", false }
-        };
     }
 }

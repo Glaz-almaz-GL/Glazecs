@@ -1,4 +1,5 @@
 ﻿using Glazecs.Modules.FMMS.Abstractions.Interfaces;
+using Glazecs.Modules.FMMS.Components.Pages;
 using Glazecs.Modules.FMMS.Services;
 using Glazecs.Modules.Hash.Abstractions.Factories;
 using Glazecs.Modules.Hash.Abstractions.Interfaces;
@@ -8,6 +9,7 @@ using Glazecs.Modules.Hash.Abstractions.Providers.Cryptographic.SHA3;
 using Glazecs.Modules.Hash.Abstractions.Providers.NonCryptographic;
 using Glazecs.Modules.Hash.Abstractions.Providers.NonCryptographic.XXH;
 using Glazecs.Modules.Hash.Abstractions.Providers.NonCryptographic.XXH3;
+using Glazecs.Shared.Core.Interfaces;
 using MudBlazor.Services;
 
 namespace Glazecs.Modules.FMMS.Extensions
@@ -21,6 +23,7 @@ namespace Glazecs.Modules.FMMS.Extensions
             services.AddTransient<IFileScannerService, FileScannerService>();
             services.AddTransient<IDirectoryScannerService, DirectoryScannerService>();
             services.AddTransient<IFilePageService, FilePageService>();
+            services.AddSingleton<IModuleSettingsProvider, FmmsSettingsView>();
 
             // <-------- HASH -------->
 

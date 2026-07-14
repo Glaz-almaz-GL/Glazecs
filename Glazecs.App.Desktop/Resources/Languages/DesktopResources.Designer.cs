@@ -59,5 +59,95 @@ namespace Glazecs.App.Desktop.Resources.Languages {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Modules.
+        /// </summary>
+        internal static string Group_Modules {
+            get {
+                return ResourceManager.GetString("Group_Modules", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Document Portioner.
+        /// </summary>
+        internal static string Page_FC_Document_Chunker {
+            get {
+                return ResourceManager.GetString("Page_FC_Document_Chunker", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Directory analysis.
+        /// </summary>
+        internal static string Page_Fmms_Directory_Scanner {
+            get {
+                return ResourceManager.GetString("Page_Fmms_Directory_Scanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на File analysis.
+        /// </summary>
+        internal static string Page_Fmms_Files_Scanner {
+            get {
+                return ResourceManager.GetString("Page_Fmms_Files_Scanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Home.
+        /// </summary>
+        internal static string Page_Home {
+            get {
+                return ResourceManager.GetString("Page_Home", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Settings.
+        /// </summary>
+        internal static string Page_Settings {
+            get {
+                return ResourceManager.GetString("Page_Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Glazecs.
+        /// </summary>
+        internal static string Settings_Tab_General {
+            get {
+                return ResourceManager.GetString("Settings_Tab_General", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Dark theme.
+        /// </summary>
+        internal static string Theme_Dark {
+            get {
+                return ResourceManager.GetString("Theme_Dark", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Light theme.
+        /// </summary>
+        internal static string Theme_Light {
+            get {
+                return ResourceManager.GetString("Theme_Light", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на System theme.
+        /// </summary>
+        internal static string Theme_System {
+            get {
+                return ResourceManager.GetString("Theme_System", resourceCulture);
+            }
+        }
     }
 }

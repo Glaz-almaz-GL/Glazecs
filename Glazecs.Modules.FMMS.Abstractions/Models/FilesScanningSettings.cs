@@ -30,17 +30,6 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
             ".xpi", ".epub", ".s7z"
         };
 
-        /// <summary>
-        /// Максимальное количество файлов, обрабатываемых параллельно.
-        /// </summary>
-        /// <remarks>
-        /// <para>Значение по умолчанию: 1 (последовательная обработка).</para>
-        /// <para>Увеличение значения может ускорить сканирование на SSD/NVMe,
-        /// но увеличивает нагрузку на диск и потребление памяти.</para>
-        /// <para>Значение &lt;= 0 означает "без ограничений" (не рекомендуется).</para>
-        /// </remarks>
-        public int MaxConcurrentFileProcessing { get; set; } = 1;
-
         #endregion
 
         #region Page Count

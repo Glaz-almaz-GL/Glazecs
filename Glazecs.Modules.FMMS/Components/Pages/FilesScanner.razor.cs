@@ -486,14 +486,10 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             FilesScanningSettings settings = SettingsService.FilesScanningSettings;
             HashingSettings hashSettings = settings.Hashing;
-            Dictionary<string, bool> hashVisibility = settings.Columns.HashColumns;
 
             foreach (string algo in hashSettings.AlgorithmsToCalculate)
             {
-                if (hashVisibility.TryGetValue(algo, out bool isVisible) && isVisible)
-                {
-                    configs.Add(new FileColumnConfig(algo.Replace("-", " "), f => GetHashValue(f, algo)));
-                }
+                configs.Add(new FileColumnConfig(algo, f => GetHashValue(f, algo)));
             }
         }
 

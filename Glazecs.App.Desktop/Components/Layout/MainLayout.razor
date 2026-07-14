@@ -80,22 +80,29 @@
         </MudDrawerHeader>
         <MudDrawerContainer>
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">
-                Home
+                @L["Page_Home"]
             </MudNavLink>
-            <MudNavGroup Icon="@Icons.Material.Filled.PieChart" Title="Modules">
-                <MudNavGroup Icon="@Icons.Material.Filled.FilePresent" Title="FMMS">
+            <MudNavGroup Expanded="true"
+                         Icon="@Icons.Material.Filled.PieChart"
+                         Title="@L["Group_Modules"]">
+                <MudNavGroup Expanded="true"
+                             Icon="@Icons.Material.Filled.FilePresent"
+                             Title="FMMS">
                     <MudNavLink Href="/modules/fmms/files_scanner" Icon="@Icons.Material.Filled.Dashboard">
-                        @L["Fmms_Files_Scanner"]
+                        @L["Page_Fmms_Files_Scanner"]
                     </MudNavLink>
 
                     <MudNavLink Href="/modules/fmms/directory_scanner" Icon="@Icons.Material.Filled.FilterNone">
-                        @L["Fmms_Directory_Scanner"]
+                        @L["Page_Fmms_Directory_Scanner"]
                     </MudNavLink>
                 </MudNavGroup>
                 <MudNavLink Href="/modules/file-chunker/document_chunker" Icon="@Icons.Custom.FileFormats.FileDocument">
-                    @L["FC_Document_Chunker"]
+                    @L["Page_FC_Document_Chunker"]
                 </MudNavLink>
             </MudNavGroup>
+            <MudNavLink Href="/settings" Icon="@Icons.Custom.FileFormats.FileDocument">
+                @L["Page_Settings"]
+            </MudNavLink>
         </MudDrawerContainer>
     </MudDrawer>
 

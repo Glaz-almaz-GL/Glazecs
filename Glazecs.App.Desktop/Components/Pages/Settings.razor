@@ -1,0 +1,43 @@
+﻿@using Glazecs.App.Desktop.Resources.Languages
+@using Glazecs.Shared.Core.Interfaces
+@using Glazecs.Shared.UI.Interfaces
+@using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Logging
+@inject IAppSettingsService AppSettings
+@inject IEnumerable<IModuleSettingsProvider>? SettingsProviders
+@inject IStringLocalizer<DesktopResources> Localizer
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+@page "/settings"
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+	<MudText Typo="Typo.h4" Class="mb-4" Style="font-weight: 600;">@Localizer["Settings_Title"]</MudText>
+
+	<MudTabs Elevation="1"
+			 Border="true"
+		     Rounded="true"
+			 ApplyEffectsToContainer="false">
+
+		<MudTabPanel Disabled="true" Text="@Localizer["Settings_Tab_General"]" Icon="@Icons.Material.Filled.Settings">
+		</MudTabPanel>
+
+		@if (SettingsProviders?.Any() == true)
+		{
+			@foreach (IModuleSettingsProvider provider in SettingsProviders)
+			{
+				try
+				{
+					<MudTabPanel Text="@provider.ModuleName" Icon="@provider.Icon">
+						<DynamicComponent Type="@provider.SettingsComponentType" />
+					</MudTabPanel>
+				}
+				catch (Exception ex)
+				{
+					_logger?.LogError(ex, "Error rendering settings provider {ModuleName}", provider.ModuleName);
+					Snackbar.Add($"Error rendering settings provider {provider.ModuleName}", Severity.Error);
+				}
+			}
+		}
+
+	</MudTabs>
+</MudContainer>

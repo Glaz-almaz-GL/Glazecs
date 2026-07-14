@@ -3,6 +3,7 @@ using Glazecs.Modules.FMMS.Abstractions.Models;
 using Glazecs.Modules.Hash.Abstractions.Enums;
 using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
 namespace Glazecs.Modules.FMMS.Services
@@ -225,8 +226,8 @@ namespace Glazecs.Modules.FMMS.Services
             long fileSize = fileInfo.Length;
 
             string relativeFilePath = GetRelativePath(filePath, dirPathLength);
-            int pagesCount = await GetPagesCountAsync(fileExtension, filePath, settings, cancellationToken).ConfigureAwait(false);
-            Dictionary<string, string> hashes = await CalculateHashesAsync(settings, fileSize, filePath, hashProviders, cancellationToken).ConfigureAwait(false);
+            int pagesCount = await GetPagesCountAsync(fileExtension, filePath, settings.PagesCountCustomRules, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> hashes = await CalculateHashesAsync(settings.Hashing, fileSize, filePath, hashProviders, cancellationToken).ConfigureAwait(false);
 
             ScannedFile result = new()
             {
@@ -257,7 +258,6 @@ namespace Glazecs.Modules.FMMS.Services
         /// <summary>
         /// Определяет количество страниц файла на основе его расширения.
         /// </summary>
-        /// <param name="file">Объект файла с метаданными (используется расширение).</param>
         /// <param name="filePath">Полный путь к файлу.</param>
         /// <param name="settings">Настройки сканирования (пользовательские правила подсчёта страниц).</param>
         /// <param name="cancellationToken">Токен отмены.</param>
@@ -267,13 +267,13 @@ namespace Glazecs.Modules.FMMS.Services
         /// <para>Для остальных расширений проверяется наличие пользовательского правила в
         /// <see cref="FilesScanningSettings.PagesCountCustomRules"/>.</para>
         /// </remarks>
-        private async Task<int> GetPagesCountAsync(string fileExtension, string filePath, FilesScanningSettings settings, CancellationToken cancellationToken = default)
+        private async Task<int> GetPagesCountAsync(string fileExtension, string filePath, Dictionary<string, int> pagesCountCustomRules, CancellationToken cancellationToken = default)
         {
             if (fileExtension.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
             {
                 return await TryGetPdfPagesCountAsync(filePath, cancellationToken).ConfigureAwait(false);
             }
-            else if (settings.PagesCountCustomRules.TryGetValue(fileExtension, out int customPages))
+            else if (pagesCountCustomRules.TryGetValue(fileExtension, out int customPages))
             {
                 return customPages;
             }
@@ -346,7 +346,7 @@ namespace Glazecs.Modules.FMMS.Services
         /// с ключом, равным имени алгоритма.</para>
         /// </remarks>
         private async Task<Dictionary<string, string>> CalculateHashesAsync(
-            FilesScanningSettings settings,
+            HashingSettings settings,
             long fileSize,
             string filePath,
             IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> hashProviders,
@@ -357,15 +357,15 @@ namespace Glazecs.Modules.FMMS.Services
                 return [];
             }
 
-            if (settings.Hashing.CalculateInParallel && hashProviders.Count > 1)
+            if (settings.CalculateInParallel && settings.MaxDegreeOfParallelism > 1 && hashProviders.Count > 1)
             {
                 // Parallel
-                return await CalculateHashesInParallelAsync(hashProviders, filePath, settings.Hashing.OutputFormat, cancellationToken).ConfigureAwait(false);
+                return await CalculateHashesInParallelAsync(hashProviders, filePath, settings.OutputFormat, settings.MaxDegreeOfParallelism, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 // Not Parallel
-                return await CalculateHashesSequentiallyAsync(hashProviders, filePath, settings.Hashing.OutputFormat, cancellationToken).ConfigureAwait(false);
+                return await CalculateHashesSequentiallyAsync(hashProviders, filePath, settings.OutputFormat, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -375,9 +375,9 @@ namespace Glazecs.Modules.FMMS.Services
         /// <param name="settings">Настройки хеширования.</param>
         /// <param name="scannedFile">Объект файла с информацией о размере.</param>
         /// <returns><see langword="true"/>, если файл не превышает лимит или лимит не задан; иначе <see langword="false"/>.</returns>
-        private static bool IsEligibleForHashing(FilesScanningSettings settings, long fileSize)
+        private static bool IsEligibleForHashing(HashingSettings settings, long fileSize)
         {
-            return settings.Hashing.MaxFileSizeBytes <= 0 || fileSize <= settings.Hashing.MaxFileSizeBytes;
+            return settings.MaxFileSizeBytes <= 0 || fileSize <= settings.MaxFileSizeBytes;
         }
 
         /// <summary>
@@ -397,31 +397,34 @@ namespace Glazecs.Modules.FMMS.Services
             IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> providers,
             string filePath,
             HashOutputFormat format,
+            int maxDegreeOfParallelism = 2,
             CancellationToken cancellationToken = default)
         {
-            Dictionary<string, string> results = [];
+            ArgumentNullException.ThrowIfNull(providers);
+            ArgumentNullException.ThrowIfNull(filePath);
 
-            IEnumerable<Task<(string AlgorithmName, string Hash, bool Success)>> tasks = providers.Select(async p =>
+            ConcurrentDictionary<string, string> results = new();
+
+            ParallelOptions parallelOptions = new()
+            {
+                MaxDegreeOfParallelism = maxDegreeOfParallelism == 0 ? -1 : maxDegreeOfParallelism,
+                CancellationToken = cancellationToken
+            };
+
+            await Parallel.ForEachAsync(providers, parallelOptions, async (provider, ct) =>
             {
                 (string? hash, bool success) = await ComputeSingleHashAsync(
-                    p.Provider, p.AlgorithmName, filePath, format, cancellationToken)
+                    provider.Provider, provider.AlgorithmName, filePath, format, ct)
                     .ConfigureAwait(false);
 
-                return (p.AlgorithmName, Hash: hash, Success: success);
-            });
-
-            (string AlgorithmName, string Hash, bool Success)[] taskResults = await Task.WhenAll(tasks).ConfigureAwait(false);
-
-            foreach ((string AlgorithmName, string Hash, bool Success) result in taskResults)
-            {
-                if (result.Success)
+                if (success && hash is not null)
                 {
-                    results[result.AlgorithmName] = result.Hash;
-                    LogHash(result.AlgorithmName, result.Hash);
+                    results[provider.AlgorithmName] = hash;
+                    LogHash(provider.AlgorithmName, hash);
                 }
-            }
+            }).ConfigureAwait(false);
 
-            return results;
+            return new Dictionary<string, string>(results);
         }
 
         /// <summary>
