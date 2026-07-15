@@ -2,8 +2,14 @@
 
 namespace Glazecs.Modules.FMMS.Abstractions.Models
 {
-    public sealed class DirectoryScanningSettings
+    /// <summary>
+    /// Настройки сканированния директорий
+    /// </summary>
+    public record DirectoryScanningSettings
     {
+        /// <summary>
+        /// Список индивидуальных расширений архивов для анализа
+        /// </summary>
         public HashSet<string> CustomArchiveExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase)
         {
             ".zip", ".rar", ".7z", ".tar", ".gz", ".tgz", ".bz2", ".tb2", ".xz",
@@ -12,7 +18,14 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
             ".xpi", ".epub", ".s7z"
         };
 
+        /// <summary>
+        /// Тип размера для отображения
+        /// </summary>
         public FileSizeType DisplayedSizeType { get; set; } = FileSizeType.MB;
+
+        /// <summary>
+        /// Флаг, отвечающий за анализ скрытых директорий
+        /// </summary>
         public bool IncludeHidden { get; set; } = false;
     }
 }

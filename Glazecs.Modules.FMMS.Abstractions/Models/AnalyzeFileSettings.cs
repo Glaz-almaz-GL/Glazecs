@@ -5,7 +5,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
     /// <summary>
     /// Настройки видимости колонок
     /// </summary>
-    public sealed class AnalyzeFileSettings
+    public record AnalyzeFileSettings
     {
         /// <summary>
         /// Видимость стандартных колонок

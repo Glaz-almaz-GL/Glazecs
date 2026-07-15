@@ -5,7 +5,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
     /// <summary>
     /// Настройки вычисления хешей
     /// </summary>
-    public sealed class HashingSettings
+    public record HashingSettings
     {
         /// <summary>
         /// Имена алгоритмов для вычисления (должны быть зарегистрированы в IHashProviderFactory)
@@ -29,7 +29,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
         /// <summary>
         /// Вычислять ли хеши параллельно (несколько алгоритмов одновременно)
         /// </summary>
-        public bool CalculateInParallel { get; set; } = false;
+        public bool CalculateInParallel { get; set; } = true;
 
         /// <summary>
         /// Максимальная степень параллелизма при вычислении хешей.

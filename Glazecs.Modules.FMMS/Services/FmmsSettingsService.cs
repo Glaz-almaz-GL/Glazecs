@@ -39,8 +39,8 @@ namespace Glazecs.Modules.FMMS.Services
             }
         }
 
-        public FilesScanningSettings FilesScanningSettings { get; private set; }
-        public DirectoryScanningSettings DirectoryScanningSettings { get; private set; }
+        public FilesScanningSettings FilesScanningSettings { get; set; }
+        public DirectoryScanningSettings DirectoryScanningSettings { get; set; }
 
         public async Task LoadAsync(CancellationToken cancellationToken = default)
         {

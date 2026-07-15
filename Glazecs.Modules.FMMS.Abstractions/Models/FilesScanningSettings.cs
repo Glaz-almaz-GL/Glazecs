@@ -5,7 +5,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
     /// <summary>
     /// Настройки сканирования файлов
     /// </summary>
-    public sealed record class FilesScanningSettings
+    public record FilesScanningSettings
     {
         #region General
 

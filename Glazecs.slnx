@@ -15,6 +15,7 @@
     <Project Path="Glazecs.Modules.FMMS/Glazecs.Modules.FMMS.csproj" />
     <Project Path="Glazecs.Modules.Hash.Abstractions/Glazecs.Modules.Hash.Abstractions.csproj" />
     <Project Path="Glazecs.Modules.Hash.Providers/Glazecs.Modules.Hash.Providers.csproj" Id="d578578c-9ab1-45f0-a25b-135c6275073c" />
+    <Project Path="Glazecs.Modules.TTS.Abstractions/Glazecs.Modules.TTS.Abstractions.csproj" Id="d015fbca-a73a-4e31-81e8-6532d487c646" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="Glazecs.Shared.Core/Glazecs.Shared.Core.csproj" Id="b190462f-8c15-474b-87a6-0ac82593926f" />
