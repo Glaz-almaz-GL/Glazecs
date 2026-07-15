@@ -168,7 +168,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private async Task SaveExplicitly()
         {
-            await SettingsService.SaveAsync();
+            await SettingsService.SaveCurrentAsync();
             Snackbar.Add(L["Settings_Saved_Success"], Severity.Success);
         }
 
