@@ -1,56 +1,57 @@
-﻿using Glazecs.Modules.Hash.Abstractions.Abstractions;
+﻿using Glazecs.Modules.Hash.Abstractions;
 using Glazecs.Modules.Hash.Abstractions.Models;
-using System.Security.Cryptography;
+using System.IO.Hashing;
 
-namespace Glazecs.Modules.Hash.Abstractions.Providers.Cryptographic.SHA3
+namespace Glazecs.Modules.Hash.Providers.NonCryptographic.XXH
 {
     /// <summary>
-    /// Реализация провайдера хеширования с использованием алгоритма SHA-3-512
+    /// Реализация провайдера хеширования с использованием алгоритма XxHash64
     /// </summary>
-    public sealed class SHA3_512HashProvider : HashProvider
+    public sealed class XxHash64Provider : HashProvider
     {
         /// <summary>
-        /// Метаданные провайдера хеширования SHA-3-512
+        /// Метаданные провайдера хеширования XxHash64
         /// </summary>
         public override HashProviderMetadata Metadata { get; } = new HashProviderMetadata
         {
-            Name = "SHA-3-512",
-            HashSizeInBits = 512,
-            Category = HashAlgorithmCategory.SHA3.Name,
-            IsCryptographic = true
+            Name = "XxHash64",
+            HashSizeInBits = 64,
+            Category = HashAlgorithmCategory.XXH.Name,
+            IsCryptographic = false
         };
 
         /// <summary>
-        /// Вычисление хеша для массива байтов с использованием алгоритма SHA-3-512
+        /// Вычисление хеша для массива байтов с использованием алгоритма XxHash64
         /// </summary>
         /// <param name="data">Массив байтов для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(byte[] data)
         {
-            return SHA3_512.HashData(data);
+            return XxHash64.Hash(data);
         }
 
         /// <summary>
-        /// Вычисление хеша для потока с использованием алгоритма SHA-3-512
+        /// Вычисление хеша для потока с использованием алгоритма XxHash64
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(Stream inputStream)
         {
-            using SHA3_512 sha3_512 = SHA3_512.Create();
-            return sha3_512.ComputeHash(inputStream);
+            XxHash64 xxHash64 = new();
+            xxHash64.Append(inputStream);
+            return xxHash64.GetCurrentHash();
         }
 
         /// <summary>
-        /// Вычисление хеша для потока асинхронно с использованием алгоритма SHA-3-512
+        /// Вычисление хеша для потока асинхронно с использованием алгоритма XxHash64
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <param name="cancellationToken">Токен отмены</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override async Task<byte[]> ComputeHashAsync(Stream inputStream, CancellationToken cancellationToken)
         {
-            using SHA3_512 sha3_512 = SHA3_512.Create();
-            return await ReadStreamWithTransformAsync(sha3_512, inputStream, cancellationToken);
+            XxHash64 xxHash64 = new();
+            return await ReadStreamWithTransformAsync(xxHash64, inputStream, cancellationToken);
         }
     }
 }

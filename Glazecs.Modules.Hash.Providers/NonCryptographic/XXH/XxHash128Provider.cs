@@ -1,8 +1,8 @@
-﻿using Glazecs.Modules.Hash.Abstractions.Abstractions;
+﻿using Glazecs.Modules.Hash.Abstractions;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.IO.Hashing;
 
-namespace Glazecs.Modules.Hash.Abstractions.Providers.NonCryptographic.XXH
+namespace Glazecs.Modules.Hash.Providers.NonCryptographic.XXH
 {
     /// <summary>
     /// Реализация провайдера хеширования с использованием алгоритма XxHash128

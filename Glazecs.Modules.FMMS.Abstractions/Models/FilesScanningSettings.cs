@@ -5,7 +5,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
     /// <summary>
     /// Настройки сканирования файлов
     /// </summary>
-    public sealed class FilesScanningSettings
+    public sealed record class FilesScanningSettings
     {
         #region General
 
@@ -55,7 +55,7 @@ namespace Glazecs.Modules.FMMS.Abstractions.Models
         /// <summary>
         /// Настройки видимости колонок
         /// </summary>
-        public ColumnVisibilitySettings Columns { get; set; } = new();
+        public AnalyzeFileSettings AnalyzeSettings { get; set; } = new();
 
         #endregion
     }

@@ -1,56 +1,56 @@
-﻿using Glazecs.Modules.Hash.Abstractions.Abstractions;
+﻿using Glazecs.Modules.Hash.Abstractions;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.Security.Cryptography;
 
-namespace Glazecs.Modules.Hash.Abstractions.Providers.Cryptographic.SHA2
+namespace Glazecs.Modules.Hash.Providers.Cryptographic.Legacy
 {
     /// <summary>
-    /// Реализация провайдера хеширования с использованием алгоритма SHA-256
+    /// Реализация провайдера хеширования с использованием алгоритма SHA-1
     /// </summary>
-    public sealed class SHA256HashProvider : HashProvider
+    public sealed class SHA1HashProvider : HashProvider
     {
         /// <summary>
-        /// Метаданные провайдера хеширования SHA-256
+        /// Метаданные провайдера хеширования SHA-1
         /// </summary>
         public override HashProviderMetadata Metadata { get; } = new HashProviderMetadata
         {
-            Name = "SHA-256",
-            HashSizeInBits = 256,
-            Category = HashAlgorithmCategory.SHA2.Name,
+            Name = "SHA-1",
+            HashSizeInBits = 160,
+            Category = HashAlgorithmCategory.Legacy.Name,
             IsCryptographic = true
         };
 
         /// <summary>
-        /// Вычисление хеша для массива байтов с использованием алгоритма SHA-256
+        /// Вычисление хеша для массива байтов с использованием алгоритма SHA-1
         /// </summary>
         /// <param name="data">Массив байтов для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(byte[] data)
         {
-            return SHA256.HashData(data);
+            return SHA1.HashData(data);
         }
 
         /// <summary>
-        /// Вычисление хеша для потока с использованием алгоритма SHA-256
+        /// Вычисление хеша для потока с использованием алгоритма SHA-1
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(Stream inputStream)
         {
-            using SHA256 sha256 = SHA256.Create();
-            return sha256.ComputeHash(inputStream);
+            using SHA1 sha1 = SHA1.Create();
+            return sha1.ComputeHash(inputStream);
         }
 
         /// <summary>
-        /// Вычисление хеша для потока асинхронно с использованием алгоритма SHA-256
+        /// Вычисление хеша для потока асинхронно с использованием алгоритма SHA-1
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <param name="cancellationToken">Токен отмены</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override async Task<byte[]> ComputeHashAsync(Stream inputStream, CancellationToken cancellationToken)
         {
-            using SHA256 sha256 = SHA256.Create();
-            return await ReadStreamWithTransformAsync(sha256, inputStream, cancellationToken);
+            using SHA1 sha1 = SHA1.Create();
+            return await ReadStreamWithTransformAsync(sha1, inputStream, cancellationToken);
         }
     }
 }

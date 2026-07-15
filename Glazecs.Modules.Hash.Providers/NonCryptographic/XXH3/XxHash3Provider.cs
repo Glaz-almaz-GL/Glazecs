@@ -1,56 +1,57 @@
-﻿using Glazecs.Modules.Hash.Abstractions.Abstractions;
+﻿using Glazecs.Modules.Hash.Abstractions;
 using Glazecs.Modules.Hash.Abstractions.Models;
-using System.Security.Cryptography;
+using System.IO.Hashing;
 
-namespace Glazecs.Modules.Hash.Abstractions.Providers.Cryptographic.SHA2
+namespace Glazecs.Modules.Hash.Providers.NonCryptographic.XXH3
 {
     /// <summary>
-    /// Реализация провайдера хеширования с использованием алгоритма SHA-384
+    /// Реализация провайдера хеширования с использованием алгоритма XxHash3
     /// </summary>
-    public sealed class SHA384HashProvider : HashProvider
+    public sealed class XxHash3Provider : HashProvider
     {
         /// <summary>
-        /// Метаданные провайдера хеширования SHA-384
+        /// Метаданные провайдера хеширования XxHash3
         /// </summary>
         public override HashProviderMetadata Metadata { get; } = new HashProviderMetadata
         {
-            Name = "SHA-384",
-            HashSizeInBits = 384,
-            Category = HashAlgorithmCategory.SHA2.Name,
-            IsCryptographic = true
+            Name = "XxHash3",
+            HashSizeInBits = 128,
+            Category = HashAlgorithmCategory.XXH.Name,
+            IsCryptographic = false
         };
 
         /// <summary>
-        /// Вычисление хеша для массива байтов с использованием алгоритма SHA-384
+        /// Вычисление хеша для массива байтов с использованием алгоритма XxHash3
         /// </summary>
         /// <param name="data">Массив байтов для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(byte[] data)
         {
-            return SHA384.HashData(data);
+            return XxHash3.Hash(data);
         }
 
         /// <summary>
-        /// Вычисление хеша для потока с использованием алгоритма SHA-384
+        /// Вычисление хеша для потока с использованием алгоритма XxHash3
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(Stream inputStream)
         {
-            using SHA384 sha384 = SHA384.Create();
-            return sha384.ComputeHash(inputStream);
+            XxHash3 xxHash3 = new();
+            xxHash3.Append(inputStream);
+            return xxHash3.GetCurrentHash();
         }
 
         /// <summary>
-        /// Вычисление хеша для потока асинхронно с использованием алгоритма SHA-384
+        /// Вычисление хеша для потока асинхронно с использованием алгоритма XxHash3
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <param name="cancellationToken">Токен отмены</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override async Task<byte[]> ComputeHashAsync(Stream inputStream, CancellationToken cancellationToken)
         {
-            using SHA384 sha384 = SHA384.Create();
-            return await ReadStreamWithTransformAsync(sha384, inputStream, cancellationToken);
+            XxHash3 xxHash3 = new();
+            return await ReadStreamWithTransformAsync(xxHash3, inputStream, cancellationToken);
         }
     }
 }

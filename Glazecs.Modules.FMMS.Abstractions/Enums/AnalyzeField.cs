@@ -1,6 +1,6 @@
 ﻿namespace Glazecs.Modules.FMMS.Abstractions.Enums
 {
-    public enum FileColumn
+    public enum AnalyzeField
     {
         Id,
         Name,

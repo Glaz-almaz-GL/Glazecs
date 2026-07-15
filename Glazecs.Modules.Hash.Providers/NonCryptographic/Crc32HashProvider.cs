@@ -1,57 +1,57 @@
-﻿using Glazecs.Modules.Hash.Abstractions.Abstractions;
+﻿using Glazecs.Modules.Hash.Abstractions;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.IO.Hashing;
 
-namespace Glazecs.Modules.Hash.Abstractions.Providers.NonCryptographic.XXH
+namespace Glazecs.Modules.Hash.Providers.NonCryptographic
 {
     /// <summary>
-    /// Реализация провайдера хеширования с использованием алгоритма XxHash64
+    /// Реализация провайдера хеширования с использованием алгоритма CRC32
     /// </summary>
-    public sealed class XxHash64Provider : HashProvider
+    public sealed class Crc32HashProvider : HashProvider
     {
         /// <summary>
-        /// Метаданные провайдера хеширования XxHash64
+        /// Метаданные провайдера хеширования CRC32
         /// </summary>
         public override HashProviderMetadata Metadata { get; } = new HashProviderMetadata
         {
-            Name = "XxHash64",
-            HashSizeInBits = 64,
-            Category = HashAlgorithmCategory.XXH.Name,
+            Name = "CRC32",
+            HashSizeInBits = 32,
+            Category = HashAlgorithmCategory.CRC.Name,
             IsCryptographic = false
         };
 
         /// <summary>
-        /// Вычисление хеша для массива байтов с использованием алгоритма XxHash64
+        /// Вычисление хеша для массива байтов с использованием алгоритма CRC32
         /// </summary>
         /// <param name="data">Массив байтов для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(byte[] data)
         {
-            return XxHash64.Hash(data);
+            return Crc32.Hash(data);
         }
 
         /// <summary>
-        /// Вычисление хеша для потока с использованием алгоритма XxHash64
+        /// Вычисление хеша для потока с использованием алгоритма CRC32
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override byte[] ComputeHash(Stream inputStream)
         {
-            XxHash64 xxHash64 = new();
-            xxHash64.Append(inputStream);
-            return xxHash64.GetCurrentHash();
+            Crc32 crc32 = new();
+            crc32.Append(inputStream);
+            return crc32.GetCurrentHash();
         }
 
         /// <summary>
-        /// Вычисление хеша для потока асинхронно с использованием алгоритма XxHash64
+        /// Вычисление хеша для потока асинхронно с использованием алгоритма CRC32
         /// </summary>
         /// <param name="inputStream">Поток данных для хеширования</param>
         /// <param name="cancellationToken">Токен отмены</param>
         /// <returns>Массив байтов, представляющий хеш</returns>
         protected override async Task<byte[]> ComputeHashAsync(Stream inputStream, CancellationToken cancellationToken)
         {
-            XxHash64 xxHash64 = new();
-            return await ReadStreamWithTransformAsync(xxHash64, inputStream, cancellationToken);
+            Crc32 crc32 = new();
+            return await ReadStreamWithTransformAsync(crc32, inputStream, cancellationToken);
         }
     }
 }

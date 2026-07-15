@@ -455,30 +455,30 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private void AddStandardColumns(List<FileColumnConfig> configs)
         {
             FilesScanningSettings settings = SettingsService.FilesScanningSettings;
-            ColumnVisibilitySettings visibleSettings = settings.Columns;
+            AnalyzeFileSettings analyzeSettings = settings.AnalyzeSettings;
 
-            TryAddColumn(configs, visibleSettings, FileColumn.Id, true, "Table_Id",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.Id, true, "Table_Id",
                 f => f.Id.ToString());
 
-            TryAddColumn(configs, visibleSettings, FileColumn.Name, true, "Table_Name",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.Name, true, "Table_Name",
                 f => f.Name);
 
-            TryAddColumn(configs, visibleSettings, FileColumn.Extension, true, "Table_Extension",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.Extension, true, "Table_Extension",
                 f => f.Extension);
 
-            TryAddColumn(configs, visibleSettings, FileColumn.Size, true, "Table_Size",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.Size, true, "Table_Size",
                 f => FormatSize(f.Size));
 
-            TryAddColumn(configs, visibleSettings, FileColumn.PagesCount, true, "Table_Pages_Count",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.PagesCount, true, "Table_Pages_Count",
                 f => f.PagesCount > 0 ? f.PagesCount.ToString() : "-");
 
-            TryAddColumn(configs, visibleSettings, FileColumn.IsArchive, false, "Table_Is_Archive",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.IsArchive, false, "Table_Is_Archive",
                 f => f.IsArchive ? "Yes" : "No");
 
-            TryAddColumn(configs, visibleSettings, FileColumn.IsArchiveEntry, false, "Table_Is_Archive_Entry",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.IsArchiveEntry, false, "Table_Is_Archive_Entry",
                 f => f.IsArchiveEntry ? "Yes" : "No");
 
-            TryAddColumn(configs, visibleSettings, FileColumn.FullPath, false, "Table_Full_Path",
+            TryAddColumn(configs, analyzeSettings, AnalyzeField.FullPath, false, "Table_Full_Path",
                 f => f.FullPath);
         }
 
@@ -495,13 +495,13 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private static void TryAddColumn(
             List<FileColumnConfig> configs,
-            ColumnVisibilitySettings visibleSettings,
-            FileColumn column,
+            AnalyzeFileSettings visibleSettings,
+            AnalyzeField field,
             bool defaultValue,
             string headerKey,
             Func<ScannedFile, string> valueSelector)
         {
-            if (visibleSettings.StandardColumns.GetValueOrDefault(column, defaultValue))
+            if (visibleSettings.FieldsToAnalyze.GetValueOrDefault(field, defaultValue))
             {
                 configs.Add(new FileColumnConfig(headerKey, valueSelector));
             }

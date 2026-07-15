@@ -26,7 +26,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             base.OnInitialized();
         }
 
-        private string GetLocalizedColumnName(FileColumn column)
+        private string GetLocalizedColumnName(AnalyzeField column)
         {
             return L[$"Column_{column}"]?.Value ?? column.ToString();
         }
@@ -53,9 +53,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Columns Logic
 
-        private async Task OnStandardColumnToggled(FileColumn column, bool isVisible)
+        private async Task OnStandardColumnToggled(AnalyzeField column, bool isVisible)
         {
-            SettingsService.FilesScanningSettings.Columns.StandardColumns[column] = isVisible;
+            SettingsService.FilesScanningSettings.AnalyzeSettings.FieldsToAnalyze[column] = isVisible;
             await SaveExplicitly();
         }
 

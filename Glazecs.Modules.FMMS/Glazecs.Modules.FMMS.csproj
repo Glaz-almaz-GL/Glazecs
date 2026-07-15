@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Glazecs.Modules.FMMS.Abstractions\Glazecs.Modules.FMMS.Abstractions.csproj" />
+    <ProjectReference Include="..\Glazecs.Modules.Hash.Providers\Glazecs.Modules.Hash.Providers.csproj" />
     <ProjectReference Include="..\Glazecs.Shared.Core\Glazecs.Shared.Core.csproj" />
   </ItemGroup>
 

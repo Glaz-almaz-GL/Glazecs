@@ -114,7 +114,7 @@
         <MudCardContent>
             <MudStack Spacing="3">
                 <MudGrid>
-                    @foreach (var kvp in SettingsService.FilesScanningSettings.Columns.StandardColumns)
+                    @foreach (var kvp in SettingsService.FilesScanningSettings.AnalyzeSettings.FieldsToAnalyze)
                     {
                         <MudItem xs="12" sm="6" md="4">
                             <MudSwitch T="bool"

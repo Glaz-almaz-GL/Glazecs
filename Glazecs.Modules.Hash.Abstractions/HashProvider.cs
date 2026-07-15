@@ -4,7 +4,7 @@ using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.Text;
 
-namespace Glazecs.Modules.Hash.Abstractions.Abstractions
+namespace Glazecs.Modules.Hash.Abstractions
 {
     /// <summary>
     /// Базовый класс для провайдеров хеширования.
