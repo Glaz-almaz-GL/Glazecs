@@ -430,7 +430,7 @@ namespace Glazecs.Modules.FMMS.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Select folder.
+        ///   Ищет локализованную строку, похожую на You can enter the path manually or select a folder using the button on the right.
         /// </summary>
         public static string Scanner_SelectFolder {
             get {
@@ -853,7 +853,7 @@ namespace Glazecs.Modules.FMMS.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Folder picker not supported.
+        ///   Ищет локализованную строку, похожую на Folder selection is not supported on your operating system..
         /// </summary>
         public static string Tooltip_Folder_Picker_Not_Supported {
             get {
@@ -862,7 +862,7 @@ namespace Glazecs.Modules.FMMS.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Select folder.
+        ///   Ищет локализованную строку, похожую на You can enter the path manually or select a folder using the button on the right.
         /// </summary>
         public static string Tooltip_Select_Folder {
             get {

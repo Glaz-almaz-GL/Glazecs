@@ -238,7 +238,7 @@
     <value>Folder path</value>
   </data>
   <data name="Scanner_SelectFolder" xml:space="preserve">
-    <value>Select folder</value>
+    <value>You can enter the path manually or select a folder using the button on the right</value>
   </data>
   <data name="Scanner_Start" xml:space="preserve">
     <value>Start scanning</value>
@@ -343,10 +343,10 @@
     <value>Rows per page</value>
   </data>
   <data name="Tooltip_Select_Folder" xml:space="preserve">
-    <value>Select folder</value>
+    <value>You can enter the path manually or select a folder using the button on the right</value>
   </data>
   <data name="Tooltip_Folder_Picker_Not_Supported" xml:space="preserve">
-    <value>Folder picker not supported</value>
+    <value>Folder selection is not supported on your operating system.</value>
   </data>
   <data name="Dialog_Enter_Path_Title" xml:space="preserve">
     <value>Enter the path</value>

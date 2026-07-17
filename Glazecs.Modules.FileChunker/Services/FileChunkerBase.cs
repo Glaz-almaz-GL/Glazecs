@@ -9,15 +9,7 @@ namespace Glazecs.Modules.FileChunker.Services
     /// Базовый абстрактный класс для всех реализаций чанкеров.
     /// Реализует общую логику оркестрации: обработку потоков, батчинг,
     /// разбиение крупных фрагментов, сохранение чанков и управление состоянием.
-    ///
-    /// Наследники должны реализовать только <see cref="ProcessStreamAsync"/>,
-    /// который отвечает за извлечение текста из конкретного формата файла.
     /// </summary>
-    /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="FileChunkerBase"/>.
-    /// </remarks>
-    /// <param name="logger">Логгер для данного типа чанкера.</param>
-    /// <param name="defaultHeaderFormatter">Форматтер заголовков по умолчанию.</param>
     public abstract class FileChunkerBase(ILogger? logger, IHeaderFormatter? defaultHeaderFormatter) : IFileChunker
     {
         protected readonly ILogger? _logger = logger;
@@ -100,12 +92,7 @@ namespace Glazecs.Modules.FileChunker.Services
 
         /// <summary>
         /// Извлекает текст из потока и передаёт его в общую логику батчинга.
-        /// Каждый наследник реализует этот метод специфично для своего формата файла.
         /// </summary>
-        /// <param name="streamFactory">Фабрика потока исходного файла.</param>
-        /// <param name="options">Опции чанкинга.</param>
-        /// <param name="state">Общее состояние обработки.</param>
-        /// <param name="ct">Токен отмены.</param>
         protected abstract Task ProcessStreamAsync(
             Func<Stream> streamFactory,
             ChunkingOptions options,
@@ -141,13 +128,11 @@ namespace Glazecs.Modules.FileChunker.Services
             string contentWithHeader = header + processedText;
             int contentSize = Encoding.UTF8.GetByteCount(contentWithHeader);
 
-            // Если после применения правил размер все еще превышает максимум, разбиваем принудительно
             if (contentSize > options.MaxChunkSizeBytes)
             {
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger.LogInformation("Батч файла {FileName} превышает максимальный размер чанка. Разбиваем на части.",
-                        fileName);
+                    _logger.LogInformation("Батч файла {FileName} превышает максимальный размер чанка. Разбиваем на части.", fileName);
                 }
 
                 state.ChunkIndex = await SplitLargeContentAsync(
@@ -156,7 +141,6 @@ namespace Glazecs.Modules.FileChunker.Services
             }
             else
             {
-                // Если добавление этого батча превысит размер глобального чанка, сохраняем текущий чанк
                 if (state.CurrentChunkSize + contentSize > options.MaxChunkSizeBytes && state.CurrentChunkSize > 0)
                 {
                     await SaveCurrentChunkAsync(state, options);
@@ -254,8 +238,8 @@ namespace Glazecs.Modules.FileChunker.Services
                         chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
                     string chunkContent = partHeader + currentChunkContent.ToString();
 
-                    await SaveChunkAsync(chunkContent, [fileName],
-                        chunkingOptions.OutputDirectory, chunkIndex, results);
+                    // Передаем имя файла в списке, чтобы SaveChunkAsync мог использовать его расширение
+                    await SaveChunkAsync(chunkContent, [fileName], chunkingOptions.OutputDirectory, chunkIndex, results);
 
                     currentChunkContent.Clear();
                     currentChunkSize = 0;
@@ -290,15 +274,16 @@ namespace Glazecs.Modules.FileChunker.Services
                     chunkingOptions.HeaderTemplate ?? string.Empty, metadataContext) + Environment.NewLine;
                 string chunkContent = partHeader + currentChunkContent.ToString();
 
-                await SaveChunkAsync(chunkContent, [fileName],
-                    chunkingOptions.OutputDirectory, chunkIndex, results);
-
+                await SaveChunkAsync(chunkContent, [fileName], chunkingOptions.OutputDirectory, chunkIndex, results);
                 chunkIndex++;
             }
 
             return chunkIndex;
         }
 
+        /// <summary>
+        /// Сохраняет чанк на диск, формируя уникальное имя файла на основе исходного имени и расширения.
+        /// </summary>
         private async Task SaveChunkAsync(
             string content,
             List<string> sourceFiles,
@@ -306,7 +291,21 @@ namespace Glazecs.Modules.FileChunker.Services
             int chunkIndex,
             List<ChunkResult> results)
         {
-            string outputFileName = $"chunk_{chunkIndex:D4}.txt";
+            // Берем первый файл из списка как основной для именования (или "merged", если их несколько)
+            string primarySourceFile = sourceFiles.FirstOrDefault() ?? "merged_files";
+
+            string sourceNameWithoutExt = Path.GetFileNameWithoutExtension(primarySourceFile);
+            string sourceExtension = Path.GetExtension(primarySourceFile).TrimStart('.');
+
+            // Санитизация имени файла: удаляем недопустимые символы для безопасности файловой системы
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            string sanitizedName = string.IsNullOrWhiteSpace(sourceNameWithoutExt)
+                ? "unknown"
+                : new string([.. sourceNameWithoutExt.Where(c => !invalidChars.Contains(c))]);
+
+            // Формируем уникальное имя: chunk_0001_ИмяФайла.docx.txt
+            // Это гарантирует, что файлы с одинаковым расширением, но разным содержимым, не перезапишут друг друга.
+            string outputFileName = $"chunk_{chunkIndex:D4}_{sanitizedName}.{sourceExtension}.txt";
             string outputPath = Path.Combine(outputDirectory, outputFileName);
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
@@ -396,10 +395,6 @@ namespace Glazecs.Modules.FileChunker.Services
 
         #region Internal State
 
-        /// <summary>
-        /// Внутреннее состояние процесса чанкинга, разделяемое между всеми этапами обработки.
-        /// Защищённый класс, доступный наследникам.
-        /// </summary>
         protected sealed class ChunkingState
         {
             public StringBuilder CurrentChunkContent { get; } = new();

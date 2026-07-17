@@ -1,0 +1,77 @@
+﻿@using Glazecs.Shared.UI.Resources.Languages
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Logging
+@using MudBlazor
+@inject IStringLocalizer<SharedResources> L
+@inject ISnackbar Snackbar
+@inject ILogger<PathPickerComponent> Logger
+
+<MudStack Row="true"
+          Style="width: 100%;"
+          AlignItems="AlignItems.Center">
+    <MudTooltip Text="@TooltipText"
+                Placement="Placement.Top"
+                Arrow="true"
+                RootStyle="@_tooltipStyle">
+
+        <MudTextField T="string"
+                        Label="@Label"
+                        Value="@Value"
+                        ValueChanged="OnValueChanged"
+                        Placeholder="@Placeholder"
+                        Disabled="@Disabled"
+                        FullWidth="@FullWidth"
+                        Variant="Variant.Outlined"
+                        Style="flex-grow: 1;"/>
+    </MudTooltip>
+
+    <MudIconButton Icon="@Icon"
+                   Disabled="@Disabled"
+                   Style="@IconStyle"
+                   Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   OnClick="SelectPathAsync" />
+</MudStack>
+
+<!-- Универсальный диалог ручного ввода пути -->
+<MudDialog @bind-Visible="_showManualPathDialog"
+           Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@L["Dialog_Enter_Path_Title"]</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+            @(IsFolder ? L["Dialog_Enter_Folder_Path_Description"] : L["Dialog_Enter_File_Path_Description"])
+        </MudText>
+        <MudTextField @bind-Value="_manualPathInput"
+                      Label="@L["Dialog_Path_Label"]"
+                      Placeholder="@(IsFolder ? "/path/to/folder" : "C:/path/to/file.ext")"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Immediate="true"
+                      OnKeyDown="@(
+                        async (KeyboardEventArgs e) =>
+                        {
+                            if (e.Key == "Enter")
+                            {
+                                await ConfirmManualPath();
+                            }
+                            else if (e.Key == "Escape")
+                            {
+                                CancelManualPath();
+                            }
+                        })" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CancelManualPath" Color="Color.Default" Variant="Variant.Text">
+            @L["Common_Cancel"]
+        </MudButton>
+        <MudButton OnClick="ConfirmManualPath"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@(string.IsNullOrWhiteSpace(_manualPathInput) || !IsPathValid(_manualPathInput))">
+            @L["Common_Confirm"]
+        </MudButton>
+    </DialogActions>
+</MudDialog>

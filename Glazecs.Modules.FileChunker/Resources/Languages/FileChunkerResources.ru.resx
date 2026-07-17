@@ -282,4 +282,10 @@
   <data name="SourceDirectoryLabel" xml:space="preserve">
     <value>Папка с файлами для порционирования</value>
   </data>
+  <data name="PathsSectionTitle" xml:space="preserve">
+    <value>Пути</value>
+  </data>
+  <data name="TemplateAndRulesTitle" xml:space="preserve">
+    <value>Шаблоны и правила</value>
+  </data>
 </root>

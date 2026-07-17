@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using Glazecs.App.Desktop.Services;
+using Glazecs.Modules.ASR.Extensions;
 using Glazecs.Modules.FileChunker.Extensions;
 using Glazecs.Modules.FMMS.Extensions;
 using Glazecs.Shared.UI.Interfaces;
@@ -25,6 +26,7 @@ namespace Glazecs.App.Desktop
             builder.Services.AddMudServices();
             builder.Services.AddFmmsServices();
             builder.Services.AddFileChunkerServices();
+            builder.Services.AddAsrServices();
             builder.Services.AddLogging();
             builder.Logging.SetMinimumLevel(LogLevel.Information);
 #if DEBUG

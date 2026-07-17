@@ -70,38 +70,47 @@ namespace Glazecs.App.Desktop.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Home.
+        /// </summary>
+        internal static string Page_Home {
+            get {
+                return ResourceManager.GetString("Page_Home", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на ASR (Automatic Speech Recognition).
+        /// </summary>
+        internal static string Page_Module_ASR {
+            get {
+                return ResourceManager.GetString("Page_Module_ASR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Document Portioner.
         /// </summary>
-        internal static string Page_FC_Document_Chunker {
+        internal static string Page_Module_FC_Document_Chunker {
             get {
-                return ResourceManager.GetString("Page_FC_Document_Chunker", resourceCulture);
+                return ResourceManager.GetString("Page_Module_FC_Document_Chunker", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Ищет локализованную строку, похожую на Directory analysis.
         /// </summary>
-        internal static string Page_Fmms_Directory_Scanner {
+        internal static string Page_Module_Fmms_Directory_Scanner {
             get {
-                return ResourceManager.GetString("Page_Fmms_Directory_Scanner", resourceCulture);
+                return ResourceManager.GetString("Page_Module_Fmms_Directory_Scanner", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Ищет локализованную строку, похожую на File analysis.
         /// </summary>
-        internal static string Page_Fmms_Files_Scanner {
+        internal static string Page_Module_Fmms_Files_Scanner {
             get {
-                return ResourceManager.GetString("Page_Fmms_Files_Scanner", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на Home.
-        /// </summary>
-        internal static string Page_Home {
-            get {
-                return ResourceManager.GetString("Page_Home", resourceCulture);
+                return ResourceManager.GetString("Page_Module_Fmms_Files_Scanner", resourceCulture);
             }
         }
         
@@ -120,6 +129,15 @@ namespace Glazecs.App.Desktop.Resources.Languages {
         internal static string Settings_Tab_General {
             get {
                 return ResourceManager.GetString("Settings_Tab_General", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Settings.
+        /// </summary>
+        internal static string Settings_Title {
+            get {
+                return ResourceManager.GetString("Settings_Title", resourceCulture);
             }
         }
         

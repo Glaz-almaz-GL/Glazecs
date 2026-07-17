@@ -117,13 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Page_Fmms_Files_Scanner" xml:space="preserve">
+  <data name="Page_Module_Fmms_Files_Scanner" xml:space="preserve">
     <value>Анализ файлов</value>
   </data>
-  <data name="Page_Fmms_Directory_Scanner" xml:space="preserve">
+  <data name="Page_Module_Fmms_Directory_Scanner" xml:space="preserve">
     <value>Анализ директорий</value>
   </data>
-  <data name="Page_FC_Document_Chunker" xml:space="preserve">
+  <data name="Page_Module_FC_Document_Chunker" xml:space="preserve">
     <value>Порционатор документов</value>
   </data>
   <data name="Theme_Dark" xml:space="preserve">
@@ -149,5 +149,8 @@
   </data>
   <data name="Settings_Title" xml:space="preserve">
     <value>Настройки</value>
+  </data>
+  <data name="Page_Module_ASR" xml:space="preserve">
+    <value>ASR (автоматическое распознавание речи)</value>
   </data>
 </root>

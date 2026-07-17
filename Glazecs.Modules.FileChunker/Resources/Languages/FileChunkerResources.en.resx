@@ -282,4 +282,10 @@
   <data name="SourceDirectoryLabel" xml:space="preserve">
     <value>Folder with files for chunking</value>
   </data>
+  <data name="PathsSectionTitle" xml:space="preserve">
+    <value>Paths</value>
+  </data>
+  <data name="TemplateAndRulesTitle" xml:space="preserve">
+    <value>Templates and rules</value>
+  </data>
 </root>

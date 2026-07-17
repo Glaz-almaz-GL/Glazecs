@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Glazecs.Modules.FileChunker.Abstractions\Glazecs.Modules.FileChunker.Abstractions.csproj" />
     <ProjectReference Include="..\Glazecs.Shared.Core\Glazecs.Shared.Core.csproj" />
+    <ProjectReference Include="..\Glazecs.Shared.UI\Glazecs.Shared.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

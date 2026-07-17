@@ -283,4 +283,12 @@
     <value>Folder with files for chunking</value>
     <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
   </data>
+  <data name="PathsSectionTitle" xml:space="preserve">
+    <value>Paths</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
+  <data name="TemplateAndRulesTitle" xml:space="preserve">
+    <value>Templates and rules</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
 </root>

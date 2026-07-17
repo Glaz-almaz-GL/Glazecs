@@ -238,7 +238,7 @@
     <value>Путь к папке</value>
   </data>
   <data name="Scanner_SelectFolder" xml:space="preserve">
-    <value>Выбрать папку</value>
+    <value>Можно ввести путь вручную или выбрать папку кнопкой справа</value>
   </data>
   <data name="Scanner_Start" xml:space="preserve">
     <value>Начать сканирование</value>
@@ -343,10 +343,10 @@
     <value>Строк на страницу</value>
   </data>
   <data name="Tooltip_Select_Folder" xml:space="preserve">
-    <value>Выбрать папку</value>
+    <value>Можно ввести путь вручную или выбрать папку кнопкой справа</value>
   </data>
   <data name="Tooltip_Folder_Picker_Not_Supported" xml:space="preserve">
-    <value>Выбор папки не поддерживается</value>
+    <value>Выбор папок не поддерживается в вашей операционной системе.</value>
   </data>
   <data name="Dialog_Enter_Path_Title" xml:space="preserve">
     <value>Введите путь</value>

@@ -1,0 +1,105 @@
+﻿@using Glazecs.Modules.ASR.Abstractions.Interfaces
+@using Glazecs.Modules.ASR.Resources.Languages
+@using Glazecs.Shared.UI.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Logging
+@using MudBlazor
+@inject IEnumerable<ISpeechRecognitionService> SpeechServices
+@inject ISnackbar Snackbar
+@inject IStringLocalizer<AsrResources> L
+@inject ILogger<SpeechRecognitionPage> Logger
+@page "/modules/asr/speech_recognition"
+
+<MudContainer @onkeydown="OnPageKeyDown" MaxWidth="MaxWidth.False" Class="mt-4">
+    <MudStack Spacing="3">
+
+        <!-- Панель управления -->
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudSelect T="ISpeechRecognitionService"
+                               @bind-Value="_selectedService"
+                               Disabled="@_isProcessing"
+                               Placeholder="@L["ASR_Service_Label"]"
+                               Variant="Variant.Outlined"
+                               Style="min-width: 200px;">
+                        @foreach (var service in SpeechServices)
+                        {
+                            <MudSelectItem T="ISpeechRecognitionService" Value="service">
+                                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                    <MudText>@service.Name</MudText>
+                                    @if (!string.IsNullOrWhiteSpace(service.Description))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">(@service.Description)</MudText>
+                                    }
+                                </MudStack>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <PathPickerComponent @bind-Value="_filePath"
+                                         Disabled="@_isProcessing"
+                                         IsFolder="false"
+                                         Placeholder="@L["ASR_FilePath_Placeholder"]"
+                                         TooltipText="@L["ASR_Tooltip_Select_File"]"
+                                         Icon="@Icons.Material.Filled.Attachment"
+                                         IconStyle="width: 56px; height: 56px;"
+                                         FileTypes="_audioFileTypes" />
+
+                    @if (!_isProcessing)
+                    {
+                        <MudTooltip Text="@L["ASR_Tooltip_Start"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.PlayArrow"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Style="width: 56px; height: 56px;"
+                                           OnClick="StartRecognitionAsync"
+                                           Disabled="@(string.IsNullOrWhiteSpace(_filePath) || _selectedService == null)" />
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="@L["ASR_Tooltip_Cancel"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Error"
+                                           Style="width: 56px; height: 56px;"
+                                           OnClick="CancelRecognitionAsync" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+
+                @if (_isProcessing)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
+                        <MudText Typo="Typo.body2" Style="min-width: 150px;">
+                            @L["ASR_Processing"]: <strong>@_processedChunksCount</strong> @L["ASR_Chunks"]
+                        </MudText>
+                            <MudProgressLinear Color="Color.Primary"
+                                               Indeterminate="true"
+                                               Style="flex-grow: 1;" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Область результатов (без изменений) -->
+        <MudCard Outlined="true">
+            <MudCardContent Class="pa-4">
+                @if (string.IsNullOrWhiteSpace(_resultText))
+                {
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="text-center">
+                        @L["ASR_No_Result_Yet"]
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body1">
+                        @_resultText
+                    </MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudStack>
+</MudContainer>

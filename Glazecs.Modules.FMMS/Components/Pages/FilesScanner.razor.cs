@@ -1,9 +1,7 @@
-﻿using CommunityToolkit.Maui.Storage;
-using Glazecs.Modules.FMMS.Abstractions.Enums;
+﻿using Glazecs.Modules.FMMS.Abstractions.Enums;
 using Glazecs.Modules.FMMS.Abstractions.Models;
 using Glazecs.Modules.FMMS.Models;
 using Glazecs.Shared.Core.Extensions;
-using Glazecs.Shared.Core.Platforms;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
@@ -28,8 +26,6 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private readonly List<ScannedFile> _scannedFiles = [];
         private HashSet<ScannedFile>? _selectedRows;
         private List<FileColumnConfig> _visibleColumnsCache = [];
-        private bool _showManualPathDialog;
-        private string _manualPathInput = string.Empty;
         private bool _disposed;
         private const int ThrottleIntervalMs = 200;
         private const int BatchSize = 250;
@@ -39,161 +35,6 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         #region Properties
 
         private FileSizeType DisplayedSizeType => SettingsService.FilesScanningSettings.DisplayedSizeType;
-
-        #endregion
-
-        #region Folder Selection
-
-        private async Task SelectFolderAsync()
-        {
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
-            {
-                _logger.LogDebug("Начало выбора папки через FolderPicker");
-            }
-
-            if (!PlatformSupport.IsFolderPickerSupported)
-            {
-                await HandleUnsupportedPlatformAsync();
-                return;
-            }
-
-            await TryPickFolderAsync();
-        }
-
-        private async Task HandleUnsupportedPlatformAsync()
-        {
-            string reason = PlatformSupport.GetFolderPickerUnsupportedReason()
-                ?? "Платформа не поддерживается.";
-
-            if (_logger?.IsEnabled(LogLevel.Warning) == true)
-            {
-                _logger.LogWarning(
-                    "FolderPicker вызван на неподдерживаемой платформе: {Platform}. Причина: {Reason}",
-                    PlatformSupport.GetCurrentPlatformDescription(),
-                    reason);
-            }
-
-            Snackbar.Add(reason, Severity.Warning);
-            await ShowManualPathInputDialogAsync();
-        }
-
-        private async Task TryPickFolderAsync()
-        {
-            try
-            {
-#pragma warning disable CA1416
-                FolderPickerResult result = await FolderPicker.Default.PickAsync();
-#pragma warning restore CA1416
-
-                HandleFolderPickerResult(result);
-            }
-            catch (PlatformNotSupportedException ex)
-            {
-                await HandlePlatformNotSupportedException(ex);
-            }
-            catch (Exception ex)
-            {
-                HandleFolderPickerException(ex);
-            }
-        }
-
-        private void HandleFolderPickerResult(FolderPickerResult result)
-        {
-            if (result.IsSuccessful && !string.IsNullOrEmpty(result.Folder?.Path))
-            {
-                _dirPath = result.Folder.Path;
-
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation("Папка успешно выбрана: {Path}", _dirPath);
-                }
-
-                StateHasChanged();
-            }
-            else
-            {
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation("Пользователь отменил выбор папки");
-                }
-            }
-        }
-
-        private async Task HandlePlatformNotSupportedException(PlatformNotSupportedException ex)
-        {
-            if (_logger?.IsEnabled(LogLevel.Error) == true)
-            {
-                _logger.LogError(ex,
-                    "PlatformNotSupportedException при вызове FolderPicker. Платформа: {Platform}",
-                    PlatformSupport.GetCurrentPlatformDescription());
-            }
-
-            Snackbar.Add("Выбор папки не поддерживается на этой платформе.", Severity.Error);
-            await ShowManualPathInputDialogAsync();
-        }
-
-        private void HandleFolderPickerException(Exception ex)
-        {
-            if (_logger?.IsEnabled(LogLevel.Error) == true)
-            {
-                _logger.LogError(ex, "Ошибка при выборе папки через FolderPicker");
-            }
-
-            Snackbar.Add($"Ошибка при выборе папки: {ex.Message}", Severity.Error);
-        }
-
-        private async Task ShowManualPathInputDialogAsync()
-        {
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
-            {
-                _logger.LogDebug("Открытие диалога ручного ввода пути");
-            }
-
-            _manualPathInput = _dirPath ?? string.Empty;
-            _showManualPathDialog = true;
-            StateHasChanged();
-        }
-
-        private void ConfirmManualPath()
-        {
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
-            {
-                _logger.LogDebug("Попытка подтверждения ручного пути: {Path}", _manualPathInput);
-            }
-
-            if (!string.IsNullOrWhiteSpace(_manualPathInput) && Directory.Exists(_manualPathInput))
-            {
-                _dirPath = _manualPathInput;
-                _showManualPathDialog = false;
-
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation("Путь успешно установлен вручную: {Path}", _dirPath);
-                }
-
-                StateHasChanged();
-            }
-            else
-            {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
-                {
-                    _logger.LogWarning("Ручной ввод пути невалиден: {Path}", _manualPathInput);
-                }
-
-                Snackbar.Add("Указанный путь не существует или пуст.", Severity.Error);
-            }
-        }
-
-        private void CancelManualPath()
-        {
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
-            {
-                _logger.LogDebug("Пользователь отменил ручной ввод пути");
-            }
-
-            _showManualPathDialog = false;
-            StateHasChanged();
-        }
 
         #endregion
 

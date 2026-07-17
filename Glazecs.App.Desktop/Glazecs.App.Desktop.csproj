@@ -79,6 +79,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Glazecs.Modules.ASR\Glazecs.Modules.ASR.csproj" />
       <ProjectReference Include="..\Glazecs.Modules.FileChunker\Glazecs.Modules.FileChunker.csproj" />
       <ProjectReference Include="..\Glazecs.Modules.FMMS\Glazecs.Modules.FMMS.csproj" />
       <ProjectReference Include="..\Glazecs.Shared.UI\Glazecs.Shared.UI.csproj" />

@@ -1,9 +1,7 @@
-﻿using CommunityToolkit.Maui.Storage;
-using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
 using Glazecs.Modules.FileChunker.Abstractions.Models;
 using Glazecs.Modules.FileChunker.Abstractions.Rules;
 using Glazecs.Modules.FileChunker.Resources.Languages;
-using Glazecs.Shared.Core.Platforms;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -97,46 +95,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
         #endregion
 
-        #region Folder Selection and Scanning
-
-        private async Task SelectFolderAsync(Action<string> setPath, string errorKey)
-        {
-            if (!PlatformSupport.IsFolderPickerSupported)
-            {
-                string reason = PlatformSupport.GetFolderPickerUnsupportedReason()
-                    ?? _localizer["PlatformNotSupported"].Value;
-                _snackbar.Add(reason, Severity.Warning);
-                return;
-            }
-
-            try
-            {
-#pragma warning disable CA1416
-                FolderPickerResult result = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync();
-#pragma warning restore CA1416
-
-                if (result.IsSuccessful)
-                {
-                    setPath(result.Folder.Path);
-                    StateHasChanged();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Ошибка при выборе папки");
-                _snackbar.Add(_localizer[errorKey, ex.Message].Value, Severity.Error);
-            }
-        }
-
-        private Task SelectSourceFolder()
-        {
-            return SelectFolderAsync(path => _sourceDirectory = path, "ErrorSelectFolder");
-        }
-
-        private Task SelectOutputFolder()
-        {
-            return SelectFolderAsync(path => _outputDirectory = path, "ErrorSelectFolder");
-        }
+        #region Scanning
 
         private void ScanSourceFolder()
         {
@@ -156,8 +115,8 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             {
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger?.LogInformation("Начало сканирования папки: {Path}, формат: {Format}, рекурсия: {Recurse}",
-                    _sourceDirectory, _selectedFormat, _scanSubfolders);
+                    _logger.LogInformation("Начало сканирования папки: {Path}, формат: {Format}, рекурсия: {Recurse}",
+                        _sourceDirectory, _selectedFormat, _scanSubfolders);
                 }
 
                 EnumerationOptions enumerationOptions = new()
@@ -185,7 +144,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger?.LogInformation("Найдено файлов: {Count}", _selectedFiles.Count);
+                    _logger.LogInformation("Найдено файлов: {Count}", _selectedFiles.Count);
                 }
 
                 if (_selectedFiles.Count == 0)
@@ -268,9 +227,10 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                 }
 
                 _results = aggregatedResults;
+
                 if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
-                    _logger?.LogInformation("Обработка завершена. Создано чанков: {Count}", _results.Count);
+                    _logger.LogInformation("Обработка завершена. Создано чанков: {Count}", _results.Count);
                 }
 
                 _snackbar.Add(_localizer["SuccessProcessing", _results.Count].Value, Severity.Success);
@@ -287,15 +247,12 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             }
             finally
             {
-                _cts.Dispose();
+                _cts?.Dispose();
                 _cts = null;
                 _isProcessing = false;
                 StateHasChanged();
             }
         }
-
-
-
 
         private void CancelProcessing()
         {

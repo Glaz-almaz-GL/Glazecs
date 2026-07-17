@@ -3,6 +3,7 @@
 @using Glazecs.Modules.FMMS.Resources.Languages
 @using Glazecs.Modules.FMMS.Services
 @using Glazecs.Shared.Core.Platforms
+@using Glazecs.Shared.UI.Components
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.Extensions.Localization
 @using MudBlazor
@@ -21,23 +22,13 @@
         <MudCard Outlined="true">
             <MudCardContent>
                 <MudStack Row="true" Spacing="2">
-                    <MudTextField T="string"
-                                  @bind-Value="_dirPath"
-                                  Placeholder="@L["Scanner_FolderPath"]"
-                                  Disabled="@_isScanning"
-                                  Variant="Variant.Outlined"
-                                  Style="flex-grow: 1;" />
-
-                    <MudTooltip Text="@(PlatformSupport.IsFolderPickerSupported
-                                                        ? L["Tooltip_Select_Folder"].Value
-                                                        : L["Tooltip_Folder_Picker_Not_Supported"].Value)">
-                        <MudIconButton Icon="@Icons.Material.Filled.FolderOpen"
-                                       Disabled="@_isScanning"
-                                       Style="width: 56px; height: 56px;"
-                                       Variant="Variant.Outlined"
-                                       Color="Color.Primary"
-                                       OnClick="SelectFolderAsync" />
-                    </MudTooltip>
+                    <PathPickerComponent @bind-Value="_dirPath"
+                                         Disabled="@_isScanning"
+                                         IsFolder="true"
+                                         Placeholder="@L["Scanner_FolderPath"]"
+                                         TooltipText="@(PlatformSupport.IsFolderPickerSupported ? L["Tooltip_Select_Folder"].Value : L["Tooltip_Folder_Picker_Not_Supported"].Value)"
+                                         Icon="@Icons.Material.Filled.FolderOpen"
+                                         IconStyle="width: 56px; height: 56px;" />
 
                     @if (!_isScanning)
                     {
@@ -164,45 +155,3 @@
         </MudCard>
     </MudStack>
 </MudContainer>
-
-<MudDialog @bind-Visible="_showManualPathDialog"
-           Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true })">
-    <TitleContent>
-        <MudText Typo="Typo.h6">@L["Dialog_Enter_Path_Title"]</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
-            @L["Dialog_Enter_Path_Description"]
-        </MudText>
-        <MudTextField @bind-Value="_manualPathInput"
-                      Label="@L["Dialog_Path_Label"]"
-                      Placeholder="/path/to/folder"
-                      Variant="Variant.Outlined"
-                      FullWidth="true"
-                      Immediate="true"
-                      OnKeyDown="@(async (KeyboardEventArgs e) =>
-                      {
-                          if (e.Key == "Enter")
-                          {
-                              ConfirmManualPath();
-                          }
-                          else if (e.Key == "Escape")
-                          {
-                              CancelManualPath();
-                          }
-                      })" />
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="CancelManualPath"
-                   Color="Color.Default"
-                   Variant="Variant.Text">
-            @L["Common_Cancel"]
-        </MudButton>
-        <MudButton OnClick="ConfirmManualPath"
-                   Color="Color.Primary"
-                   Variant="Variant.Filled"
-                   Disabled="@(string.IsNullOrWhiteSpace(_manualPathInput) || !Directory.Exists(_manualPathInput))">
-            @L["Common_Confirm"]
-        </MudButton>
-    </DialogActions>
-</MudDialog>

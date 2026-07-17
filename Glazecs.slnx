@@ -9,13 +9,15 @@
     <Project Path="Glazecs.App.Web/Glazecs.App.Web.csproj" Id="1c306288-29d5-42c2-bbe5-93e6a86df3cd" />
   </Folder>
   <Folder Name="/Modules/">
+    <Project Path="Glazecs.Modules.ASR.Abstractions/Glazecs.Modules.ASR.Abstractions.csproj" Id="118b64ce-e395-4e49-b4ec-9710eeeeec05" />
+    <Project Path="Glazecs.Modules.ASR.Whisper/Glazecs.Modules.ASR.Whisper.csproj" Id="7158a642-5cef-4d23-a902-0e85213a55e7" />
+    <Project Path="Glazecs.Modules.ASR/Glazecs.Modules.ASR.csproj" Id="00334bf8-d077-4d55-8215-8b14638ce479" />
     <Project Path="Glazecs.Modules.FileChunker.Abstractions/Glazecs.Modules.FileChunker.Abstractions.csproj" Id="36b258bb-6072-4f21-8f09-074773a8c674" />
     <Project Path="Glazecs.Modules.FileChunker/Glazecs.Modules.FileChunker.csproj" Id="fdbdc059-577c-47e9-a2ce-2062c4b22f9a" />
     <Project Path="Glazecs.Modules.FMMS.Abstractions/Glazecs.Modules.FMMS.Abstractions.csproj" />
     <Project Path="Glazecs.Modules.FMMS/Glazecs.Modules.FMMS.csproj" />
     <Project Path="Glazecs.Modules.Hash.Abstractions/Glazecs.Modules.Hash.Abstractions.csproj" />
     <Project Path="Glazecs.Modules.Hash.Providers/Glazecs.Modules.Hash.Providers.csproj" Id="d578578c-9ab1-45f0-a25b-135c6275073c" />
-    <Project Path="Glazecs.Modules.TTS.Abstractions/Glazecs.Modules.TTS.Abstractions.csproj" Id="d015fbca-a73a-4e31-81e8-6532d487c646" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="Glazecs.Shared.Core/Glazecs.Shared.Core.csproj" Id="b190462f-8c15-474b-87a6-0ac82593926f" />
