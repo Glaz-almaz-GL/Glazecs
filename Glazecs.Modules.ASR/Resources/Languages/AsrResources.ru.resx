@@ -156,4 +156,10 @@
   <data name="ASR_Error_No_Service" xml:space="preserve">
     <value>Выберите сервис распознавания.</value>
   </data>
+  <data name="ASR_Model_Downloaded_Success" xml:space="preserve">
+    <value>Модель успешно загружена</value>
+  </data>
+  <data name="ASR_Model_Download_Failed" xml:space="preserve">
+    <value>Не удалось загрузить модель</value>
+  </data>
 </root>

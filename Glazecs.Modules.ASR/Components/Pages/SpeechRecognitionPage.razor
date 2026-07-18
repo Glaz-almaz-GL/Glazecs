@@ -14,24 +14,70 @@
 <MudContainer @onkeydown="OnPageKeyDown" MaxWidth="MaxWidth.False" Class="mt-4">
     <MudStack Spacing="3">
 
-        <!-- Панель управления -->
+        @* Блок предупреждения о необходимости загрузки модели *@
+        @if (!_isModelReady && _selectedService != null)
+        {
+            <MudAlert Severity="Severity.Warning" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudText>
+                        Модель <strong>@_selectedService.Name</strong> не найдена.
+                        Требуется загрузка.
+                    </MudText>
+
+                    @if (_isDownloadingModel)
+                    {
+                        <MudProgressLinear Color="Color.Primary"
+                                           Value="@_downloadProgress"
+                                           Class="mt-2" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Загружено: @_downloadProgress.ToString("F1")%
+                        </MudText>
+                    }
+
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   Disabled="@(_isDownloadingModel || _isProcessing)"
+                                   OnClick="DownloadModelAsync">
+                            @(_isDownloadingModel ? "Загрузка..." : "Скачать модель")
+                        </MudButton>
+
+                        @if (_isDownloadingModel)
+                        {
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="CancelDownloadAsync">
+                                Отмена
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudAlert>
+        }
+
+        <!-- Панель управления (ваш существующий код) -->
         <MudCard Outlined="true">
             <MudCardContent>
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                     <MudSelect T="ISpeechRecognitionService"
-                               @bind-Value="_selectedService"
+                               Value="_selectedService"
                                Disabled="@_isProcessing"
                                Placeholder="@L["ASR_Service_Label"]"
                                Variant="Variant.Outlined"
-                               Style="min-width: 200px;">
+                               Style="min-width: 200px;"
+                               ValueChanged="OnServiceChanged">
                         @foreach (var service in SpeechServices)
                         {
-                            <MudSelectItem T="ISpeechRecognitionService" Value="service">
+                            <MudSelectItem T="ISpeechRecognitionService" Value="@service">
                                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                                     <MudText>@service.Name</MudText>
                                     @if (!string.IsNullOrWhiteSpace(service.Description))
                                     {
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">(@service.Description)</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @service.Description
+                                        </MudText>
                                     }
                                 </MudStack>
                             </MudSelectItem>
@@ -55,7 +101,9 @@
                                            Color="Color.Primary"
                                            Style="width: 56px; height: 56px;"
                                            OnClick="StartRecognitionAsync"
-                                           Disabled="@(string.IsNullOrWhiteSpace(_filePath) || _selectedService == null)" />
+                                           Disabled="@(string.IsNullOrWhiteSpace(_filePath) ||
+                                                                                                 _selectedService == null ||
+                                                                                                 !_isModelReady)" />
                         </MudTooltip>
                     }
                     else
@@ -76,15 +124,15 @@
                         <MudText Typo="Typo.body2" Style="min-width: 150px;">
                             @L["ASR_Processing"]: <strong>@_processedChunksCount</strong> @L["ASR_Chunks"]
                         </MudText>
-                            <MudProgressLinear Color="Color.Primary"
-                                               Indeterminate="true"
-                                               Style="flex-grow: 1;" />
+                        <MudProgressLinear Color="Color.Primary"
+                                           Indeterminate="true"
+                                           Style="flex-grow: 1;" />
                     </MudStack>
                 }
             </MudCardContent>
         </MudCard>
 
-        <!-- Область результатов (без изменений) -->
+        <!-- Область результатов -->
         <MudCard Outlined="true">
             <MudCardContent Class="pa-4">
                 @if (string.IsNullOrWhiteSpace(_resultText))

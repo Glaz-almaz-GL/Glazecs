@@ -13,6 +13,12 @@ namespace Glazecs.App.Desktop
     {
         public static MauiApp CreateMauiApp()
         {
+#if WINDOWS
+            // Принудительно направляем кэш WebView2 в папку пользователя
+            var webViewCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Glazecs", "WebView2Cache");
+            Directory.CreateDirectory(webViewCachePath);
+            Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", webViewCachePath);
+#endif
             MauiAppBuilder builder = MauiApp.CreateBuilder();
             builder.UseMauiApp<App>().ConfigureFonts(fonts =>
             {

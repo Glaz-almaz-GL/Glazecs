@@ -22,7 +22,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
 
         private string? _outputDirectory;
         private string? _sourceDirectory;
-        private string _selectedFormat = "all";
+        private string _selectedFormat = "All";
         private bool _scanSubfolders;
 
         private long _maxChunkSizeMB = 20;
@@ -40,17 +40,35 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         private readonly ISnackbar _snackbar = snackbar;
         private readonly ILogger<FileChunkerPage>? _logger = logger;
 
-        private static readonly Dictionary<string, HashSet<string>> FormatExtensions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["word"] = new(StringComparer.OrdinalIgnoreCase) { ".docx" },
-            ["pdf"] = new(StringComparer.OrdinalIgnoreCase) { ".pdf" },
-            ["all"] = new(StringComparer.OrdinalIgnoreCase) { ".docx", ".pdf" }
-        };
+        private readonly Dictionary<string, HashSet<string>> _formatExtensions = [];
 
         private List<PlaceholderInfo> _placeholders = [];
 
         protected override void OnInitialized()
         {
+            // 1. Динамическое построение списка форматов из зарегистрированных в DI чанкеров
+            foreach (IFileChunker chunker in fileChunkers)
+            {
+                string formatKey = chunker.ChunkerName.Trim();
+
+                if (!_formatExtensions.TryGetValue(formatKey, out HashSet<string>? value))
+                {
+                    value = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    _formatExtensions[formatKey] = value;
+                }
+
+                foreach (string ext in chunker.SupportedExtensions)
+                {
+                    value.Add(ext);
+                }
+            }
+
+            // 2. Добавляем опцию "Все форматы"
+            _formatExtensions["All"] = _formatExtensions.Values
+                .SelectMany(x => x)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // 3. Инициализация плейсхолдеров
             _placeholders =
             [
                 new("{FileName}", _localizer["PlaceholderFileName"].Value),
@@ -71,7 +89,6 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         private static Dictionary<string, IFileChunker> BuildChunkerMap(IEnumerable<IFileChunker> chunkers)
         {
             Dictionary<string, IFileChunker> map = new(StringComparer.OrdinalIgnoreCase);
-
             foreach (IFileChunker chunker in chunkers)
             {
                 foreach (string? extension in chunker.SupportedExtensions.Where(extension => !map.ContainsKey(extension)))
@@ -79,7 +96,6 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                     map[extension] = chunker;
                 }
             }
-
             return map;
         }
 
@@ -105,7 +121,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                 return;
             }
 
-            if (!FormatExtensions.TryGetValue(_selectedFormat, out HashSet<string>? allowedExtensions))
+            if (!_formatExtensions.TryGetValue(_selectedFormat, out HashSet<string>? allowedExtensions))
             {
                 _snackbar.Add(_localizer["ErrorUnknownFormat", _selectedFormat].Value, Severity.Error);
                 return;

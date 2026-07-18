@@ -19,7 +19,6 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "WhisperModels");
 
-    // Lazy<T> по умолчанию гарантирует потокобезопасную инициализацию (ExecutionAndPublication)
     private readonly Lazy<WhisperFactory> _lazyFactory;
     private readonly Lazy<WhisperProcessor> _lazyProcessor;
     private bool _disposed;
@@ -33,7 +32,6 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
     public GgmlType GgmlType { get; }
 
     private readonly IStringLocalizer<WhisperResources> _localizer;
-
     private string ModelFileName => GgmlType.ToModelFileName();
     private string ModelPath => Path.Combine(_modelsPath, ModelFileName);
 
@@ -50,6 +48,7 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
         _localizer = localizer;
         _logger = logger;
 
+        // Инициализация отложена до первого вызова TranscribeAsync
         _lazyFactory = new Lazy<WhisperFactory>(() => WhisperFactory.FromPath(ModelPath));
         _lazyProcessor = new Lazy<WhisperProcessor>(() => _lazyFactory.Value
             .CreateBuilder()
@@ -60,6 +59,11 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
     #endregion
 
     #region Public Methods
+    public async Task<bool> InitializeAsync()
+    {
+        return File.Exists(ModelPath);
+    }
+
 
     public async IAsyncEnumerable<ISpeechRecognitionResult> TranscribeAsync(
         Stream audioStream,
@@ -71,11 +75,8 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
             yield break;
         }
 
-        EnsureInitialized();
-
         await foreach (SegmentData chunk in _lazyProcessor.Value.ProcessAsync(audioStream, cancellationToken))
         {
-            // Collection expression (C# 12) для эффективного создания массива
             SpeechRecognitionToken[] tokens = [.. chunk.Tokens
                 .Select(t => new SpeechRecognitionToken(
                     Text: t.Text,
@@ -100,12 +101,7 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await using FileStream fileStream = new(
-            filePath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            bufferSize: 4096,
-            useAsync: true);
+            filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
 
         await foreach (ISpeechRecognitionResult result in TranscribeAsync(fileStream, cancellationToken))
         {
@@ -114,18 +110,13 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
     }
 
     /// <summary>
-    /// Загружает модель, если она еще не была загружена.
-    /// Метод идемпотентен: если модель уже существует, загрузка пропускается.
+    /// Загружает модель по требованию с отслеживанием прогресса.
     /// </summary>
-    public async Task<bool> DownloadModelAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> DownloadModelAsync(IProgress<double>? progress = null, CancellationToken cancellationToken = default)
     {
         if (File.Exists(ModelPath))
         {
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
-            {
-                _logger?.LogDebug("Модель {ModelName} уже существует. Загрузка пропущена.", ModelFileName);
-            }
-
+            progress?.Report(100.0);
             return true;
         }
 
@@ -133,10 +124,36 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
         {
             Directory.CreateDirectory(_modelsPath);
 
-            await using Stream modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(GgmlType, cancellationToken: cancellationToken);
-            await using FileStream fileWriter = new(ModelPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation("Начало загрузки модели {ModelName}...", ModelFileName);
+            }
 
-            await modelStream.CopyToAsync(fileWriter, cancellationToken);
+            await using Stream modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(GgmlType, cancellationToken: cancellationToken);
+
+            // Если поток поддерживает длину, мы можем рассчитать прогресс
+            bool canReportProgress = modelStream.CanSeek;
+            long totalBytes = canReportProgress ? modelStream.Length : 0;
+            long downloadedBytes = 0;
+            byte[] buffer = new byte[81920]; // 80 KB buffer
+            int bytesRead;
+
+            await using FileStream fileWriter = new(ModelPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+
+            while ((bytesRead = await modelStream.ReadAsync(buffer, cancellationToken)) > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await fileWriter.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+
+                if (canReportProgress)
+                {
+                    downloadedBytes += bytesRead;
+                    double percent = (double)downloadedBytes / totalBytes * 100.0;
+                    progress?.Report(Math.Min(percent, 99.9)); // 100% будет установлено после завершения
+                }
+            }
+
+            progress?.Report(100.0);
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
@@ -145,30 +162,27 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
 
             return true;
         }
+        catch (OperationCanceledException ex)
+        {
+            _logger?.LogWarning(ex, "Загрузка модели {ModelName} была отменена.", ModelFileName);
+            // Удаляем неполный файл
+            if (File.Exists(ModelPath))
+            {
+                File.Delete(ModelPath);
+            }
+
+            return false;
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Ошибка при загрузке модели {ModelName}.", ModelFileName);
+            if (File.Exists(ModelPath))
+            {
+                File.Delete(ModelPath);
+            }
+
             return false;
         }
-    }
-
-    public async Task<bool> InitializeAsync()
-    {
-        return await DownloadModelAsync();
-    }
-
-    #endregion
-
-    #region Private Methods
-
-    private void EnsureInitialized()
-    {
-        if (!File.Exists(ModelPath))
-        {
-            throw new FileNotFoundException($"Модель Whisper не найдена по пути: {ModelPath}. Сначала вызовите DownloadModelAsync().");
-        }
-
-        _ = _lazyProcessor.Value;
     }
 
     #endregion
@@ -191,7 +205,6 @@ public sealed class WhisperRecognitionService : ISpeechRecognitionService
                     _lazyProcessor.Value.Dispose();
                 }
             }
-
             _disposed = true;
         }
     }

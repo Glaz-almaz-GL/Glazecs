@@ -1,5 +1,5 @@
 <Solution>
-  <Folder Name="/App/">
+  <Folder Name="/Apps/">
     <Project Path="Glazecs.App.Desktop/Glazecs.App.Desktop.csproj" Id="de1aaab2-8d8a-471c-9803-faba14db2b9e">
       <Deploy />
     </Project>

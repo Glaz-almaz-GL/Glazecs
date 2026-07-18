@@ -15,13 +15,12 @@
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     <MudGrid Spacing="4">
 
-        <!-- ЛЕВАЯ КОЛОНКА: Панель настроек -->
         <MudItem xs="12" md="8">
             <MudCard Outlined="true" Class="h-100">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-4">@L["PageTitle"]</MudText>
 
-                    <!-- Блок 1: Основные параметры -->
+                   <!-- Блок 1: Основные параметры -->
                     <MudGrid>
                         <MudItem xs="12" sm="6">
                             <MudSelect T="string"
@@ -30,11 +29,22 @@
                                        Variant="Variant.Outlined"
                                        HelperText="@L["FormatHelper"]"
                                        Disabled="@_isProcessing">
-                                <MudSelectItem Value="@("word")">@L["FormatWord"]</MudSelectItem>
-                                <MudSelectItem Value="@("pdf")">@L["FormatPdf"]</MudSelectItem>
-                                <MudSelectItem Value="@("all")">@L["FormatAll"]</MudSelectItem>
+
+                                @foreach (var formatKey in _formatExtensions)
+                                {
+                                    @* Адаптивное отображение имени с поддержкой локализации *@
+                                    string displayName = formatKey.Key switch
+                                    {
+                                        "All" => L["FormatAll"].Value,
+                                        _ => formatKey.Key + $" ({string.Join(", ", formatKey.Value)})"
+                                    };
+
+                                    <MudSelectItem Value="@formatKey.Key">@displayName</MudSelectItem>
+                                }
+
                             </MudSelect>
                         </MudItem>
+
                         <MudItem xs="12" sm="6">
                             <MudNumericField T="long"
                                              @bind-Value="_maxChunkSizeMB"
@@ -44,7 +54,6 @@
                                              Disabled="@_isProcessing" />
                         </MudItem>
                     </MudGrid>
-
                     <MudDivider Class="my-4" />
 
                     <!-- Блок 2: Пути -->

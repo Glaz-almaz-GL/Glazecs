@@ -169,4 +169,12 @@
     <value>Please select a recognition service.</value>
     <comment>Used in Glazecs.Modules.ASR\Components\Pages\SpeechRecognitionPage.razor.cs document</comment>
   </data>
+  <data name="ASR_Model_Downloaded_Success" xml:space="preserve">
+    <value>Model downloaded successfully</value>
+    <comment>Used in Glazecs.Modules.ASR\Components\Pages\SpeechRecognitionPage.razor.cs document</comment>
+  </data>
+  <data name="ASR_Model_Download_Failed" xml:space="preserve">
+    <value>Failed to load the model</value>
+    <comment>Used in Glazecs.Modules.ASR\Components\Pages\SpeechRecognitionPage.razor.cs document</comment>
+  </data>
 </root>

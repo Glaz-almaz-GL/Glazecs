@@ -138,12 +138,6 @@
   <data name="FormatLabel" xml:space="preserve">
     <value>Processing Format</value>
   </data>
-  <data name="FormatPdf" xml:space="preserve">
-    <value>PDF (.pdf)</value>
-  </data>
-  <data name="FormatWord" xml:space="preserve">
-    <value>Word (.docx)</value>
-  </data>
   <data name="FoundFilesTitle" xml:space="preserve">
     <value>Found Files</value>
   </data>

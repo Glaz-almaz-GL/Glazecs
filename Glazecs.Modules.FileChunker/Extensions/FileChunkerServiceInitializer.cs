@@ -1,5 +1,6 @@
 ﻿using Glazecs.Modules.FileChunker.Abstractions.Formatters;
 using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+using Glazecs.Modules.FileChunker.Services;
 using MudBlazor.Services;
 
 namespace Glazecs.Modules.FileChunker.Extensions
@@ -10,8 +11,9 @@ namespace Glazecs.Modules.FileChunker.Extensions
         {
             services.AddMudServices();
             services.AddSingleton<IHeaderFormatter, TemplateHeaderFormatter>();
-            services.AddTransient<IFileChunker, FileChunker.Services.WordFileChunker>();
-            services.AddTransient<IFileChunker, FileChunker.Services.PdfFileChunker>();
+            services.AddTransient<IFileChunker, WordFileChunker>();
+            services.AddTransient<IFileChunker, PdfFileChunker>();
+            services.AddTransient<IFileChunker, TextFileChunker>();
         }
     }
 }

@@ -178,24 +178,6 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на PDF (.pdf).
-        /// </summary>
-        public static string FormatPdf {
-            get {
-                return ResourceManager.GetString("FormatPdf", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на Word (.docx).
-        /// </summary>
-        public static string FormatWord {
-            get {
-                return ResourceManager.GetString("FormatWord", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Ищет локализованную строку, похожую на Found Files.
         /// </summary>
         public static string FoundFilesTitle {
@@ -291,6 +273,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string PageTitle {
             get {
                 return ResourceManager.GetString("PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Paths.
+        /// </summary>
+        public static string PathsSectionTitle {
+            get {
+                return ResourceManager.GetString("PathsSectionTitle", resourceCulture);
             }
         }
         
@@ -516,6 +507,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string SuccessScan {
             get {
                 return ResourceManager.GetString("SuccessScan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Templates and rules.
+        /// </summary>
+        public static string TemplateAndRulesTitle {
+            get {
+                return ResourceManager.GetString("TemplateAndRulesTitle", resourceCulture);
             }
         }
         

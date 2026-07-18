@@ -17,7 +17,7 @@ namespace Glazecs.Modules.FileChunker.Services
     {
 
         /// <inheritdoc />
-        public override string ChunkerName => "PDF Chunker";
+        public override string ChunkerName => "PDF";
 
         /// <inheritdoc />
         public override IReadOnlyCollection<string> SupportedExtensions => [".pdf"];
