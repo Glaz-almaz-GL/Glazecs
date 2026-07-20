@@ -1,112 +1,53 @@
-﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+﻿using Glazecs.Modules.FileChunker.Abstractions.Attributes;
+using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
 using Glazecs.Modules.FileChunker.Abstractions.Models;
-using Glazecs.Modules.FileChunker.Abstractions.Rules;
-using Glazecs.Modules.FileChunker.Resources.Languages;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace Glazecs.Modules.FileChunker.Components.Pages
 {
-    public partial class FileChunkerPage(
-        IEnumerable<IFileChunker> fileChunkers,
-        IStringLocalizer<FileChunkerResources> localizer,
-        ISnackbar snackbar,
-        ILogger<FileChunkerPage>? logger = null) : ComponentBase
+    public partial class FileChunkerPage : ComponentBase
     {
+        #region Injection
+
+        [Inject] private IEnumerable<IFileChunker> FileChunkers { get; set; } = default!;
+        [Inject] private IEnumerable<IChunkRule> ChunkRules { get; set; } = default!;
+        [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        [Inject] private IStringLocalizer<Resources.Languages.FileChunkerResources> L { get; set; } = default!;
+        [Inject] private ILogger<FileChunkerPage> Logger { get; set; } = default!;
+
+        #endregion
+
         #region State and Properties
 
         private readonly List<SelectedFileInfo> _selectedFiles = [];
         private List<ChunkResult> _results = [];
 
-        private string? _outputDirectory;
         private string? _sourceDirectory;
-        private string _selectedFormat = "All";
+        private string? _outputDirectory;
         private bool _scanSubfolders;
-
         private long _maxChunkSizeMB = 20;
         private string _headerTemplate = string.Empty;
-
-        private bool _removePunctuation;
-        private bool _useStopWords;
-        private string _stopWordsText = string.Empty;
 
         private bool _isProcessing;
         private CancellationTokenSource? _cts;
 
-        private readonly Dictionary<string, IFileChunker> _chunkerByExtension = BuildChunkerMap(fileChunkers);
-        private readonly IStringLocalizer<FileChunkerResources> _localizer = localizer;
-        private readonly ISnackbar _snackbar = snackbar;
-        private readonly ILogger<FileChunkerPage>? _logger = logger;
-
-        private readonly Dictionary<string, HashSet<string>> _formatExtensions = [];
-
-        private List<PlaceholderInfo> _placeholders = [];
-
-        protected override void OnInitialized()
-        {
-            // 1. Динамическое построение списка форматов из зарегистрированных в DI чанкеров
-            foreach (IFileChunker chunker in fileChunkers)
-            {
-                string formatKey = chunker.ChunkerName.Trim();
-
-                if (!_formatExtensions.TryGetValue(formatKey, out HashSet<string>? value))
-                {
-                    value = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    _formatExtensions[formatKey] = value;
-                }
-
-                foreach (string ext in chunker.SupportedExtensions)
-                {
-                    value.Add(ext);
-                }
-            }
-
-            // 2. Добавляем опцию "Все форматы"
-            _formatExtensions["All"] = _formatExtensions.Values
-                .SelectMany(x => x)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            // 3. Инициализация плейсхолдеров
-            _placeholders =
-            [
-                new("{FileName}", _localizer["PlaceholderFileName"].Value),
-                new("{OriginalPath}", _localizer["PlaceholderOriginalPath"].Value),
-                new("{FilePart}", _localizer["PlaceholderFilePart"].Value),
-                new("{TotalParts}", _localizer["PlaceholderTotalParts"].Value),
-                new("{FileSize}", _localizer["PlaceholderFileSize"].Value),
-                new("{ChunkIndex}", _localizer["PlaceholderChunkIndex"].Value),
-                new("{Date}", _localizer["PlaceholderDate"].Value),
-                new("{DateTime}", _localizer["PlaceholderDateTime"].Value)
-            ];
-        }
+        private IReadOnlyCollection<IFileChunker> SelectedChunkers { get; set; } = [];
+        private List<RuleState> RuleStates { get; set; } = [];
 
         #endregion
 
         #region Initialization
 
-        private static Dictionary<string, IFileChunker> BuildChunkerMap(IEnumerable<IFileChunker> chunkers)
+        protected override void OnInitialized()
         {
-            Dictionary<string, IFileChunker> map = new(StringComparer.OrdinalIgnoreCase);
-            foreach (IFileChunker chunker in chunkers)
-            {
-                foreach (string? extension in chunker.SupportedExtensions.Where(extension => !map.ContainsKey(extension)))
-                {
-                    map[extension] = chunker;
-                }
-            }
-            return map;
-        }
-
-        #endregion
-
-        #region Placeholder Management
-
-        private void InsertPlaceholder(string placeholder)
-        {
-            _headerTemplate += placeholder;
-            StateHasChanged();
+            // Инициализируем список состояний правил (по умолчанию выключены)
+            RuleStates = [.. ChunkRules.Select(rule => new RuleState(rule, false))];
+            base.OnInitialized();
         }
 
         #endregion
@@ -117,23 +58,26 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         {
             if (string.IsNullOrWhiteSpace(_sourceDirectory) || !Directory.Exists(_sourceDirectory))
             {
-                _snackbar.Add(_localizer["WarningSelectExistingFolder"].Value, Severity.Warning);
+                Snackbar.Add(L["WarningSelectExistingFolder"].Value, Severity.Warning);
                 return;
             }
 
-            if (!_formatExtensions.TryGetValue(_selectedFormat, out HashSet<string>? allowedExtensions))
+            if (SelectedChunkers.Count == 0)
             {
-                _snackbar.Add(_localizer["ErrorUnknownFormat", _selectedFormat].Value, Severity.Error);
+                Snackbar.Add(L["WarningSelectAtLeastOneChunker"].Value, Severity.Warning);
                 return;
             }
 
             try
             {
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Начало сканирования папки: {Path}, формат: {Format}, рекурсия: {Recurse}",
-                        _sourceDirectory, _selectedFormat, _scanSubfolders);
+                    Logger.LogInformation("Начало сканирования: {Path}, рекурсия: {Recurse}", _sourceDirectory, _scanSubfolders);
                 }
+
+                HashSet<string> allowedExtensions = SelectedChunkers
+                    .SelectMany(c => c.SupportedExtensions)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 EnumerationOptions enumerationOptions = new()
                 {
@@ -142,42 +86,32 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                     AttributesToSkip = FileAttributes.System
                 };
 
-                IEnumerable<FileInfo> files = Directory
-                    .EnumerateFiles(_sourceDirectory, "*", enumerationOptions)
-                    .Select(path => new FileInfo(path))
-                    .Where(file => allowedExtensions.Contains(file.Extension));
+                IEnumerable<string> files = Directory.EnumerateFiles(_sourceDirectory, "*", enumerationOptions)
+                    .Where(path => allowedExtensions.Contains(Path.GetExtension(path)));
 
                 _selectedFiles.Clear();
-
-                foreach (FileInfo fileInfo in files)
+                foreach (string path in files)
                 {
-                    _selectedFiles.Add(new SelectedFileInfo(
-                        fileInfo.Name,
-                        fileInfo.FullName,
-                        fileInfo.Extension,
-                        fileInfo.Length));
+                    FileInfo fileInfo = new(path);
+                    _selectedFiles.Add(new SelectedFileInfo(fileInfo.Name, fileInfo.FullName, fileInfo.Extension, fileInfo.Length));
                 }
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Найдено файлов: {Count}", _selectedFiles.Count);
+                    Logger.LogInformation("Найдено файлов: {Count}", _selectedFiles.Count);
                 }
 
-                if (_selectedFiles.Count == 0)
-                {
-                    _snackbar.Add(_localizer["InfoNoFilesInFormat", _selectedFormat].Value, Severity.Info);
-                }
-                else
-                {
-                    _snackbar.Add(_localizer["SuccessScan", _selectedFiles.Count].Value, Severity.Success);
-                }
+                Snackbar.Add(_selectedFiles.Count > 0
+                ? L["SuccessScan", _selectedFiles.Count].Value
+                : L["InfoNoFilesInFormat"].Value,
+                _selectedFiles.Count > 0 ? Severity.Success : Severity.Info);
 
                 StateHasChanged();
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Ошибка при сканировании папки: {Path}", _sourceDirectory);
-                _snackbar.Add(_localizer["ErrorScanFolder", ex.Message].Value, Severity.Error);
+                Logger.LogError(ex, "Ошибка при сканировании папки: {Path}", _sourceDirectory);
+                Snackbar.Add(L["ErrorScanFolder", ex.Message].Value, Severity.Error);
             }
         }
 
@@ -195,7 +129,7 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         {
             if (_selectedFiles.Count == 0 || string.IsNullOrWhiteSpace(_outputDirectory))
             {
-                _snackbar.Add(_localizer["WarningSelectFilesAndFolder"].Value, Severity.Warning);
+                Snackbar.Add(L["WarningSelectFilesAndFolder"].Value, Severity.Warning);
                 return;
             }
 
@@ -207,59 +141,70 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
                 _results.Clear();
                 StateHasChanged();
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Начало обработки {Count} файлов", _selectedFiles.Count);
+                    Logger.LogInformation("Начало обработки {Count} файлов", _selectedFiles.Count);
                 }
 
-                string normalizedTemplate = Environment.NewLine + _headerTemplate.Trim() + Environment.NewLine;
-                List<IChunkRule> rules = BuildRules();
+                // 1. Формируем список активных правил из НОВОГО списка _ruleStates
+                List<IChunkRule> activeRules = [.. RuleStates
+                    .Where(state => state.IsEnabled)
+                    .Select(state => state.Rule)];
+
+                string? normalizedTemplate = string.IsNullOrWhiteSpace(_headerTemplate)
+                    ? null
+                    : Environment.NewLine + _headerTemplate.Trim() + Environment.NewLine;
 
                 ChunkingOptions options = new(
                     outputDirectory: _outputDirectory,
-                    rules: rules,
+                    rules: activeRules,
                     maxChunkSizeBytes: _maxChunkSizeMB * 1024 * 1024,
-                    headerTemplate: string.IsNullOrWhiteSpace(_headerTemplate) ? null : normalizedTemplate
+                    headerTemplate: normalizedTemplate
                 );
 
                 List<ChunkResult> aggregatedResults = [];
 
-                IEnumerable<IGrouping<string, SelectedFileInfo>> groupedByExtension = _selectedFiles
-                    .GroupBy(f => f.Extension, StringComparer.OrdinalIgnoreCase);
+                IEnumerable<IGrouping<IFileChunker?, string>> filesByChunker = _selectedFiles.GroupBy(
+                    file => GetChunkerForExtension(file.Extension),
+                    file => file.Path
+                );
 
-                foreach (IGrouping<string, SelectedFileInfo> group in groupedByExtension)
+                foreach (IGrouping<IFileChunker?, string> group in filesByChunker)
                 {
-                    if (!_chunkerByExtension.TryGetValue(group.Key, out IFileChunker? chunker))
+                    IFileChunker? chunker = group.Key;
+                    if (chunker == null)
                     {
-                        _snackbar.Add(_localizer["WarningNoChunker", group.Key].Value, Severity.Warning);
+                        Logger.LogWarning("Не найден чанкер для файлов с расширением {Extension}", group.First().Split('.')[^1]);
                         continue;
                     }
 
-                    IEnumerable<string> filePaths = group.Select(f => f.Path);
-                    IReadOnlyCollection<ChunkResult> chunkResults = await chunker.ProcessAsync(
-                        filePaths, options, _cts.Token);
+                    if (Logger.IsEnabled(LogLevel.Information))
+                    {
+                        Logger.LogInformation("Обработка {Count} файлов через {ChunkerName}", group.Count(), chunker.Name);
+                    }
 
+                    IReadOnlyCollection<ChunkResult> chunkResults = await chunker.ProcessAsync(group, options, _cts.Token);
                     aggregatedResults.AddRange(chunkResults);
                 }
 
                 _results = aggregatedResults;
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Обработка завершена. Создано чанков: {Count}", _results.Count);
+                    Logger.LogInformation("Обработка завершена. Создано чанков: {Count}", _results.Count);
                 }
 
-                _snackbar.Add(_localizer["SuccessProcessing", _results.Count].Value, Severity.Success);
+                Snackbar.Add(L["SuccessProcessing", _results.Count].Value, Severity.Success);
             }
             catch (OperationCanceledException ex)
             {
-                _logger?.LogInformation(ex, "Обработка отменена пользователем");
-                _snackbar.Add(_localizer["OperationCancelled"].Value, Severity.Info);
+                Logger.LogInformation(ex, "Обработка отменена пользователем");
+                Snackbar.Add(L["OperationCancelled"].Value, Severity.Info);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Ошибка при обработке файлов");
-                _snackbar.Add(_localizer["ErrorProcessing", ex.Message].Value, Severity.Error);
+                Logger.LogError(ex, "Критическая ошибка при обработке файлов");
+                Snackbar.Add(L["ErrorProcessing", ex.Message].Value, Severity.Error);
             }
             finally
             {
@@ -275,25 +220,23 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             _cts?.Cancel();
         }
 
-        private List<IChunkRule> BuildRules()
+        private IFileChunker? GetChunkerForExtension(string extension)
         {
-            List<IChunkRule> rules = [];
+            return SelectedChunkers.FirstOrDefault(c =>
+                c.SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase));
+        }
 
-            if (_removePunctuation)
-            {
-                rules.Add(new RemovePunctuationRule());
-            }
+        #endregion
 
-            if (_useStopWords && !string.IsNullOrWhiteSpace(_stopWordsText))
-            {
-                string[] stopWords = _stopWordsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                if (stopWords.Length > 0)
-                {
-                    rules.Add(new DictionaryFilterRule(stopWords));
-                }
-            }
+        #region Helper Methods
 
-            return rules;
+        private static bool TryGetEditorComponentType(IChunkRule rule, [NotNullWhen(true)] out Type? editorType)
+        {
+            ChunkRuleEditorAttribute? attribute = rule.GetType()
+                .GetCustomAttribute<ChunkRuleEditorAttribute>();
+
+            editorType = attribute?.EditorComponentType;
+            return editorType != null;
         }
 
         #endregion
@@ -306,7 +249,17 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             string Extension,
             long Size);
 
-        private sealed record PlaceholderInfo(string Key, string Description);
+        private sealed record RuleState
+        {
+            public IChunkRule Rule { get; set; }
+            public bool IsEnabled { get; set; }
+
+            public RuleState(IChunkRule rule, bool isEnabled)
+            {
+                Rule = rule;
+                IsEnabled = isEnabled;
+            }
+        }
 
         #endregion
     }

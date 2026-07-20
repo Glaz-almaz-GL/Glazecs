@@ -169,15 +169,6 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Processing Format.
-        /// </summary>
-        public static string FormatLabel {
-            get {
-                return ResourceManager.GetString("FormatLabel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Ищет локализованную строку, похожую на Found Files.
         /// </summary>
         public static string FoundFilesTitle {
@@ -219,6 +210,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string MaxChunkSizeLabel {
             get {
                 return ResourceManager.GetString("MaxChunkSizeLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing rules.
+        /// </summary>
+        public static string ModulesAndRulesTitle {
+            get {
+                return ResourceManager.GetString("ModulesAndRulesTitle", resourceCulture);
             }
         }
         
@@ -421,6 +421,150 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Safely remove single-line (//) and multi-line (/* */) comments from C# code using the Roslyn parser.
+        /// </summary>
+        public static string Rule_Comment_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Comment_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removing Comments from C# Code.
+        /// </summary>
+        public static string Rule_Comment_Name {
+            get {
+                return ResourceManager.GetString("Rule_Comment_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removes words from the text that are present in the specified stopword list.
+        /// </summary>
+        public static string Rule_Dictionary_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Dictionary_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Enter words separated by commas, spaces, or a new line. Case is not sensitive..
+        /// </summary>
+        public static string Rule_Dictionary_Help {
+            get {
+                return ResourceManager.GetString("Rule_Dictionary_Help", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Stop word list.
+        /// </summary>
+        public static string Rule_Dictionary_Label {
+            get {
+                return ResourceManager.GetString("Rule_Dictionary_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Stop words.
+        /// </summary>
+        public static string Rule_Dictionary_Name {
+            get {
+                return ResourceManager.GetString("Rule_Dictionary_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на word1, word2, word3.
+        /// </summary>
+        public static string Rule_Dictionary_Placeholder {
+            get {
+                return ResourceManager.GetString("Rule_Dictionary_Placeholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Safely remove XML documentation comments (/// and /** */) from C# code using the Roslyn parser.
+        /// </summary>
+        public static string Rule_Doc_Comment_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Doc_Comment_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removing Comments from C# Documentation.
+        /// </summary>
+        public static string Rule_Doc_Comment_Name {
+            get {
+                return ResourceManager.GetString("Rule_Doc_Comment_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removes all empty lines from the text.
+        /// </summary>
+        public static string Rule_Empty_Row_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Empty_Row_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Blank lines.
+        /// </summary>
+        public static string Rule_Empty_Row_Name {
+            get {
+                return ResourceManager.GetString("Rule_Empty_Row_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Remove all punctuation from the text while preserving letters, numbers, and line structure.
+        /// </summary>
+        public static string Rule_Punctuation_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Punctuation_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Punctuation marks.
+        /// </summary>
+        public static string Rule_Punctuation_Name {
+            get {
+                return ResourceManager.GetString("Rule_Punctuation_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removes a string from text if it matches a regular expression..
+        /// </summary>
+        public static string Rule_Regex_Desc {
+            get {
+                return ResourceManager.GetString("Rule_Regex_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Regular expression (Regex).
+        /// </summary>
+        public static string Rule_Regex_Label {
+            get {
+                return ResourceManager.GetString("Rule_Regex_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Regex.
+        /// </summary>
+        public static string Rule_Regex_Name {
+            get {
+                return ResourceManager.GetString("Rule_Regex_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Processing Rules.
         /// </summary>
         public static string RulesSectionTitle {
@@ -444,6 +588,15 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string ScanSubfoldersLabel {
             get {
                 return ResourceManager.GetString("ScanSubfoldersLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Processing Format.
+        /// </summary>
+        public static string SelectChunkersLabel {
+            get {
+                return ResourceManager.GetString("SelectChunkersLabel", resourceCulture);
             }
         }
         
@@ -484,15 +637,6 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Stop words (comma separated).
-        /// </summary>
-        public static string StopWordsLabel {
-            get {
-                return ResourceManager.GetString("StopWordsLabel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Ищет локализованную строку, похожую на Processing completed. Chunks created: {0}.
         /// </summary>
         public static string SuccessProcessing {
@@ -516,15 +660,6 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         public static string TemplateAndRulesTitle {
             get {
                 return ResourceManager.GetString("TemplateAndRulesTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на Apply stop words filter.
-        /// </summary>
-        public static string UseStopWordsLabel {
-            get {
-                return ResourceManager.GetString("UseStopWordsLabel", resourceCulture);
             }
         }
         

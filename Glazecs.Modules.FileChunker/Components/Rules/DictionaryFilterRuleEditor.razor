@@ -1,0 +1,35 @@
+﻿@using Glazecs.Modules.FileChunker.Resources.Languages
+@using Glazecs.Modules.FileChunker.Rules
+@using Microsoft.Extensions.Localization
+@using MudBlazor
+@inject IStringLocalizer<FileChunkerResources> L
+
+<MudTextField T="string"
+              Value="@Rule.StopWordsText"
+              Label="@L["Rule_Dictionary_Label"]"
+              Placeholder="@L["Rule_Dictionary_Placeholder"]"
+              Lines="4"
+              Variant="Variant.Outlined"
+              HelperText="@L["Rule_Dictionary_Help"]"
+              ValueChanged="OnValueChanged"
+              Class="mt-2" />
+
+@code {
+    /// <summary>
+    /// Экземпляр правила, переданный через DynamicComponent Parameters.
+    /// </summary>
+    [Parameter]
+    public DictionaryFilterRule Rule { get; set; } = default!;
+
+    /// <summary>
+    /// Событие для уведомления родительского компонента об изменении состояния.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private async Task OnValueChanged(string newValue)
+    {
+        Rule.StopWordsText = newValue;
+        await OnChanged.InvokeAsync();
+    }
+}

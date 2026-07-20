@@ -92,16 +92,15 @@
       <ApplicationDisplayVersion>1.3.0</ApplicationDisplayVersion>
     </PropertyGroup>
 
+	<!--Настройки выходных файлов-->
+	<PropertyGroup>
+		<!--Поддерживаемые языки-->
+		<SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
+	</PropertyGroup>
+
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\glazecs.png" />
-
-        <!-- Splash Screen -->
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-
-        <!-- Images -->
-        <MauiImage Include="Resources\Images\*" />
-        <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
@@ -140,6 +139,11 @@
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>DesktopResources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\Images\" />
+      <Folder Include="Resources\Splash\" />
     </ItemGroup>
 
 </Project>

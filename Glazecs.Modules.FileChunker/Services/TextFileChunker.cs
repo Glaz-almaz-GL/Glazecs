@@ -14,7 +14,7 @@ namespace Glazecs.Modules.FileChunker.Services
         IHeaderFormatter? defaultHeaderFormatter = null) : FileChunkerBase(logger, defaultHeaderFormatter)
     {
         /// <inheritdoc />
-        public override string ChunkerName => "Text";
+        public override string Name => "Text";
 
         /// <inheritdoc />
         public override IReadOnlyCollection<string> SupportedExtensions => [".txt", ".cs", ".md"];

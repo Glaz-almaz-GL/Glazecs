@@ -1,14 +1,27 @@
 ﻿using Glazecs.Modules.FMMS.Abstractions.Enums;
 using Glazecs.Modules.FMMS.Abstractions.Models;
+using Glazecs.Modules.FMMS.Resources.Languages;
+using Glazecs.Modules.FMMS.Services;
+using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Glazecs.Shared.Core.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Localization;
 using MudBlazor;
 
 namespace Glazecs.Modules.FMMS.Components.Pages
 {
     public partial class FmmsSettingsView : ComponentBase, IModuleSettingsProvider
     {
+        #region Injection
+
+        [Inject] private IStringLocalizer<FmmsResources> L { get; set; } = default!;
+        [Inject] private FmmsSettingsService SettingsService { get; set; } = default!;
+        [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        [Inject] private IHashProviderFactory HashProviderFactory { get; set; } = default!;
+
+        #endregion
+
         private string _newArchiveExt = "";
         private string _newRuleExt = "";
         private int _newRulePages = 1;
@@ -16,7 +29,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         public string ModuleName => "FMMS";
 
-        public string Icon => Icons.Material.Filled.PermMedia;
+        public string Icon => Icons.Material.Filled.FilePresent;
 
         public Type SettingsComponentType => typeof(FmmsSettingsView);
 
@@ -120,7 +133,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 ext = "." + ext;
             }
 
-            if (!string.IsNullOrEmpty(Path.GetExtension(ext)))
+            if (string.IsNullOrEmpty(Path.GetExtension(ext)))
             {
                 Snackbar.Add(L["Settings_InvalidExtension"], Severity.Warning);
                 return false;

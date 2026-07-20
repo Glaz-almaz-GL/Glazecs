@@ -1,6 +1,6 @@
 ﻿using Glazecs.Modules.ASR.Abstractions.Interfaces;
+using Glazecs.Modules.ASR.Abstractions.Models;
 using Glazecs.Modules.ASR.Resources.Languages;
-using Glazecs.Modules.ASR.Whisper.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Localization;
@@ -10,19 +10,17 @@ using System.Text;
 
 namespace Glazecs.Modules.ASR.Components.Pages;
 
-public partial class SpeechRecognitionPage(
-    ILogger<SpeechRecognitionPage>? logger,
-    ISnackbar snackbar,
-    IStringLocalizer<AsrResources> localizer) : ComponentBase, IDisposable
+public partial class SpeechRecognitionPage : ComponentBase, IDisposable
 {
     #region Injection & Fields
 
-    private readonly ILogger<SpeechRecognitionPage>? _logger = logger;
-    private readonly ISnackbar _snackbar = snackbar;
-    private readonly IStringLocalizer<AsrResources> _localizer = localizer;
+    [Inject] private IEnumerable<ISpeechRecognitionService> SpeechServices { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private IStringLocalizer<AsrResources> L { get; set; } = default!;
+    [Inject] private ILogger<SpeechRecognitionPage> Logger { get; set; } = default!;
 
-    private CancellationTokenSource? _cts;
-    private CancellationTokenSource? _downloadCts;
+    private CancellationTokenSource? _recognitionCts;
+    private CancellationTokenSource? _initializingCts;
     private bool _disposed;
 
     private readonly Dictionary<DevicePlatform, IEnumerable<string>> _audioFileTypes = new()
@@ -41,119 +39,76 @@ public partial class SpeechRecognitionPage(
     private string _filePath = string.Empty;
     private string _resultText = string.Empty;
     private bool _isProcessing;
-    private bool _isModelReady;
-    private bool _isDownloadingModel;
-    private double _downloadProgress;
+    private bool _isInitializing;
     private int _processedChunksCount;
+
+    private string _initProgressMessage = string.Empty;
+    private double _initProgressPercent;
+
+    private readonly Progress<SpeechInitializeProgress> _initializingProgress = new();
     private ISpeechRecognitionService? _selectedService;
 
     #endregion
 
-    #region Lifecycle
-
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        // Проверяем готовность модели при выборе сервиса
-        if (_selectedService != null)
+        // Корректная привязка прогресса к UI
+        _initializingProgress.ProgressChanged += (_, progress) =>
         {
-            await CheckModelStatusAsync();
-        }
-    }
+            _initProgressMessage = progress.Message;
+            _initProgressPercent = progress.Percent;
 
-    #endregion
+            InvokeAsync(StateHasChanged);
+        };
+
+        base.OnInitialized();
+    }
 
     #region Model Management
 
-    private async Task OnServiceChanged(ISpeechRecognitionService? service)
+    private void OnServiceChanged(ISpeechRecognitionService? service)
     {
         _selectedService = service;
-        await CheckModelStatusAsync();
-        StateHasChanged();
+        _initProgressMessage = string.Empty;
+        _initProgressPercent = 0;
     }
 
-    private async Task CheckModelStatusAsync()
+    private async Task InitializeServiceAsync()
     {
-        if (_selectedService == null)
+        if (_selectedService == null || _selectedService.Initialized)
         {
-            _isModelReady = false;
             return;
         }
 
-        try
-        {
-            _isModelReady = await _selectedService.InitializeAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Ошибка при проверке статуса модели");
-            _isModelReady = false;
-        }
-    }
-
-    private async Task DownloadModelAsync()
-    {
-        if (_selectedService == null)
-        {
-            _snackbar.Add(_localizer["ASR_Error_No_Service"], Severity.Warning);
-            return;
-        }
-
-        _isDownloadingModel = true;
-        _downloadProgress = 0;
-        _downloadCts = new CancellationTokenSource();
+        _isInitializing = true;
+        _initProgressMessage = L["ASR_Initializing_Started"];
+        await InvokeAsync(StateHasChanged);
 
         try
         {
-            Progress<double> progress = new(value =>
-            {
-                _downloadProgress = value;
-                InvokeAsync(StateHasChanged);
-            });
+            _initializingCts = new();
+            await _selectedService.InitializeAsync(_initializingProgress, _initializingCts.Token);
 
-            if (_selectedService is not WhisperRecognitionService whisperService)
-            {
-                _snackbar.Add("Выбранный сервис не поддерживает загрузку моделей", Severity.Error);
-                return;
-            }
+            _initializingCts.Dispose();
+            _initializingCts = null;
 
-            bool success = await whisperService.DownloadModelAsync(progress, _downloadCts.Token);
-
-            if (success)
-            {
-                _isModelReady = true;
-                _snackbar.Add(_localizer["ASR_Model_Downloaded_Success"], Severity.Success);
-            }
-            else
-            {
-                _snackbar.Add(_localizer["ASR_Model_Download_Failed"], Severity.Error);
-            }
+            Snackbar.Add(L["ASR_Initialized_Success"], Severity.Success);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _snackbar.Add("Загрузка модели отменена", Severity.Info);
+            Logger.LogInformation(ex, "Инициализация сервиса была отменена.");
+            Snackbar.Add(L["ASR_Initialization_Cancelled"], Severity.Warning);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Ошибка при загрузке модели");
-            _snackbar.Add($"Ошибка загрузки: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Ошибка при инициализации сервиса распознавания.");
+            Snackbar.Add($"{L["Common_Error"]}: {ex.Message}", Severity.Error, config => config.RequireInteraction = true);
         }
         finally
         {
-            _isDownloadingModel = false;
-            _downloadCts?.Dispose();
-            _downloadCts = null;
+            _isInitializing = false;
             await InvokeAsync(StateHasChanged);
         }
-    }
-
-    private async Task CancelDownloadAsync()
-    {
-        if (_downloadCts is null)
-        {
-            return;
-        }
-
-        await _downloadCts.CancelAsync();
     }
 
     #endregion
@@ -162,119 +117,121 @@ public partial class SpeechRecognitionPage(
 
     private async Task StartRecognitionAsync()
     {
-        if (!await ValidateBeforeStartAsync())
+        if (_selectedService != null && !_selectedService.Initialized)
+        {
+            await InitializeServiceAsync();
+
+            if (!_selectedService.Initialized)
+            {
+                return;
+            }
+        }
+
+        if (!ValidateBeforeStart())
         {
             return;
         }
 
-        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        if (Logger.IsEnabled(LogLevel.Information))
         {
-            _logger?.LogInformation("Начало распознавания файла: {FilePath} с использованием {ServiceName}",
+            Logger.LogInformation("Начало распознавания файла: {FilePath} с использованием {ServiceName}",
                 _filePath, _selectedService!.Name);
         }
 
-        await InitializeStateAsync();
+        InitializeState();
 
         try
         {
-            CancellationToken token = _cts!.Token;
+            CancellationToken token = _recognitionCts!.Token;
             StringBuilder stringBuilder = new();
 
             await foreach (ISpeechRecognitionResult chunk in _selectedService!.TranscribeAsync(_filePath, token))
             {
-                if (token.IsCancellationRequested)
-                {
-                    break;
-                }
+                token.ThrowIfCancellationRequested();
 
                 stringBuilder.Append(chunk.Text);
                 _resultText = stringBuilder.ToString();
                 _processedChunksCount++;
+
                 await InvokeAsync(StateHasChanged);
             }
 
             if (!token.IsCancellationRequested)
             {
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger?.LogInformation("Распознавание успешно завершено. Всего чанков: {Count}", _processedChunksCount);
+                    Logger.LogInformation("Распознавание успешно завершено. Всего чанков: {Count}", _processedChunksCount);
                 }
 
-                _snackbar.Add(_localizer["ASR_Completed_Success"], Severity.Success);
+                Snackbar.Add(L["ASR_Completed_Success"], Severity.Success);
             }
         }
         catch (OperationCanceledException ex)
         {
-            _logger?.LogInformation(ex, "Распознавание отменено пользователем.");
-            _snackbar.Add(_localizer["ASR_Cancelled"], Severity.Warning);
+            Logger.LogInformation(ex, "Распознавание отменено пользователем.");
+            Snackbar.Add(L["ASR_Cancelled"], Severity.Warning);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Ошибка при распознавании файла: {FilePath}", _filePath);
-            _snackbar.Add($"{_localizer["Common_Error"]}: {ex.Message}", Severity.Error,
+            Logger.LogError(ex, "Ошибка при распознавании файла: {FilePath}", _filePath);
+            Snackbar.Add($"{L["Common_Error"]}: {ex.Message}", Severity.Error,
                 config => config.RequireInteraction = true);
         }
         finally
         {
-            await FinalizeRecognitionAsync();
+            FinalizeRecognition();
         }
     }
 
-    private async Task<bool> ValidateBeforeStartAsync()
+    private bool ValidateBeforeStart()
     {
         if (string.IsNullOrWhiteSpace(_filePath))
         {
-            _snackbar.Add(_localizer["ASR_Error_No_File"], Severity.Warning);
+            Snackbar.Add(L["ASR_Error_No_File"], Severity.Warning);
             return false;
         }
 
         if (_selectedService == null)
         {
-            _snackbar.Add(_localizer["ASR_Error_No_Service"], Severity.Warning);
-            return false;
-        }
-
-        if (!_isModelReady)
-        {
-            _snackbar.Add("Сначала загрузите модель распознавания", Severity.Warning);
+            Snackbar.Add(L["ASR_Error_No_Service"], Severity.Warning);
             return false;
         }
 
         if (!File.Exists(_filePath))
         {
-            _snackbar.Add("Указанный файл не найден. Проверьте путь.", Severity.Error);
+            Snackbar.Add(L["ASR_Error_File_Not_Found"], Severity.Error);
             return false;
         }
 
         return true;
     }
 
-    private async Task InitializeStateAsync()
+    private void InitializeState()
     {
         _isProcessing = true;
         _resultText = string.Empty;
         _processedChunksCount = 0;
-        _cts = new CancellationTokenSource();
-
-        // Убедимся, что модель готова (повторная проверка)
-        if (!_isModelReady)
-        {
-            await CheckModelStatusAsync();
-        }
+        _recognitionCts = new CancellationTokenSource();
     }
 
-    private void CancelRecognitionAsync()
+    private void CancelRecognition()
     {
-        _logger?.LogDebug("Запрошена отмена распознавания.");
-        _cts?.Cancel();
+        Logger.LogDebug("Запрошена отмена распознавания.");
+        _recognitionCts?.Cancel();
     }
 
-    private async Task FinalizeRecognitionAsync()
+    private void CancelInitializing()
+    {
+        Logger.LogDebug("Запршена отмена инициализации сервиса.");
+        _initializingCts?.Cancel();
+    }
+
+    private void FinalizeRecognition()
     {
         _isProcessing = false;
-        _cts?.Dispose();
-        _cts = null;
-        await InvokeAsync(StateHasChanged);
+        _recognitionCts?.Dispose();
+        _recognitionCts = null;
+        StateHasChanged();
     }
 
     #endregion
@@ -283,7 +240,7 @@ public partial class SpeechRecognitionPage(
 
     private async Task OnPageKeyDown(KeyboardEventArgs e)
     {
-        if (_isProcessing || _isDownloadingModel)
+        if (_isProcessing || _isInitializing)
         {
             return;
         }
@@ -304,8 +261,10 @@ public partial class SpeechRecognitionPage(
         {
             if (disposing)
             {
-                _cts?.Dispose();
-                _downloadCts?.Dispose();
+                CancelRecognition();
+                CancelInitializing();
+                _recognitionCts?.Dispose();
+                _initializingCts?.Dispose();
             }
             _disposed = true;
         }

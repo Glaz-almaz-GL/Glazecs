@@ -1,16 +1,8 @@
-﻿@using Glazecs.Modules.FMMS.Abstractions.Interfaces
-@using Glazecs.Modules.FMMS.Abstractions.Models
-@using Glazecs.Modules.FMMS.Resources.Languages
-@using Glazecs.Modules.FMMS.Services
+﻿@using Glazecs.Modules.FMMS.Abstractions.Models
 @using Glazecs.Shared.Core.Platforms
 @using Glazecs.Shared.UI.Components
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.Extensions.Localization
 @using MudBlazor
-@inject IFileScannerService ScannerService
-@inject FmmsSettingsService SettingsService
-@inject IStringLocalizer<FmmsResources> L
-@inject ISnackbar Snackbar
 @page "/modules/fmms/files_scanner"
 
 <MudContainer @onkeydown="OnDataGridKeyDown" MaxWidth="MaxWidth.False" Class="mt-4">

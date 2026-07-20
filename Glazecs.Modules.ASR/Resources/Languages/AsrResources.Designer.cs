@@ -88,6 +88,15 @@ namespace Glazecs.Modules.ASR.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на The specified file could not be found. Check the path..
+        /// </summary>
+        public static string ASR_Error_File_Not_Found {
+            get {
+                return ResourceManager.GetString("ASR_Error_File_Not_Found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Please select a file first..
         /// </summary>
         public static string ASR_Error_No_File {
@@ -111,6 +120,51 @@ namespace Glazecs.Modules.ASR.Resources.Languages {
         public static string ASR_FilePath_Placeholder {
             get {
                 return ResourceManager.GetString("ASR_FilePath_Placeholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Initialization was canceled by the user..
+        /// </summary>
+        public static string ASR_Initialization_Cancelled {
+            get {
+                return ResourceManager.GetString("ASR_Initialization_Cancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Initialization was successful..
+        /// </summary>
+        public static string ASR_Initialized_Success {
+            get {
+                return ResourceManager.GetString("ASR_Initialized_Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на The automatic speech recognition service has started initializing..
+        /// </summary>
+        public static string ASR_Initializing_Started {
+            get {
+                return ResourceManager.GetString("ASR_Initializing_Started", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Failed to load the model.
+        /// </summary>
+        public static string ASR_Model_Download_Failed {
+            get {
+                return ResourceManager.GetString("ASR_Model_Download_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Model downloaded successfully.
+        /// </summary>
+        public static string ASR_Model_Downloaded_Success {
+            get {
+                return ResourceManager.GetString("ASR_Model_Downloaded_Success", resourceCulture);
             }
         }
         
@@ -147,6 +201,15 @@ namespace Glazecs.Modules.ASR.Resources.Languages {
         public static string ASR_Tooltip_Cancel {
             get {
                 return ResourceManager.GetString("ASR_Tooltip_Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Initialize the service.
+        /// </summary>
+        public static string ASR_Tooltip_Initialize {
+            get {
+                return ResourceManager.GetString("ASR_Tooltip_Initialize", resourceCulture);
             }
         }
         

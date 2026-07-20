@@ -1,19 +1,21 @@
 ﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
+using Glazecs.Modules.FileChunker.Resources.Languages;
+using Microsoft.Extensions.Localization;
 using System.Text.RegularExpressions;
 
-namespace Glazecs.Modules.FileChunker.Abstractions.Rules
+namespace Glazecs.Modules.FileChunker.Rules
 {
     /// <summary>
     /// Правило удаления знаков препинания из текста.
     /// Удаляет все символы, кроме букв, цифр, пробелов и переносов строк.
     /// </summary>
-    public sealed partial class RemovePunctuationRule : IChunkRule
+    public sealed partial class RemovePunctuationRule(IStringLocalizer<FileChunkerResources> localizer) : IChunkRule
     {
         /// <inheritdoc />
-        public string RuleName => "RemovePunctuation";
+        public string Name => localizer["Rule_Punctuation_Name"];
 
         /// <inheritdoc />
-        public string RuleDescription => "Удаляет из текста все знаки препинания, сохраняя буквы, цифры и структуру строк.";
+        public string Description => localizer["Rule_Punctuation_Desc"];
 
         /// <inheritdoc />
         /// <remarks>

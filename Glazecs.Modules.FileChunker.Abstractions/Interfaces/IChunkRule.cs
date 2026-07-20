@@ -8,12 +8,12 @@
         /// <summary>
         /// Имя правила.
         /// </summary>
-        string RuleName { get; }
+        string Name { get; }
 
         /// <summary>
         /// Описание правила
         /// </summary>
-        string RuleDescription { get; }
+        string Description { get; }
 
         /// <summary>
         /// Применяет правило к текстовому фрагменту.

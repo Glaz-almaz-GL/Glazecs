@@ -135,7 +135,7 @@
   <data name="FormatHelper" xml:space="preserve">
     <value>Select which files will be processed</value>
   </data>
-  <data name="FormatLabel" xml:space="preserve">
+  <data name="SelectChunkersLabel" xml:space="preserve">
     <value>Processing Format</value>
   </data>
   <data name="FoundFilesTitle" xml:space="preserve">
@@ -210,12 +210,6 @@
   <data name="StopWordsHelper" xml:space="preserve">
     <value>Enter words separated by commas</value>
   </data>
-  <data name="StopWordsLabel" xml:space="preserve">
-    <value>Stop words (comma separated)</value>
-  </data>
-  <data name="UseStopWordsLabel" xml:space="preserve">
-    <value>Apply stop words filter</value>
-  </data>
   <data name="NoResults" xml:space="preserve">
     <value>No data. Start file processing.</value>
   </data>
@@ -284,5 +278,73 @@
   <data name="TemplateAndRulesTitle" xml:space="preserve">
     <value>Templates and rules</value>
     <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPage.razor document</comment>
+  </data>
+  <data name="ModulesAndRulesTitle" xml:space="preserve">
+    <value>Processing rules</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Pages\FileChunkerPageNew.razor document</comment>
+  </data>
+  <data name="Rule_Regex_Name" xml:space="preserve">
+    <value>Regex</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\RegexRowRule.cs document</comment>
+  </data>
+  <data name="Rule_Regex_Desc" xml:space="preserve">
+    <value>Removes a string from text if it matches a regular expression.</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\RegexRowRule.cs document</comment>
+  </data>
+  <data name="Rule_Empty_Row_Name" xml:space="preserve">
+    <value>Blank lines</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\EmptyRowRule.cs document</comment>
+  </data>
+  <data name="Rule_Empty_Row_Desc" xml:space="preserve">
+    <value>Removes all empty lines from the text</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\EmptyRowRule.cs document</comment>
+  </data>
+  <data name="Rule_Punctuation_Desc" xml:space="preserve">
+    <value>Remove all punctuation from the text while preserving letters, numbers, and line structure</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\RemovePunctuationRule.cs document</comment>
+  </data>
+  <data name="Rule_Punctuation_Name" xml:space="preserve">
+    <value>Punctuation marks</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\RemovePunctuationRule.cs document</comment>
+  </data>
+  <data name="Rule_Dictionary_Desc" xml:space="preserve">
+    <value>Removes words from the text that are present in the specified stopword list</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\DictionaryFilterRule.cs document</comment>
+  </data>
+  <data name="Rule_Dictionary_Name" xml:space="preserve">
+    <value>Stop words</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\DictionaryFilterRule.cs document</comment>
+  </data>
+  <data name="Rule_Doc_Comment_Name" xml:space="preserve">
+    <value>Removing Comments from C# Documentation</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\CSharpDocumentationCommentRemovalRule.cs document</comment>
+  </data>
+  <data name="Rule_Doc_Comment_Desc" xml:space="preserve">
+    <value>Safely remove XML documentation comments (/// and /** */) from C# code using the Roslyn parser</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\CSharpDocumentationCommentRemovalRule.cs document</comment>
+  </data>
+  <data name="Rule_Comment_Name" xml:space="preserve">
+    <value>Removing Comments from C# Code</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\CSharpCommentRemovalRule.cs document</comment>
+  </data>
+  <data name="Rule_Comment_Desc" xml:space="preserve">
+    <value>Safely remove single-line (//) and multi-line (/* */) comments from C# code using the Roslyn parser</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\CSharpCommentRemovalRule.cs document</comment>
+  </data>
+  <data name="Rule_Dictionary_Label" xml:space="preserve">
+    <value>Stop word list</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Rules\DictionaryFilterRuleEditor.razor document</comment>
+  </data>
+  <data name="Rule_Dictionary_Placeholder" xml:space="preserve">
+    <value>word1, word2, word3</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Rules\DictionaryFilterRuleEditor.razor document</comment>
+  </data>
+  <data name="Rule_Dictionary_Help" xml:space="preserve">
+    <value>Enter words separated by commas, spaces, or a new line. Case is not sensitive.</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Rules\DictionaryFilterRuleEditor.razor document</comment>
+  </data>
+  <data name="Rule_Regex_Label" xml:space="preserve">
+    <value>Regular expression (Regex)</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Components\Rules\RegexRuleEditor.razor document</comment>
   </data>
 </root>

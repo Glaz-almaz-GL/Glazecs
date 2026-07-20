@@ -4,7 +4,7 @@
       <Deploy />
     </Project>
     <Project Path="Glazecs.App.Mobile/Glazecs.App.Mobile.csproj" Id="c938e1da-b187-49b7-ad5b-d9ec28b85922">
-      <Deploy Solution="Release|*" />
+      <Deploy />
     </Project>
     <Project Path="Glazecs.App.Web/Glazecs.App.Web.csproj" Id="1c306288-29d5-42c2-bbe5-93e6a86df3cd" />
   </Folder>

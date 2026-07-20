@@ -162,4 +162,19 @@
   <data name="ASR_Model_Download_Failed" xml:space="preserve">
     <value>Failed to load the model</value>
   </data>
+  <data name="ASR_Error_File_Not_Found" xml:space="preserve">
+    <value>The specified file could not be found. Check the path.</value>
+  </data>
+  <data name="ASR_Initializing_Started" xml:space="preserve">
+    <value>The automatic speech recognition service has started initializing.</value>
+  </data>
+  <data name="ASR_Initialized_Success" xml:space="preserve">
+    <value>Initialization was successful.</value>
+  </data>
+  <data name="ASR_Initialization_Cancelled" xml:space="preserve">
+    <value>Initialization was canceled by the user.</value>
+  </data>
+  <data name="ASR_Tooltip_Initialize" xml:space="preserve">
+    <value>Initialize the service</value>
+  </data>
 </root>

@@ -17,7 +17,7 @@ namespace Glazecs.Modules.FileChunker.Services
     {
 
         /// <inheritdoc />
-        public override string ChunkerName => "Word";
+        public override string Name => "Word";
 
         /// <inheritdoc />
         public override IReadOnlyCollection<string> SupportedExtensions => [".docx"];

@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace Glazecs.App.Desktop.Components.Layout
 {
-    public sealed partial class MainLayout : LayoutComponentBase
+    public partial class MainLayout : LayoutComponentBase
     {
         private bool _drawerOpen = true;
         private bool _isDarkMode = false;
@@ -60,7 +60,7 @@ namespace Glazecs.App.Desktop.Components.Layout
                 OverlayLight = "rgba(255, 255, 255, 0.7)" // Мягкое белое затемнение фона при модальных окнах
             },
 
-            // Темная тема (PaletteDark) из предыдущего ответа для полноты объекта
+            // Темная тема (PaletteDark)
             PaletteDark = new PaletteDark()
             {
                 Background = "#1e1e1e",

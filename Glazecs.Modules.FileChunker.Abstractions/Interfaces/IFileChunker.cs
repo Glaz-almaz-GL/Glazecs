@@ -7,7 +7,7 @@ namespace Glazecs.Modules.FileChunker.Abstractions.Interfaces
     /// </summary>
     public interface IFileChunker
     {
-        string ChunkerName { get; }
+        string Name { get; }
         IReadOnlyCollection<string> SupportedExtensions { get; }
 
         Task<IReadOnlyCollection<ChunkResult>> ProcessAsync(

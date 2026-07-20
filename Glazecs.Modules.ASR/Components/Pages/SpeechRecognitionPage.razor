@@ -1,69 +1,19 @@
 ﻿@using Glazecs.Modules.ASR.Abstractions.Interfaces
-@using Glazecs.Modules.ASR.Resources.Languages
 @using Glazecs.Shared.UI.Components
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.Extensions.Localization
-@using Microsoft.Extensions.Logging
 @using MudBlazor
-@inject IEnumerable<ISpeechRecognitionService> SpeechServices
-@inject ISnackbar Snackbar
-@inject IStringLocalizer<AsrResources> L
-@inject ILogger<SpeechRecognitionPage> Logger
 @page "/modules/asr/speech_recognition"
 
 <MudContainer @onkeydown="OnPageKeyDown" MaxWidth="MaxWidth.False" Class="mt-4">
     <MudStack Spacing="3">
 
-        @* Блок предупреждения о необходимости загрузки модели *@
-        @if (!_isModelReady && _selectedService != null)
-        {
-            <MudAlert Severity="Severity.Warning" Outlined="true">
-                <MudStack Spacing="2">
-                    <MudText>
-                        Модель <strong>@_selectedService.Name</strong> не найдена.
-                        Требуется загрузка.
-                    </MudText>
-
-                    @if (_isDownloadingModel)
-                    {
-                        <MudProgressLinear Color="Color.Primary"
-                                           Value="@_downloadProgress"
-                                           Class="mt-2" />
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            Загружено: @_downloadProgress.ToString("F1")%
-                        </MudText>
-                    }
-
-                    <MudStack Row="true" Spacing="2">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Size="Size.Small"
-                                   Disabled="@(_isDownloadingModel || _isProcessing)"
-                                   OnClick="DownloadModelAsync">
-                            @(_isDownloadingModel ? "Загрузка..." : "Скачать модель")
-                        </MudButton>
-
-                        @if (_isDownloadingModel)
-                        {
-                            <MudButton Variant="Variant.Outlined"
-                                       Color="Color.Error"
-                                       Size="Size.Small"
-                                       OnClick="CancelDownloadAsync">
-                                Отмена
-                            </MudButton>
-                        }
-                    </MudStack>
-                </MudStack>
-            </MudAlert>
-        }
-
-        <!-- Панель управления (ваш существующий код) -->
+        <!-- Панель управления -->
         <MudCard Outlined="true">
             <MudCardContent>
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                     <MudSelect T="ISpeechRecognitionService"
                                Value="_selectedService"
-                               Disabled="@_isProcessing"
+                               Disabled="@(_isProcessing || _isInitializing)"
                                Placeholder="@L["ASR_Service_Label"]"
                                Variant="Variant.Outlined"
                                Style="min-width: 200px;"
@@ -85,7 +35,7 @@
                     </MudSelect>
 
                     <PathPickerComponent @bind-Value="_filePath"
-                                         Disabled="@_isProcessing"
+                                         Disabled="@(_isProcessing || _isInitializing)"
                                          IsFolder="false"
                                          Placeholder="@L["ASR_FilePath_Placeholder"]"
                                          TooltipText="@L["ASR_Tooltip_Select_File"]"
@@ -93,40 +43,71 @@
                                          IconStyle="width: 56px; height: 56px;"
                                          FileTypes="_audioFileTypes" />
 
-                    @if (!_isProcessing)
+                    @if (!_isProcessing && !_isInitializing)
                     {
+                        @if (_selectedService != null && !_selectedService.Initialized)
+                        {
+                            <MudTooltip Text="@L["ASR_Tooltip_Initialize"]">
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudDownload"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Info"
+                                               Style="width: 56px; height: 56px;"
+                                               OnClick="InitializeServiceAsync" />
+                            </MudTooltip>
+                        }
+
                         <MudTooltip Text="@L["ASR_Tooltip_Start"]">
                             <MudIconButton Icon="@Icons.Material.Filled.PlayArrow"
                                            Variant="Variant.Filled"
                                            Color="Color.Primary"
                                            Style="width: 56px; height: 56px;"
                                            OnClick="StartRecognitionAsync"
-                                           Disabled="@(string.IsNullOrWhiteSpace(_filePath) ||
-                                                                                                 _selectedService == null ||
-                                                                                                 !_isModelReady)" />
+                                           Disabled="@(string.IsNullOrWhiteSpace(_filePath) || _selectedService == null || !_selectedService.Initialized)" />
                         </MudTooltip>
                     }
-                    else
+                    else if (_isProcessing)
                     {
                         <MudTooltip Text="@L["ASR_Tooltip_Cancel"]">
                             <MudIconButton Icon="@Icons.Material.Filled.Stop"
                                            Variant="Variant.Filled"
                                            Color="Color.Error"
                                            Style="width: 56px; height: 56px;"
-                                           OnClick="CancelRecognitionAsync" />
+                                           OnClick="CancelRecognition" />
+                        </MudTooltip>
+                    }
+                    else if (_isInitializing)
+                    {
+                        <MudTooltip Text="@L["ASR_Tooltip_Cancel"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Error"
+                                           Style="width: 56px; height: 56px;"
+                                           OnClick="CancelInitializing" />
                         </MudTooltip>
                     }
                 </MudStack>
 
+                <!-- UI для отображения прогресса инициализации -->
+                @if (_isInitializing)
+                {
+                    <MudStack Spacing="1" Class="mt-4">
+                        <MudText Typo="Typo.body2" Color="Color.Info">
+                            @_initProgressMessage
+                        </MudText>
+                        <MudProgressLinear Color="Color.Info"
+                                           Value="@_initProgressPercent"
+                                           Style="height: 8px;" />
+                    </MudStack>
+                }
+
+                <!-- UI для отображения прогресса распознавания -->
                 @if (_isProcessing)
                 {
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
                         <MudText Typo="Typo.body2" Style="min-width: 150px;">
                             @L["ASR_Processing"]: <strong>@_processedChunksCount</strong> @L["ASR_Chunks"]
                         </MudText>
-                        <MudProgressLinear Color="Color.Primary"
-                                           Indeterminate="true"
-                                           Style="flex-grow: 1;" />
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Style="flex-grow: 1;" />
                     </MudStack>
                 }
             </MudCardContent>
@@ -143,7 +124,7 @@
                 }
                 else
                 {
-                    <MudText Typo="Typo.body1">
+                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
                         @_resultText
                     </MudText>
                 }

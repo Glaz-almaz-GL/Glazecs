@@ -1,4 +1,6 @@
-﻿namespace Glazecs.Modules.ASR.Abstractions.Interfaces
+﻿using Glazecs.Modules.ASR.Abstractions.Models;
+
+namespace Glazecs.Modules.ASR.Abstractions.Interfaces
 {
     /// <summary>
     /// Представляет унифицированный контракт для сервиса распознавания речи (ASR).
@@ -8,6 +10,7 @@
     {
         string Name { get; }
         string Description { get; }
+        bool Initialized { get; }
 
         /// <summary>
         /// Выполняет транскрипцию аудиопотока в реальном времени.
@@ -29,6 +32,6 @@
             string filePath,
             CancellationToken cancellationToken = default);
 
-        Task<bool> InitializeAsync();
+        Task<bool> InitializeAsync(IProgress<SpeechInitializeProgress>? progress = null, CancellationToken cancellationToken = default);
     }
 }

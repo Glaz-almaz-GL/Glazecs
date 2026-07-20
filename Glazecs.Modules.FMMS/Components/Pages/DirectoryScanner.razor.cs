@@ -1,9 +1,13 @@
 ﻿using Glazecs.Modules.FMMS.Abstractions.Enums;
+using Glazecs.Modules.FMMS.Abstractions.Interfaces;
 using Glazecs.Modules.FMMS.Abstractions.Models;
 using Glazecs.Modules.FMMS.Models;
+using Glazecs.Modules.FMMS.Resources.Languages;
+using Glazecs.Modules.FMMS.Services;
 using Glazecs.Shared.Core.Extensions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using System.Diagnostics;
@@ -11,9 +15,17 @@ using System.Text;
 
 namespace Glazecs.Modules.FMMS.Components.Pages
 {
-    public partial class DirectoryScanner(ILogger<DirectoryScanner>? logger = null) : ComponentBase, IDisposable
+    public partial class DirectoryScanner : ComponentBase, IDisposable
     {
-        private readonly ILogger<DirectoryScanner>? _logger = logger;
+        #region Injection
+
+        [Inject] private ILogger<DirectoryScanner> Logger { get; set; } = default!;
+        [Inject] private IDirectoryScannerService Scanner { get; set; } = default!;
+        [Inject] private FmmsSettingsService SettingsService { get; set; } = default!;
+        [Inject] private IStringLocalizer<FmmsResources> L { get; set; } = default!;
+        [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+        #endregion
 
         #region State
 
@@ -47,9 +59,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Начало сканирования директорий: {Path}, SizeType: {SizeType}",
                     _dirPath,
                     DisplayedSizeType);
@@ -80,9 +92,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             if (string.IsNullOrWhiteSpace(_dirPath))
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка начать сканирование без указания пути");
+                    Logger.LogWarning("Попытка начать сканирование без указания пути");
                 }
 
                 Snackbar.Add("Укажите путь для сканирования.", Severity.Warning);
@@ -91,9 +103,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (!Directory.Exists(_dirPath))
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка начать сканирование несуществующей директории: {Path}", _dirPath);
+                    Logger.LogWarning("Попытка начать сканирование несуществующей директории: {Path}", _dirPath);
                 }
 
                 Snackbar.Add("Указанная директория не существует.", Severity.Warning);
@@ -147,9 +159,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             sw.Stop();
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Сканирование директорий завершено успешно. Найдено директорий: {Count}, Время: {ElapsedMs} мс",
                     _scannedDirs.Count, sw.ElapsedMilliseconds);
             }
@@ -163,9 +175,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             _processedDirsCount = _scannedDirs.Count;
             tempList.Clear();
 
-            if (_logger?.IsEnabled(LogLevel.Trace) == true)
+            if (Logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("Пакетное обновление UI: добавлено {Count} директорий. Всего: {Total}",
+                Logger.LogTrace("Пакетное обновление UI: добавлено {Count} директорий. Всего: {Total}",
                     tempList.Count, _scannedDirs.Count);
             }
 
@@ -176,9 +188,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             sw.Stop();
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(ex,
+                Logger.LogInformation(ex,
                     "Сканирование директорий отменено пользователем. Обработано директорий: {Count}, Время: {ElapsedMs} мс",
                     _scannedDirs.Count, sw.ElapsedMilliseconds);
             }
@@ -190,9 +202,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             sw.Stop();
 
-            if (_logger?.IsEnabled(LogLevel.Error) == true)
+            if (Logger.IsEnabled(LogLevel.Error))
             {
-                _logger.LogError(ex,
+                Logger.LogError(ex,
                     "Ошибка при сканировании директорий: {Path}. Обработано директорий: {Count}, Время: {ElapsedMs} мс",
                     _dirPath, _scannedDirs.Count, sw.ElapsedMilliseconds);
             }
@@ -210,9 +222,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private void CancelScanning()
         {
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Запрос отмены сканирования директорий. IsScanning: {IsScanning}", _isScanning);
+                Logger.LogInformation("Запрос отмены сканирования директорий. IsScanning: {IsScanning}", _isScanning);
             }
 
             _cts?.Cancel();
@@ -226,9 +238,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             _contextRow = args.Item;
 
-            if (_logger?.IsEnabled(LogLevel.Trace) == true)
+            if (Logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("Открытие контекстного меню для директории: {Path}", args.Item.FullPath);
+                Logger.LogTrace("Открытие контекстного меню для директории: {Path}", args.Item.FullPath);
             }
 
             await _contextMenu.OpenMenuAsync(args.MouseEventArgs);
@@ -238,9 +250,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             _selectedRows = items;
 
-            if (_logger?.IsEnabled(LogLevel.Trace) == true)
+            if (Logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("Изменение выбора директорий. Выбрано: {Count}", items?.Count ?? 0);
+                Logger.LogTrace("Изменение выбора директорий. Выбрано: {Count}", items?.Count ?? 0);
             }
         }
 
@@ -274,9 +286,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return _visibleColumnsCache;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("Инициализация конфигурации видимых колонок");
+                Logger.LogDebug("Инициализация конфигурации видимых колонок");
             }
 
             List<DirectoryColumnConfig> configs = [];
@@ -311,33 +323,33 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             if (string.IsNullOrEmpty(dirPath))
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка открыть директорию с пустым путём");
+                    Logger.LogWarning("Попытка открыть директорию с пустым путём");
                 }
 
                 return;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("Открытие директории: {Path}", dirPath);
+                Logger.LogDebug("Открытие директории: {Path}", dirPath);
             }
 
             try
             {
                 Process.Start(new ProcessStartInfo(dirPath) { UseShellExecute = true });
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                if (Logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Директория успешно открыта: {Path}", dirPath);
+                    Logger.LogInformation("Директория успешно открыта: {Path}", dirPath);
                 }
             }
             catch (Exception ex)
             {
-                if (_logger?.IsEnabled(LogLevel.Error) == true)
+                if (Logger.IsEnabled(LogLevel.Error))
                 {
-                    _logger.LogError(ex, "Ошибка при открытии директории: {Path}", dirPath);
+                    Logger.LogError(ex, "Ошибка при открытии директории: {Path}", dirPath);
                 }
 
                 Snackbar.Add(ex.Message, Severity.Error, config => config.RequireInteraction = true);
@@ -387,9 +399,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             }
             else
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка копирования без выбранной директории");
+                    Logger.LogWarning("Попытка копирования без выбранной директории");
                 }
             }
         }
@@ -404,9 +416,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             }
             else
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка копирования TSV без выбранной директории");
+                    Logger.LogWarning("Попытка копирования TSV без выбранной директории");
                 }
             }
         }
@@ -415,9 +427,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             string formatType = formatted ? "форматированно" : "TSV";
 
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("Копирование информации о директории ({FormatType}): {Path}", formatType, dir.FullPath);
+                Logger.LogDebug("Копирование информации о директории ({FormatType}): {Path}", formatType, dir.FullPath);
             }
 
             string content = formatted
@@ -426,9 +438,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             await Clipboard.Default.SetTextAsync(content);
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("{FormatType}-информация о директории скопирована. Длина: {Length} символов",
+                Logger.LogInformation("{FormatType}-информация о директории скопирована. Длина: {Length} символов",
                     formatted ? "Форматированная" : "TSV", content.Length);
             }
 
@@ -442,9 +454,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("Копирование информации о {Count} выбранных директориях (форматированно)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (форматированно)", _selectedRows!.Count);
             }
 
             List<ScannedDirectory> sortedDirs = GetSortedSelectedDirs();
@@ -458,9 +470,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             string content = sb.ToString();
             await Clipboard.Default.SetTextAsync(content);
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Информация о {Count} директориях скопирована. Длина: {Length} символов",
+                Logger.LogInformation("Информация о {Count} директориях скопирована. Длина: {Length} символов",
                     sortedDirs.Count, content.Length);
             }
 
@@ -474,9 +486,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("Копирование информации о {Count} выбранных директориях (TSV)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (TSV)", _selectedRows!.Count);
             }
 
             List<ScannedDirectory> sortedDirs = GetSortedSelectedDirs();
@@ -484,9 +496,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             await Clipboard.Default.SetTextAsync(content);
 
-            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            if (Logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("TSV-информация о {Count} директориях скопирована. Длина: {Length} символов",
+                Logger.LogInformation("TSV-информация о {Count} директориях скопирована. Длина: {Length} символов",
                     sortedDirs.Count, content.Length);
             }
 
@@ -510,9 +522,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             if (_selectedRows == null || _selectedRows.Count == 0)
             {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                if (Logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Попытка {Operation}, но список пуст", operationName);
+                    Logger.LogWarning("Попытка {Operation}, но список пуст", operationName);
                 }
 
                 return false;
@@ -548,9 +560,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            if (_logger?.IsEnabled(LogLevel.Trace) == true)
+            if (Logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("Нажата клавиша: {Code}, Ctrl: {Ctrl}, Shift: {Shift}",
+                Logger.LogTrace("Нажата клавиша: {Code}, Ctrl: {Ctrl}, Shift: {Shift}",
                     e.Code, e.CtrlKey, e.ShiftKey);
             }
 
@@ -571,9 +583,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (e.ShiftKey && e.Code == "KeyC")
             {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
+                if (Logger.IsEnabled(LogLevel.Debug))
                 {
-                    _logger.LogDebug("Горячая клавиша: Ctrl+Shift+C (копирование TSV)");
+                    Logger.LogDebug("Горячая клавиша: Ctrl+Shift+C (копирование TSV)");
                 }
 
                 _ = CopySingleInfoTsvAsync();
@@ -582,9 +594,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (e.Code == "KeyC")
             {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
+                if (Logger.IsEnabled(LogLevel.Debug))
                 {
-                    _logger.LogDebug("Горячая клавиша: Ctrl+C (копирование)");
+                    Logger.LogDebug("Горячая клавиша: Ctrl+C (копирование)");
                 }
 
                 _ = CopySingleInfoAsync();
@@ -609,9 +621,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (e.ShiftKey && e.Code == "KeyO")
             {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
+                if (Logger.IsEnabled(LogLevel.Debug))
                 {
-                    _logger.LogDebug("Горячая клавиша: Ctrl+Shift+O (открытие директории)");
+                    Logger.LogDebug("Горячая клавиша: Ctrl+Shift+O (открытие директории)");
                 }
 
                 OpenDirectory(activeDir.Value.FullPath);

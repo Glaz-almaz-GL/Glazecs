@@ -162,4 +162,19 @@
   <data name="ASR_Model_Download_Failed" xml:space="preserve">
     <value>Не удалось загрузить модель</value>
   </data>
+  <data name="ASR_Error_File_Not_Found" xml:space="preserve">
+    <value>Указанный файл не найден. Проверьте путь.</value>
+  </data>
+  <data name="ASR_Initializing_Started" xml:space="preserve">
+    <value>Началась инициализация службы автоматического распознавания речи.</value>
+  </data>
+  <data name="ASR_Initialized_Success" xml:space="preserve">
+    <value>Инициализация прошла успешно.</value>
+  </data>
+  <data name="ASR_Initialization_Cancelled" xml:space="preserve">
+    <value>Инициализация была отменена пользователем.</value>
+  </data>
+  <data name="ASR_Tooltip_Initialize" xml:space="preserve">
+    <value>Инициализировать сервис</value>
+  </data>
 </root>

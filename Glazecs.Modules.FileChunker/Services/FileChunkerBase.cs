@@ -16,7 +16,7 @@ namespace Glazecs.Modules.FileChunker.Services
         protected readonly IHeaderFormatter _defaultHeaderFormatter = defaultHeaderFormatter ?? new Abstractions.Formatters.TemplateHeaderFormatter();
 
         /// <inheritdoc />
-        public abstract string ChunkerName { get; }
+        public abstract string Name { get; }
 
         /// <inheritdoc />
         public abstract IReadOnlyCollection<string> SupportedExtensions { get; }
@@ -34,7 +34,7 @@ namespace Glazecs.Modules.FileChunker.Services
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation("Начало обработки файлов ({Chunker}). Количество: {Count}",
-                    ChunkerName, filePaths.Count());
+                    Name, filePaths.Count());
             }
 
             IEnumerable<Func<Stream>> streamFactories = filePaths.Select(path =>
@@ -64,7 +64,7 @@ namespace Glazecs.Modules.FileChunker.Services
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation("Начало обработки потоков ({Chunker}). Максимальный размер чанка: {MaxSize} байт",
-                    ChunkerName, chunkingOptions.MaxChunkSizeBytes);
+                    Name, chunkingOptions.MaxChunkSizeBytes);
             }
 
             ChunkingState state = new();
@@ -80,7 +80,7 @@ namespace Glazecs.Modules.FileChunker.Services
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation("Обработка ({Chunker}) завершена. Создано чанков: {Count}",
-                    ChunkerName, state.Results.Count);
+                    Name, state.Results.Count);
             }
 
             return state.Results;
@@ -366,7 +366,7 @@ namespace Glazecs.Modules.FileChunker.Services
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug("Применение правила: {RuleName}", rule.RuleName);
+                    _logger.LogDebug("Применение правила: {RuleName}", rule.Name);
                 }
 
                 result = rule.Apply(result);

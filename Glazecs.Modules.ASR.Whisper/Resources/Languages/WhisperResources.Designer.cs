@@ -61,11 +61,74 @@ namespace Glazecs.Modules.ASR.Whisper.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Checking model availability....
+        /// </summary>
+        public static string Whisper_Checking_Model {
+            get {
+                return ResourceManager.GetString("Whisper_Checking_Model", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Connecting to the model server....
+        /// </summary>
+        public static string Whisper_Connecting_To_Server {
+            get {
+                return ResourceManager.GetString("Whisper_Connecting_To_Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Local speech recognition system.
         /// </summary>
         public static string Whisper_Description {
             get {
                 return ResourceManager.GetString("Whisper_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Loading model....
+        /// </summary>
+        public static string Whisper_Downloading_Model {
+            get {
+                return ResourceManager.GetString("Whisper_Downloading_Model", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на The model is already loaded.
+        /// </summary>
+        public static string Whisper_Model_Already_Downloaded {
+            get {
+                return ResourceManager.GetString("Whisper_Model_Already_Downloaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на The model is already initialized.
+        /// </summary>
+        public static string Whisper_Model_Already_Initialized {
+            get {
+                return ResourceManager.GetString("Whisper_Model_Already_Initialized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на The model has been loaded successfully..
+        /// </summary>
+        public static string Whisper_Model_Downloaded_Success {
+            get {
+                return ResourceManager.GetString("Whisper_Model_Downloaded_Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на The model was initialized successfully..
+        /// </summary>
+        public static string Whisper_Model_Initialized_Success {
+            get {
+                return ResourceManager.GetString("Whisper_Model_Initialized_Success", resourceCulture);
             }
         }
     }

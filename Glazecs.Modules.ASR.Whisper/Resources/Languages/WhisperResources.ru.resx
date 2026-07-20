@@ -117,7 +117,28 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Whisper_Checking_Model" xml:space="preserve">
+    <value>Проверка наличия модели...</value>
+  </data>
+  <data name="Whisper_Connecting_To_Server" xml:space="preserve">
+    <value>Подключение к серверу моделей...</value>
+  </data>
   <data name="Whisper_Description" xml:space="preserve">
     <value>Локальная система распознавания речи</value>
+  </data>
+  <data name="Whisper_Downloading_Model" xml:space="preserve">
+    <value>Загрузка модели...</value>
+  </data>
+  <data name="Whisper_Model_Already_Downloaded" xml:space="preserve">
+    <value>Модель уже загружена</value>
+  </data>
+  <data name="Whisper_Model_Already_Initialized" xml:space="preserve">
+    <value>Модель уже инициализирована</value>
+  </data>
+  <data name="Whisper_Model_Downloaded_Success" xml:space="preserve">
+    <value>Модель успешно загружена</value>
+  </data>
+  <data name="Whisper_Model_Initialized_Success" xml:space="preserve">
+    <value>Модель успешно инициализирована</value>
   </data>
 </root>

@@ -1,0 +1,54 @@
+﻿@using System.Text.RegularExpressions
+@using Glazecs.Modules.FileChunker.Resources.Languages
+@using Glazecs.Modules.FileChunker.Rules
+@using Microsoft.Extensions.Localization
+@using MudBlazor
+@inject IStringLocalizer<FileChunkerResources> L
+
+<MudTextField T="string"
+              Value="@Rule.Pattern"
+              Label="@L["Rule_Regex_Label"]"
+              Variant="Variant.Outlined"
+              Class="mt-2"
+              Error="@_hasError"
+              ErrorText="@_errorMessage"
+              ValueChanged="OnPatternChanged"
+              Immediate="true" />
+@code {
+    [Parameter] public RegexRowRule Rule { get; set; } = default!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool _hasError;
+    private string? _errorMessage;
+
+    private async Task OnPatternChanged(string newValue)
+    {
+        // 1. Обновляем модель, чтобы пользователь мог продолжать редактирование
+        Rule.Pattern = newValue;
+
+        // 2. Валидация
+        if (string.IsNullOrWhiteSpace(newValue))
+        {
+            _hasError = false;
+            _errorMessage = null;
+        }
+        else
+        {
+            try
+            {
+                _ = new Regex(newValue);
+
+                _hasError = false;
+                _errorMessage = null;
+            }
+            catch (ArgumentException ex)
+            {
+                _hasError = true;
+                _errorMessage = $"Некорректный синтаксис: {ex.Message}";
+            }
+        }
+
+        // 3. Уведомляем родительский компонент об изменении состояния
+        await OnChanged.InvokeAsync();
+    }
+}

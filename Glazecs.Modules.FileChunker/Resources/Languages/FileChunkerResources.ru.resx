@@ -135,7 +135,7 @@
   <data name="FormatHelper" xml:space="preserve">
     <value>Выберите, какие файлы будут обрабатываться</value>
   </data>
-  <data name="FormatLabel" xml:space="preserve">
+  <data name="SelectChunkersLabel" xml:space="preserve">
     <value>Формат обработки</value>
   </data>
   <data name="FoundFilesTitle" xml:space="preserve">
@@ -145,7 +145,7 @@
     <value>Шаблон заголовка</value>
   </data>
   <data name="HeaderTemplatePlaceholder" xml:space="preserve">
-    <value>{FileName} - Часть {FilePart}</value>
+    <value>{FileName} - Фрагмент файла {FilePart}</value>
   </data>
   <data name="MaxChunkSizeLabel" xml:space="preserve">
     <value>Макс. размер файла (МБ)</value>
@@ -209,12 +209,6 @@
   </data>
   <data name="StopWordsHelper" xml:space="preserve">
     <value>Введите слова через запятую</value>
-  </data>
-  <data name="StopWordsLabel" xml:space="preserve">
-    <value>Стоп-слова (через запятую)</value>
-  </data>
-  <data name="UseStopWordsLabel" xml:space="preserve">
-    <value>Применить фильтр стоп-слов</value>
   </data>
   <data name="NoResults" xml:space="preserve">
     <value>Нет данных. Запустите обработку файлов.</value>
@@ -281,5 +275,56 @@
   </data>
   <data name="TemplateAndRulesTitle" xml:space="preserve">
     <value>Шаблоны и правила</value>
+  </data>
+  <data name="ModulesAndRulesTitle" xml:space="preserve">
+    <value>Правила обработки</value>
+  </data>
+  <data name="Rule_Regex_Name" xml:space="preserve">
+    <value>Регулярное выражение</value>
+  </data>
+  <data name="Rule_Regex_Desc" xml:space="preserve">
+    <value>Удаляет строку из текста, если она соответствует регулярному выражению</value>
+  </data>
+  <data name="Rule_Empty_Row_Name" xml:space="preserve">
+    <value>Удалить пустые строки</value>
+  </data>
+  <data name="Rule_Empty_Row_Desc" xml:space="preserve">
+    <value>Удаляет все пустые строки из текста</value>
+  </data>
+  <data name="Rule_Punctuation_Desc" xml:space="preserve">
+    <value>Удаляет все знаки препинания из текста, сохраняя буквы, цифры и структуру строк</value>
+  </data>
+  <data name="Rule_Punctuation_Name" xml:space="preserve">
+    <value>Удалить знаки препинания</value>
+  </data>
+  <data name="Rule_Dictionary_Desc" xml:space="preserve">
+    <value>Удаляет из текста слова, присутствующие в указанном списке стоп-слов</value>
+  </data>
+  <data name="Rule_Dictionary_Name" xml:space="preserve">
+    <value>Фильтр стоп-слова</value>
+  </data>
+  <data name="Rule_Doc_Comment_Name" xml:space="preserve">
+    <value>Удаление комментариев из документации C#</value>
+  </data>
+  <data name="Rule_Doc_Comment_Desc" xml:space="preserve">
+    <value>Безопасное удаление комментариев XML-документации (/// и /** */) из кода C# с помощью парсера Roslyn</value>
+  </data>
+  <data name="Rule_Comment_Name" xml:space="preserve">
+    <value>Удаление комментариев из кода C#</value>
+  </data>
+  <data name="Rule_Comment_Desc" xml:space="preserve">
+    <value>Безопасное удаление однострочных (//) и многострочных (/* */) комментариев из кода C# с помощью парсера Roslyn</value>
+  </data>
+  <data name="Rule_Dictionary_Label" xml:space="preserve">
+    <value>Список стоп-слов</value>
+  </data>
+  <data name="Rule_Dictionary_Placeholder" xml:space="preserve">
+    <value>слово1, слово2, слово3</value>
+  </data>
+  <data name="Rule_Dictionary_Help" xml:space="preserve">
+    <value>Введите слова через запятую, пробел или с новой строки. Регистр не учитывается.</value>
+  </data>
+  <data name="Rule_Regex_Label" xml:space="preserve">
+    <value>Регулярное выражение (Regex)</value>
   </data>
 </root>

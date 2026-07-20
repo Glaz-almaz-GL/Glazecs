@@ -1,50 +1,100 @@
 ﻿@using Glazecs.Modules.FileChunker.Abstractions.Interfaces
 @using Glazecs.Modules.FileChunker.Abstractions.Models
-@using Glazecs.Modules.FileChunker.Resources.Languages
 @using Glazecs.Shared.Core.Extensions
 @using Glazecs.Shared.UI.Components
-@using Microsoft.Extensions.Localization
 @using MudBlazor
-
-@inject IEnumerable<IFileChunker> FileChunkers
-@inject ISnackbar Snackbar
-@inject IStringLocalizer<FileChunkerResources> L
-
 @page "/modules/file-chunker/document_chunker"
 
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     <MudGrid Spacing="4">
 
+        <!-- ЛЕВАЯ КОЛОНКА: Настройки -->
         <MudItem xs="12" md="8">
             <MudCard Outlined="true" Class="h-100">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-4">@L["PageTitle"]</MudText>
 
-                   <!-- Блок 1: Основные параметры -->
+                    <!-- Блок 1: Выбор модулей и правил -->
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">@L["ModulesAndRulesTitle"]</MudText>
+
+                    <MudSelect T="IFileChunker"
+                               MultiSelection="true"
+                               @bind-SelectedValues="SelectedChunkers"
+                               Label="@L["SelectChunkersLabel"]"
+                               Variant="Variant.Outlined"
+                               Disabled="@_isProcessing"
+                               Class="mb-4"
+                               ToStringFunc="@(chunker => $"{chunker.Name} ({string.Join(", ", chunker.SupportedExtensions)})")">
+                        @foreach (var chunker in FileChunkers)
+                        {
+                            <MudSelectItem Value="@chunker">
+                                @($"{chunker.Name} ({string.Join(", ", chunker.SupportedExtensions)})")
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
                     <MudGrid>
-                        <MudItem xs="12" sm="6">
-                            <MudSelect T="string"
-                                       @bind-Value="_selectedFormat"
-                                       Label="@L["FormatLabel"]"
-                                       Variant="Variant.Outlined"
-                                       HelperText="@L["FormatHelper"]"
-                                       Disabled="@_isProcessing">
+                        @foreach (var state in RuleStates)
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch T="bool"
+                                           @bind-Value="state.IsEnabled"
+                                           Label="@state.Rule.Name"
+                                           Disabled="@_isProcessing"
+                                           Color="Color.Primary">
+                                    <MudTooltip Text="@state.Rule.Description" Placement="Placement.Top">
+                                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Secondary" Class="ml-2" />
+                                    </MudTooltip>
+                                </MudSwitch>
 
-                                @foreach (var formatKey in _formatExtensions)
+                                @if (state.IsEnabled)
                                 {
-                                    @* Адаптивное отображение имени с поддержкой локализации *@
-                                    string displayName = formatKey.Key switch
-                                    {
-                                        "All" => L["FormatAll"].Value,
-                                        _ => formatKey.Key + $" ({string.Join(", ", formatKey.Value)})"
-                                    };
-
-                                    <MudSelectItem Value="@formatKey.Key">@displayName</MudSelectItem>
+                                    <div class="mt-2 pl-4" style="border-left: 2px solid var(--mud-palette-primary);">
+                                        @* Динамический рендеринг редактора *@
+                                        @if (TryGetEditorComponentType(state.Rule, out var editorType))
+                                        {
+                                            <DynamicComponent Type="@editorType"
+                                                              Parameters="@(new Dictionary<string, object?>
+                                                              {
+                                                                  ["Rule"] = state.Rule,
+                                                                  ["OnChanged"] = EventCallback.Factory.Create(this, () => StateHasChanged())
+                                                              })" />
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                Дополнительная настройка не требуется.
+                                            </MudText>
+                                        }
+                                    </div>
                                 }
+                            </MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-4" />
 
-                            </MudSelect>
-                        </MudItem>
+                    <!-- Блок 2: Пути и Параметры -->
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">@L["PathsSectionTitle"]</MudText>
 
+                    <PathPickerComponent @bind-Value="_sourceDirectory"
+                                         IsFolder="true"
+                                         Label="@L["SourceDirectoryLabel"]"
+                                         Placeholder="@L["SourceDirectoryPlaceholder"]"
+                                         TooltipText="@L["SourceDirectoryHelper"]"
+                                         Icon="@Icons.Material.Filled.FolderOpen"
+                                         IconStyle="width: 56px; height: 56px;"
+                                         Disabled="@_isProcessing" />
+
+                    <PathPickerComponent @bind-Value="_outputDirectory"
+                                         IsFolder="true"
+                                         Label="@L["OutputDirectoryLabel"]"
+                                         Placeholder="@L["OutputDirectoryPlaceholder"]"
+                                         TooltipText="@L["OutputDirectoryHelper"]"
+                                         Icon="@Icons.Material.Filled.CreateNewFolder"
+                                         IconStyle="width: 56px; height: 56px;"
+                                         Disabled="@_isProcessing" />
+
+                    <MudGrid Class="mt-2">
                         <MudItem xs="12" sm="6">
                             <MudNumericField T="long"
                                              @bind-Value="_maxChunkSizeMB"
@@ -53,105 +103,32 @@
                                              Variant="Variant.Outlined"
                                              Disabled="@_isProcessing" />
                         </MudItem>
-                    </MudGrid>
-                    <MudDivider Class="my-4" />
-
-                    <!-- Блок 2: Пути -->
-                    <MudText Typo="Typo.subtitle1" Class="mb-3">@L["PathsSectionTitle"]</MudText>
-
-                    <MudItem xs="12" Class="mb-3">
-                        <PathPickerComponent @bind-Value="_sourceDirectory"
-                                                IsFolder="true"
-                                                Label="@L["SourceDirectoryLabel"]"
-                                                Placeholder="@L["SourceDirectoryPlaceholder"]"
-                                                TooltipText="@L["SourceDirectoryHelper"]"
-                                                Icon="@Icons.Material.Filled.FolderOpen"
-                                                IconStyle="width: 56px; height: 56px;"
-                                                Disabled="@_isProcessing" />
-                    </MudItem>
-
-                    <MudItem xs="12" Class="mb-3">
-                        <PathPickerComponent @bind-Value="_outputDirectory"
-                                                IsFolder="true"
-                                                Label="@L["OutputDirectoryLabel"]"
-                                                Placeholder="@L["OutputDirectoryPlaceholder"]"
-                                                TooltipText="@L["OutputDirectoryHelper"]"
-                                                Icon="@Icons.Material.Filled.CreateNewFolder"
-                                                IconStyle="width: 56px; height: 56px;"
-                                                Disabled="@_isProcessing" />
-                    </MudItem>
-
-                    <MudItem xs="12" Class="mb-4">
-                        <MudCheckBox T="bool"
-                                     @bind-Value="_scanSubfolders"
-                                     Label="@L["ScanSubfoldersLabel"]"
-                                     Color="Color.Primary"
-                                     Disabled="@_isProcessing" />
-                    </MudItem>
-
-                    <MudDivider Class="my-4" />
-
-                    <!-- Блок 3: Шаблон и Правила -->
-                    <MudText Typo="Typo.subtitle1" Class="mb-3">@L["TemplateAndRulesTitle"]</MudText>
-
-                    <MudItem xs="12" Class="mb-3">
-                        <MudTextField @bind-Value="_headerTemplate"
-                                      Label="@L["HeaderTemplateLabel"]"
-                                      Placeholder="@L["HeaderTemplatePlaceholder"]"
-                                      Lines="3"
-                                      MaxLines="3"
-                                      Variant="Variant.Outlined"
-                                      Disabled="@_isProcessing" />
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 mb-2">
-                            @L["PlaceholdersCaption"]
-                        </MudText>
-                        <MudChipSet T="string" Size="Size.Medium">
-                            @foreach (var placeholder in _placeholders)
-                            {
-                                <MudChip T="string"
-                                         Text="@placeholder.Key"
-                                         Color="Color.Info"
-                                         Variant="Variant.Outlined"
-                                         Size="Size.Small"
-                                         Disabled="@_isProcessing"
-                                         Style="cursor: pointer;"
-                                         OnClick="@(() => InsertPlaceholder(placeholder.Key))">
-                                    <MudTooltip Text="@placeholder.Description" Placement="Placement.Top">
-                                        @placeholder.Key
-                                    </MudTooltip>
-                                </MudChip>
-                            }
-                        </MudChipSet>
-                    </MudItem>
-
-                    <MudGrid Class="mt-2">
                         <MudItem xs="12" sm="6">
-                            <MudCheckBox T="bool" @bind-Value="_removePunctuation" Label="@L["RemovePunctuationLabel"]" Color="Color.Primary" Disabled="@_isProcessing" />
-                        </MudItem>
-                        <MudItem xs="12" sm="6">
-                            <MudCheckBox T="bool" @bind-Value="_useStopWords" Label="@L["UseStopWordsLabel"]" Color="Color.Primary" Disabled="@_isProcessing" />
+                            <MudCheckBox T="bool"
+                                         @bind-Value="_scanSubfolders"
+                                         Label="@L["ScanSubfoldersLabel"]"
+                                         Color="Color.Primary"
+                                         Disabled="@_isProcessing" />
                         </MudItem>
                     </MudGrid>
 
-                    @if (_useStopWords)
-                    {
-                        <MudItem xs="12" Class="mt-2">
-                            <MudTextField @bind-Value="_stopWordsText"
-                                          Label="@L["StopWordsLabel"]"
-                                          Variant="Variant.Outlined"
-                                          HelperText="@L["StopWordsHelper"]"
-                                          Disabled="@_isProcessing" />
-                        </MudItem>
-                    }
+                    <MudTextField @bind-Value="_headerTemplate"
+                                  Label="@L["HeaderTemplateLabel"]"
+                                  Placeholder="@L["HeaderTemplatePlaceholder"]"
+                                  Lines="3"
+                                  MaxLines="3"
+                                  Variant="Variant.Outlined"
+                                  Disabled="@_isProcessing"
+                                  Class="mt-4" />
 
-                    <!-- Блок 4: Кнопки действий -->
+                    <!-- Блок 3: Кнопки действий -->
                     <MudStack Row="true" Spacing="2" Class="mt-6 justify-end">
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    Size="Size.Large"
                                    StartIcon="@Icons.Material.Filled.FolderSpecial"
                                    OnClick="ScanSourceFolder"
-                                   Disabled="@(_isProcessing || string.IsNullOrWhiteSpace(_sourceDirectory))">
+                                   Disabled="@(_isProcessing || string.IsNullOrWhiteSpace(_sourceDirectory) || SelectedChunkers.Count == 0)">
                             @L["ScanButton"]
                         </MudButton>
 
@@ -181,38 +158,25 @@
             </MudCard>
         </MudItem>
 
-        <!-- ПРАВАЯ КОЛОНКА: Список найденных файлов -->
+        <!-- ПРАВАЯ КОЛОНКА: Файлы и Результаты -->
         <MudItem xs="12" md="4">
-            <MudCard Outlined="true" Class="h-100 d-flex flex-column">
+            <MudCard Outlined="true" Class="h-100 d-flex flex-column mb-4">
                 <MudCardContent Class="flex-grow-0">
                     <MudText Typo="Typo.h6">
                         @L["FoundFilesTitle"]
                         <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="ml-2">@_selectedFiles.Count</MudChip>
                     </MudText>
                 </MudCardContent>
-
                 <MudDivider />
-
                 <MudCardContent Class="pa-0 flex-grow-1" Style="overflow: hidden;">
                     @if (_selectedFiles.Any())
                     {
-                        <MudDataGrid T="SelectedFileInfo"
-                                     Items="_selectedFiles"
-                                     Hover="true"
-                                     Striped="true"
-                                     Dense="true"
-                                     Elevation="0"
-                                     ReadOnly="true"
-                                     Outlined="false"
-                                     Style="max-height: 500px; overflow-y: auto;">
+                        <MudDataGrid T="SelectedFileInfo" Items="_selectedFiles" Hover="true" Striped="true" Dense="true" Elevation="0" Style="max-height: 300px; overflow-y: auto;">
                             <Columns>
-                                <PropertyColumn Property="x => x.Name" Title="@L["ColumnFileName"]" CellClass="text-truncate" Style="max-width: 150px;" />
-                                <PropertyColumn Property="x => x.Extension" Title="Тип" />
-                                <TemplateColumn Title="Размер">
+                                <PropertyColumn Property="x => x.Name" Title="@L["ColumnFileName"]" CellClass="text-truncate" />
+                                <TemplateColumn Title="@L["ColumnSize"]">
                                     <CellTemplate>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                            @context.Item.Size.ToHumanReadableSize()
-                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.Size.ToHumanReadableSize()</MudText>
                                     </CellTemplate>
                                 </TemplateColumn>
                                 <TemplateColumn Title="">
@@ -221,8 +185,7 @@
                                                        Color="Color.Error"
                                                        Size="Size.Small"
                                                        Disabled="@_isProcessing"
-                                                       OnClick="@(() => RemoveFile(context.Item))"
-                                                       title="@L["RemoveFileTitle"]" />
+                                                       OnClick="@(() => RemoveFile(context.Item))" />
                                     </CellTemplate>
                                 </TemplateColumn>
                             </Columns>
@@ -231,61 +194,37 @@
                     else
                     {
                         <div class="d-flex align-center justify-center" style="height: 200px;">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
-                                @L["NoFilesFound"]
+                            <MudText Typo="Typo.body2"
+                                     Color="Color.Secondary"
+                                     Class="text-center">@L["NoFilesFound"]
                             </MudText>
                         </div>
                     }
                 </MudCardContent>
             </MudCard>
-        </MudItem>
 
-        <!-- НИЖНЯЯ СЕКЦИЯ: Результаты обработки -->
-        <MudItem xs="12">
-            <MudCard Outlined="true">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-2">@L["ResultsTitle"]</MudText>
-
+            <MudCard Outlined="true" Class="d-flex flex-column">
+                <MudCardContent Class="flex-grow-0">
+                    <MudText Typo="Typo.h6">@L["ResultsTitle"]</MudText>
+                </MudCardContent>
+                <MudDivider />
+                <MudCardContent Class="pa-0 flex-grow-1" Style="overflow: hidden;">
                     <MudDataGrid T="ChunkResult"
                                  Items="_results"
                                  Hover="true"
                                  Striped="true"
                                  Dense="true"
-                                 Outlined="true"
-                                 Elevation="0"
                                  Loading="@_isProcessing"
-                                 LoadingProgressColor="Color.Primary">
+                                 Style="max-height: 300px; overflow-y: auto;">
                         <Columns>
-                            <PropertyColumn Property="x => x.OutputFileName" Title="@L["ColumnFileName"]" />
+                            <PropertyColumn Property="x => x.OutputFileName"
+                                            Title="@L["ColumnFileName"]"
+                                            CellClass="text-truncate" />
+
                             <TemplateColumn Title="@L["ColumnSize"]">
-                                <CellTemplate>
-                                    @context.Item.SizeInBytes.ToHumanReadableSize()
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="@L["ColumnSourceFiles"]">
-                                <CellTemplate>
-                                    <MudTooltip Text="@string.Join(", ", context.Item.SourceFileNames)">
-                                        <MudText Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            @string.Join(", ", context.Item.SourceFileNames)
-                                        </MudText>
-                                    </MudTooltip>
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="@L["ColumnPath"]">
-                                <CellTemplate>
-                                    <MudTooltip Text="@context.Item.OutputPath">
-                                        <MudText Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            @System.IO.Path.GetFileName(context.Item.OutputPath)
-                                        </MudText>
-                                    </MudTooltip>
-                                </CellTemplate>
+                                <CellTemplate>@context.Item.SizeInBytes.ToHumanReadableSize()</CellTemplate>
                             </TemplateColumn>
                         </Columns>
-                        <NoRecordsContent>
-                            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="text-center pa-4">
-                                @L["NoResults"]
-                            </MudText>
-                        </NoRecordsContent>
                     </MudDataGrid>
                 </MudCardContent>
             </MudCard>
