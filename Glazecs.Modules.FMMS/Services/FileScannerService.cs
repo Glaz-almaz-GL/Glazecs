@@ -117,7 +117,7 @@ namespace Glazecs.Modules.FMMS.Services
         {
             try
             {
-                return Directory.EnumerateFiles(directoryPath, "*.*", EnumerationOptions);
+                return Directory.EnumerateFiles(directoryPath, "*", EnumerationOptions);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -269,6 +269,11 @@ namespace Glazecs.Modules.FMMS.Services
         /// </remarks>
         private async Task<int> GetPagesCountAsync(string fileExtension, string filePath, Dictionary<string, int> pagesCountCustomRules, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(fileExtension))
+            {
+                return 0;
+            }
+
             if (fileExtension.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
             {
                 return await TryGetPdfPagesCountAsync(filePath, cancellationToken).ConfigureAwait(false);
