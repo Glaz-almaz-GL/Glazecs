@@ -37,7 +37,7 @@
         <ApplicationId>com.companyname.glazecs.app.desktop</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
 
         <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
@@ -55,38 +55,6 @@
 		<SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-ios|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-maccatalyst|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-windows10.0.19041.0|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-ios|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-maccatalyst|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
-      <ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-    </PropertyGroup>
-
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\glazecs.png" />
@@ -96,10 +64,6 @@
 
         <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="MauiProgram.cs~RF1795bb2.TMP" />
     </ItemGroup>
 
     <ItemGroup>
@@ -128,10 +92,5 @@
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>DesktopResources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Resources\Images\" />
-      <Folder Include="Resources\Splash\" />
     </ItemGroup>
 </Project>
