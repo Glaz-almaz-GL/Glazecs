@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Glazecs.Modules.FileChunker.Rules
 {
+    /// <summary>
+    /// Правило удаления пустых строк из текста.
+    /// </summary>
     public sealed class EmptyRowRule(IStringLocalizer<FileChunkerResources> localizer) : IChunkRule
     {
         public string Name => localizer["Rule_Empty_Row_Name"];

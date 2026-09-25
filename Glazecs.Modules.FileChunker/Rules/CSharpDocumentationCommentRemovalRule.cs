@@ -2,10 +2,16 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 
 namespace Glazecs.Modules.FileChunker.Rules
 {
-    public sealed class CSharpDocumentationCommentRemovalRule(IStringLocalizer<FileChunkerResources> localizer) : CSharpTriviaRemovalRuleBase
+    /// <summary>
+    /// Правило удаления XML-документационных комментариев из C# кода.
+    /// </summary>
+    public sealed class CSharpDocumentationCommentRemovalRule(
+        ILogger<CSharpDocumentationCommentRemovalRule>? logger,
+        IStringLocalizer<FileChunkerResources> localizer) : CSharpTriviaRemovalRuleBase(logger)
     {
         public override string Name => localizer["Rule_Doc_Comment_Name"];
 

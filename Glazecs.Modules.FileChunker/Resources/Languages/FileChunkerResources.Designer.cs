@@ -520,6 +520,24 @@ namespace Glazecs.Modules.FileChunker.Resources.Languages {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Removes all indentation from JSON, making it compact and without unnecessary spaces.
+        /// </summary>
+        public static string Rule_JsonIndented_Desc {
+            get {
+                return ResourceManager.GetString("Rule_JsonIndented_Desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Removes all indentation from JSON.
+        /// </summary>
+        public static string Rule_JsonIndented_Name {
+            get {
+                return ResourceManager.GetString("Rule_JsonIndented_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Remove all punctuation from the text while preserving letters, numbers, and line structure.
         /// </summary>
         public static string Rule_Punctuation_Desc {

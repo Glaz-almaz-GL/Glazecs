@@ -223,7 +223,8 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
         private IFileChunker? GetChunkerForExtension(string extension)
         {
             return SelectedChunkers.FirstOrDefault(c =>
-                c.SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase));
+                c.SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase) ||
+                c.SupportedExtensions.Contains(".*", StringComparer.OrdinalIgnoreCase)); // Позволяет сначала проверять точные расширения, а затем использовать универсальный вариант
         }
 
         #endregion
@@ -249,16 +250,10 @@ namespace Glazecs.Modules.FileChunker.Components.Pages
             string Extension,
             long Size);
 
-        private sealed record RuleState
+        private sealed class RuleState(IChunkRule rule, bool isEnabled)
         {
-            public IChunkRule Rule { get; set; }
-            public bool IsEnabled { get; set; }
-
-            public RuleState(IChunkRule rule, bool isEnabled)
-            {
-                Rule = rule;
-                IsEnabled = isEnabled;
-            }
+            public IChunkRule Rule { get; } = rule;
+            public bool IsEnabled { get; set; } = isEnabled;
         }
 
         #endregion

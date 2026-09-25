@@ -347,4 +347,12 @@
     <value>Regular expression (Regex)</value>
     <comment>Used in Glazecs.Modules.FileChunker\Components\Rules\RegexRuleEditor.razor document</comment>
   </data>
+  <data name="Rule_JsonIndented_Name" xml:space="preserve">
+    <value>Removes all indentation from JSON</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\JsonIndentedRule.cs document</comment>
+  </data>
+  <data name="Rule_JsonIndented_Desc" xml:space="preserve">
+    <value>Removes all indentation from JSON, making it compact and without unnecessary spaces</value>
+    <comment>Used in Glazecs.Modules.FileChunker\Rules\JsonIndentedRule.cs document</comment>
+  </data>
 </root>

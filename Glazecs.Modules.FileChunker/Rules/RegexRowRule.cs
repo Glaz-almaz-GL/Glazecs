@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace Glazecs.Modules.FileChunker.Rules
 {
+    /// <summary>
+    /// Правило фильтрации строк на основе регулярного выражения.
+    /// </summary>
     [ChunkRuleEditor(typeof(RegexRuleEditor))]
     public sealed class RegexRowRule(IStringLocalizer<FileChunkerResources> localizer) : IChunkRule
     {

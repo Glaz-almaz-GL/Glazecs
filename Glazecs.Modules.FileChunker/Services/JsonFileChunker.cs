@@ -2,29 +2,22 @@
 using Glazecs.Modules.FileChunker.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using System.Text.Json;
 
 namespace Glazecs.Modules.FileChunker.Services
 {
     /// <summary>
-    /// Реализация чанкера для текстовых файлов (.txt, .cs, .md и др.).
-    /// Извлекает текст построчно, сохраняя целостность строк и соблюдая лимит размера чанка.
+    /// Реализация чанкера для JSON-файлов. Читает JSON-файл построчно, накапливает строки в буфере и создает чанки, обеспечивая корректность JSON-структуры.
     /// </summary>
-    public sealed class TextFileChunker(
+    public sealed class JsonFileChunker(
         ILogger<TextFileChunker>? logger = null,
         IHeaderFormatter? defaultHeaderFormatter = null) : FileChunkerBase(logger, defaultHeaderFormatter)
     {
-        /// <inheritdoc />
-        public override string Name => "Text";
+        public override string Name => "JSON";
 
-        /// <inheritdoc />
-        public override IReadOnlyCollection<string> SupportedExtensions => [".txt", ".cs", ".md", ".*"];
+        public override IReadOnlyCollection<string> SupportedExtensions => [".json", ".jsonc"];
 
-        /// <inheritdoc />
-        protected override async Task ProcessStreamAsync(
-            Func<Stream> streamFactory,
-            ChunkingOptions options,
-            ChunkingState state,
-            CancellationToken ct)
+        protected override async Task ProcessStreamAsync(Func<Stream> streamFactory, ChunkingOptions options, ChunkingState state, CancellationToken ct)
         {
             using Stream sourceStream = streamFactory();
 
@@ -45,6 +38,8 @@ namespace Glazecs.Modules.FileChunker.Services
             // Используем UTF-8 для согласованности с подсчетом байтов
             using StreamReader reader = new(sourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: false);
 
+            // Json требует корректного формата, поэтому мы будем читать файл построчно и накапливать строки в буфере до достижения максимального размера чанка
+            // Но для корректного JSON мы должны убедиться, что мы не разрываем объекты или массивы на части. Поэтому мы будем накапливать строки до тех пор, пока не достигнем максимального размера чанка, а затем проверим, можем ли мы безопасно завершить текущий чанк.
             StringBuilder batchBuffer = new();
             long currentBatchBytes = 0;
             long maxBatchSize = options.MaxChunkSizeBytes;
@@ -59,7 +54,7 @@ namespace Glazecs.Modules.FileChunker.Services
                 int lineBytes = Encoding.UTF8.GetByteCount(lineContent);
 
                 // Если добавление текущей строки превысит лимит, и буфер не пустой — сбрасываем буфер в обработку
-                if (currentBatchBytes > 0 && currentBatchBytes + lineBytes > maxBatchSize)
+                if (currentBatchBytes > 0 && currentBatchBytes + lineBytes > maxBatchSize && IsValidJson(batchBuffer.ToString()))
                 {
                     await ProcessBatchAsync(batchBuffer.ToString(), fileName, fileSize, options, state, ct);
                     batchBuffer.Clear();
@@ -71,9 +66,19 @@ namespace Glazecs.Modules.FileChunker.Services
             }
 
             // Обработка остатка данных в буфере после завершения чтения файла
-            if (batchBuffer.Length > 0)
+            await ProcessBatchAsync(batchBuffer.ToString(), fileName, fileSize, options, state, ct);
+        }
+
+        private static bool IsValidJson(string input)
+        {
+            try
             {
-                await ProcessBatchAsync(batchBuffer.ToString(), fileName, fileSize, options, state, ct);
+                using JsonDocument doc = JsonDocument.Parse(input);
+                return true;
+            }
+            catch (JsonException)
+            {
+                return false;
             }
         }
     }

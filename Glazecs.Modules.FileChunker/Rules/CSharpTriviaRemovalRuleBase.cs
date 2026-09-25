@@ -1,13 +1,14 @@
 ﻿using Glazecs.Modules.FileChunker.Abstractions.Interfaces;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Logging;
 
 namespace Glazecs.Modules.FileChunker.Rules
 {
     /// <summary>
     /// Базовый абстрактный класс для правил, удаляющих определенные виды trivia (пробельных символов и комментариев) из кода C#.
     /// </summary>
-    public abstract class CSharpTriviaRemovalRuleBase : IChunkRule
+    public abstract class CSharpTriviaRemovalRuleBase(ILogger<CSharpTriviaRemovalRuleBase>? logger) : IChunkRule
     {
         public abstract string Name { get; }
         public abstract string Description { get; }
@@ -16,16 +17,24 @@ namespace Glazecs.Modules.FileChunker.Rules
         {
             ArgumentNullException.ThrowIfNull(content);
 
-            // 1. Парсим исходный текст в синтаксическое дерево
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(content);
-            SyntaxNode root = tree.GetRoot();
+            try
+            {
+                // 1. Парсим исходный текст в синтаксическое дерево
+                SyntaxTree tree = CSharpSyntaxTree.ParseText(content);
+                SyntaxNode root = tree.GetRoot();
 
-            // 2. Применяем переписчик, передавая ему логику фильтрации из наследника
-            TriviaRemovalRewriter rewriter = new(ShouldRemove);
-            SyntaxNode newRoot = rewriter.Visit(root);
+                // 2. Применяем переписчик, передавая ему логику фильтрации из наследника
+                TriviaRemovalRewriter rewriter = new(ShouldRemove);
+                SyntaxNode newRoot = rewriter.Visit(root);
 
-            // 3. Возвращаем модифицированный код
-            return newRoot.ToFullString();
+                // 3. Возвращаем модифицированный код
+                return newRoot.ToFullString();
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Ошибка при применении правила {RuleName}: {ErrorMessage}", Name, ex.Message);
+                return content;
+            }
         }
 
         /// <summary>

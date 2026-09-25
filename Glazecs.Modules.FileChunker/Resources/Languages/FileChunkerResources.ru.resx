@@ -327,4 +327,10 @@
   <data name="Rule_Regex_Label" xml:space="preserve">
     <value>Регулярное выражение (Regex)</value>
   </data>
+  <data name="Rule_JsonIndented_Name" xml:space="preserve">
+    <value>Удаляет все отступы из JSON</value>
+  </data>
+  <data name="Rule_JsonIndented_Desc" xml:space="preserve">
+    <value>Убирает все отступы из JSON, делая его компактным и без лишних пробелов</value>
+  </data>
 </root>
