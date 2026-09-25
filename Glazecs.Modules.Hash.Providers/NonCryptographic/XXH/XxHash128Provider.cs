@@ -1,4 +1,5 @@
 ﻿using Glazecs.Modules.Hash.Abstractions;
+using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.IO.Hashing;
 
@@ -52,6 +53,14 @@ namespace Glazecs.Modules.Hash.Providers.NonCryptographic.XXH
         {
             XxHash128 xxHash128 = new();
             return await ReadStreamWithTransformAsync(xxHash128, inputStream, cancellationToken);
+        }
+
+        /// <inheritdoc />
+
+        /// <inheritdoc />
+        public override IIncrementalHasher CreateIncrementalHasher()
+        {
+            return CreateIncrementalHasher(new XxHash128());
         }
     }
 }

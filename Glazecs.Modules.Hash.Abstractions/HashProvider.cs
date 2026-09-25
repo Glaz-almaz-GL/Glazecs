@@ -312,6 +312,66 @@ namespace Glazecs.Modules.Hash.Abstractions
         /// </remarks>
         protected abstract Task<byte[]> ComputeHashAsync(Stream inputStream, CancellationToken cancellationToken);
 
+        /// <inheritdoc />
+        public abstract IIncrementalHasher CreateIncrementalHasher();
+
+        #endregion
+
+        #region Incremental Hashers
+
+        /// <summary>
+        /// Пошаговый хешер поверх криптографического алгоритма. Алгоритм переходит во владение хешера.
+        /// </summary>
+        protected static IIncrementalHasher CreateIncrementalHasher(System.Security.Cryptography.HashAlgorithm algorithm)
+        {
+            return new CryptographicIncrementalHasher(algorithm);
+        }
+
+        /// <summary>
+        /// Пошаговый хешер поверх некриптографического алгоритма.
+        /// </summary>
+        protected static IIncrementalHasher CreateIncrementalHasher(System.IO.Hashing.NonCryptographicHashAlgorithm algorithm)
+        {
+            return new NonCryptographicIncrementalHasher(algorithm);
+        }
+
+        private sealed class CryptographicIncrementalHasher(System.Security.Cryptography.HashAlgorithm algorithm) : IIncrementalHasher
+        {
+            public void Append(byte[] buffer, int offset, int count)
+            {
+                algorithm.TransformBlock(buffer, offset, count, null, 0);
+            }
+
+            public byte[] GetHash()
+            {
+                algorithm.TransformFinalBlock([], 0, 0);
+                return algorithm.Hash!;
+            }
+
+            public void Dispose()
+            {
+                algorithm.Dispose();
+            }
+        }
+
+        private sealed class NonCryptographicIncrementalHasher(System.IO.Hashing.NonCryptographicHashAlgorithm algorithm) : IIncrementalHasher
+        {
+            public void Append(byte[] buffer, int offset, int count)
+            {
+                algorithm.Append(buffer.AsSpan(offset, count));
+            }
+
+            public byte[] GetHash()
+            {
+                return algorithm.GetCurrentHash();
+            }
+
+            public void Dispose()
+            {
+                // Некриптографические алгоритмы не держат неуправляемых ресурсов
+            }
+        }
+
         #endregion
 
         #region Protected Helper Methods

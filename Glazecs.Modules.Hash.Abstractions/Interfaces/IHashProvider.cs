@@ -110,6 +110,16 @@ namespace Glazecs.Modules.Hash.Abstractions.Interfaces
 
         #endregion
 
+        #region Incremental
+
+        /// <summary>
+        /// Создать пошаговый хешер: данные подаются частями — например, один прочитанный блок файла
+        /// сразу нескольким алгоритмам.
+        /// </summary>
+        IIncrementalHasher CreateIncrementalHasher();
+
+        #endregion
+
         #region Verification Methods
 
         /// <summary>

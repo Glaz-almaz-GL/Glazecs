@@ -1,4 +1,5 @@
 ﻿using Glazecs.Modules.Hash.Abstractions;
+using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Glazecs.Modules.Hash.Abstractions.Models;
 using System.Security.Cryptography;
 
@@ -51,6 +52,14 @@ namespace Glazecs.Modules.Hash.Providers.Cryptographic.SHA2
         {
             using SHA256 sha256 = SHA256.Create();
             return await ReadStreamWithTransformAsync(sha256, inputStream, cancellationToken);
+        }
+
+        /// <inheritdoc />
+
+        /// <inheritdoc />
+        public override IIncrementalHasher CreateIncrementalHasher()
+        {
+            return CreateIncrementalHasher(SHA256.Create());
         }
     }
 }

@@ -1,10 +1,12 @@
-﻿using Glazecs.Modules.FMMS.Abstractions.Interfaces;
+using Glazecs.Modules.FMMS.Abstractions.Interfaces;
 using Glazecs.Modules.FMMS.Abstractions.Models;
 using Glazecs.Modules.Hash.Abstractions.Enums;
+using Glazecs.Modules.Hash.Abstractions.Extensions;
 using Glazecs.Modules.Hash.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
+using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Threading.Channels;
 
 namespace Glazecs.Modules.FMMS.Services
 {
@@ -27,6 +29,11 @@ namespace Glazecs.Modules.FMMS.Services
         private readonly IHashProviderFactory _hashProviderFactory = hashProviderFactory;
         private readonly IFilePageService _filePageService = filePageService;
         private readonly ILogger<FileScannerService>? _logger = logger;
+
+        /// <summary>
+        /// Размер блока чтения файла при хешировании: крупные блоки быстрее при последовательном чтении.
+        /// </summary>
+        private const int HashReadBufferSize = 1024 * 1024;
 
         /// <summary>
         /// Опции перечисления файлов при рекурсивном сканировании директорий.
@@ -59,6 +66,9 @@ namespace Glazecs.Modules.FMMS.Services
         /// <remarks>
         /// <para>Метод работает лениво: файлы обрабатываются по мере перечисления,
         /// что позволяет начинать обработку до завершения полного обхода директории.</para>
+        /// <para>При <see cref="HashingSettings.CalculateInParallel"/> одновременно обрабатывается до
+        /// <see cref="HashingSettings.MaxDegreeOfParallelism"/> файлов (0 — по числу ядер), но результаты
+        /// выдаются строго в порядке обхода — номера файлов идут подряд.</para>
         /// <para>При ошибке доступа к файлу или директории операция не прерывается —
         /// проблемный элемент пропускается с записью в лог.</para>
         /// <para>Общее количество файлов заранее неизвестно, поэтому <paramref name="progress"/>
@@ -76,27 +86,45 @@ namespace Glazecs.Modules.FMMS.Services
                 yield break;
             }
 
-            int processedFiles = 0;
-            int fileIndex = 0;
             int dirPathLength = Path.TrimEndingDirectorySeparator(directoryPath).Length + 1;
             List<(string AlgorithmName, IHashProvider Provider)> hashProviders = InitializeHashProviders(settings);
+            int degreeOfParallelism = GetDegreeOfParallelism(settings.Hashing);
 
-            foreach (string filePath in filePaths)
+            // Задачи обработки идут в канал в порядке обхода и забираются в том же порядке.
+            // Семафор ограничивает число файлов в работе, ёмкость канала — забегание вперёд готовых результатов.
+            Channel<Task<ScannedFile?>> pending = Channel.CreateBounded<Task<ScannedFile?>>(
+                new BoundedChannelOptions(degreeOfParallelism * 2) { SingleReader = true, SingleWriter = true });
+
+            // Без using: при досрочной остановке задачи файлов ещё могут вызвать Release,
+            // а SemaphoreSlim без AvailableWaitHandle освобождать не требуется
+            SemaphoreSlim workers = new(degreeOfParallelism);
+            using CancellationTokenSource producerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task producer = ProduceFileTasksAsync(filePaths, pending.Writer, workers, dirPathLength, settings, hashProviders, producerCts.Token);
+
+            int processedFiles = 0;
+
+            try
             {
-                fileIndex++;
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                ScannedFile? scannedFile = await TryProcessSingleFileAsync(
-                    filePath, dirPathLength, fileIndex, settings, hashProviders, cancellationToken).ConfigureAwait(false);
-
-                if (scannedFile.HasValue)
+                // Ошибка перечисления файлов приходит сюда же — через завершение канала
+                await foreach (Task<ScannedFile?> fileTask in pending.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    yield return scannedFile.Value;
-                }
+                    ScannedFile? scannedFile = await fileTask.ConfigureAwait(false);
 
-                processedFiles++;
-                progress?.Report(processedFiles);
+                    if (scannedFile.HasValue)
+                    {
+                        yield return scannedFile.Value;
+                    }
+
+                    processedFiles++;
+                    progress?.Report(processedFiles);
+                }
+            }
+            finally
+            {
+                // Потребитель мог остановиться раньше (отмена, выход из цикла) — останавливаем производителя
+                // и дожидаемся его, не пробрасывая отмену: семафор освобождается только после этого
+                await producerCts.CancelAsync().ConfigureAwait(false);
+                await Task.WhenAny(producer).ConfigureAwait(false);
             }
         }
 
@@ -124,6 +152,79 @@ namespace Glazecs.Modules.FMMS.Services
                 _logger?.LogWarning(ex, "Access denied to directory: {DirectoryPath}", directoryPath);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Число файлов, обрабатываемых одновременно.
+        /// </summary>
+        private static int GetDegreeOfParallelism(HashingSettings settings)
+        {
+            if (!settings.CalculateInParallel)
+            {
+                return 1;
+            }
+
+            return settings.MaxDegreeOfParallelism > 0 ? settings.MaxDegreeOfParallelism : Environment.ProcessorCount;
+        }
+
+        /// <summary>
+        /// Обходит файлы и для каждого запускает обработку в пуле потоков, складывая задачи в канал по порядку.
+        /// </summary>
+        private Task ProduceFileTasksAsync(
+            IEnumerable<string> filePaths,
+            ChannelWriter<Task<ScannedFile?>> writer,
+            SemaphoreSlim workers,
+            int dirPathLength,
+            FilesScanningSettings settings,
+            IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> hashProviders,
+            CancellationToken cancellationToken)
+        {
+            return Task.Run(async () =>
+            {
+                Exception? error = null;
+
+                try
+                {
+                    int fileIndex = 0;
+
+                    foreach (string filePath in filePaths)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        int index = ++fileIndex;
+
+                        // Место в канале — до захвата слота: иначе слоты держали бы файлы, которых ещё никто не ждёт
+                        if (!await writer.WaitToWriteAsync(cancellationToken).ConfigureAwait(false))
+                        {
+                            break;
+                        }
+
+                        await workers.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                        Task<ScannedFile?> fileTask = Task.Run(() =>
+                        {
+                            try
+                            {
+                                return TryProcessSingleFile(filePath, dirPathLength, index, settings, hashProviders, cancellationToken);
+                            }
+                            finally
+                            {
+                                workers.Release();
+                            }
+                        }, CancellationToken.None);
+
+                        await writer.WriteAsync(fileTask, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+                finally
+                {
+                    writer.TryComplete(error);
+                }
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -162,6 +263,7 @@ namespace Glazecs.Modules.FMMS.Services
         /// </summary>
         /// <param name="filePath">Полный путь к файлу.</param>
         /// <param name="dirPathLength">Длина пути корневой директории (для вычисления относительного пути).</param>
+        /// <param name="fileIndex">Порядковый номер файла в обходе.</param>
         /// <param name="settings">Настройки сканирования.</param>
         /// <param name="hashProviders">Список провайдеров хеширования для вычисления хешей.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
@@ -173,18 +275,17 @@ namespace Glazecs.Modules.FMMS.Services
         /// асинхронного потока.</para>
         /// <para>Все прочие исключения перехватываются и логируются как непредвиденные ошибки.</para>
         /// </remarks>
-        private async Task<ScannedFile?> TryProcessSingleFileAsync(
+        private ScannedFile? TryProcessSingleFile(
             string filePath,
             int dirPathLength,
             int fileIndex,
             FilesScanningSettings settings,
             IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> hashProviders,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             try
             {
-                ScannedFile scannedFile = await ProcessFileAsync(filePath, dirPathLength, fileIndex, hashProviders, settings, cancellationToken).ConfigureAwait(false);
-                return scannedFile;
+                return ProcessFile(filePath, dirPathLength, fileIndex, hashProviders, settings, cancellationToken);
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
@@ -211,23 +312,25 @@ namespace Glazecs.Modules.FMMS.Services
         /// </summary>
         /// <param name="filePath">Полный путь к файлу.</param>
         /// <param name="dirPathLength">Длина пути корневой директории (для вычисления относительного пути).</param>
+        /// <param name="fileIndex">Порядковый номер файла в обходе.</param>
+        /// <param name="hashProviders">Список провайдеров хеширования.</param>
         /// <param name="settings">Настройки сканирования (пользовательские расширения архивов, правила подсчёта страниц).</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Объект <see cref="ScannedFile"/> с заполненными метаданными.</returns>
-        private async Task<ScannedFile> ProcessFileAsync(string filePath,
+        private ScannedFile ProcessFile(string filePath,
             int dirPathLength,
             int fileIndex,
             IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> hashProviders,
             FilesScanningSettings settings,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             FileInfo fileInfo = new(filePath);
             string fileExtension = fileInfo.Extension.ToLowerInvariant();
             long fileSize = fileInfo.Length;
 
             string relativeFilePath = GetRelativePath(filePath, dirPathLength);
-            int pagesCount = await GetPagesCountAsync(fileExtension, filePath, settings.PagesCountCustomRules, cancellationToken).ConfigureAwait(false);
-            Dictionary<string, string> hashes = await CalculateHashesAsync(settings.Hashing, fileSize, filePath, hashProviders, cancellationToken).ConfigureAwait(false);
+            int pagesCount = GetPagesCount(fileExtension, filePath, settings.PagesCountCustomRules);
+            Dictionary<string, string> hashes = CalculateHashes(settings.Hashing, fileSize, filePath, hashProviders, cancellationToken);
 
             ScannedFile result = new()
             {
@@ -258,16 +361,16 @@ namespace Glazecs.Modules.FMMS.Services
         /// <summary>
         /// Определяет количество страниц файла на основе его расширения.
         /// </summary>
+        /// <param name="fileExtension">Расширение файла в нижнем регистре.</param>
         /// <param name="filePath">Полный путь к файлу.</param>
-        /// <param name="settings">Настройки сканирования (пользовательские правила подсчёта страниц).</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <param name="pagesCountCustomRules">Пользовательские правила подсчёта страниц по расширению.</param>
         /// <returns>Количество страниц, <c>-1</c> в случае ошибки чтения PDF, либо <c>0</c>, если подсчёт не применим.</returns>
         /// <remarks>
-        /// <para>Для PDF-файлов используется <see cref="IFilePageService.TryGetPagesCountInPdfAsync"/>.</para>
+        /// <para>Для PDF-файлов используется <see cref="IFilePageService.TryGetPagesCountInPdf(string, out int)"/>.</para>
         /// <para>Для остальных расширений проверяется наличие пользовательского правила в
         /// <see cref="FilesScanningSettings.PagesCountCustomRules"/>.</para>
         /// </remarks>
-        private async Task<int> GetPagesCountAsync(string fileExtension, string filePath, Dictionary<string, int> pagesCountCustomRules, CancellationToken cancellationToken = default)
+        private int GetPagesCount(string fileExtension, string filePath, Dictionary<string, int> pagesCountCustomRules)
         {
             if (string.IsNullOrEmpty(fileExtension))
             {
@@ -276,7 +379,7 @@ namespace Glazecs.Modules.FMMS.Services
 
             if (fileExtension.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
             {
-                return await TryGetPdfPagesCountAsync(filePath, cancellationToken).ConfigureAwait(false);
+                return TryGetPdfPagesCount(filePath);
             }
             else if (pagesCountCustomRules.TryGetValue(fileExtension, out int customPages))
             {
@@ -290,19 +393,16 @@ namespace Glazecs.Modules.FMMS.Services
         /// Пытается подсчитать количество страниц в PDF-файле.
         /// </summary>
         /// <param name="filePath">Путь к PDF-файлу.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Количество страниц при успехе, либо <c>-1</c> в случае ошибки.</returns>
         /// <remarks>
         /// При неудаче или исключении записывает ошибку в лог и возвращает <c>-1</c>,
         /// не прерывая процесс сканирования.
         /// </remarks>
-        private async Task<int> TryGetPdfPagesCountAsync(string filePath, CancellationToken cancellationToken = default)
+        private int TryGetPdfPagesCount(string filePath)
         {
             try
             {
-                (bool success, int pagesCount) = await _filePageService.TryGetPagesCountInPdfAsync(filePath, cancellationToken).ConfigureAwait(false);
-
-                if (success)
+                if (_filePageService.TryGetPagesCountInPdf(filePath, out int pagesCount))
                 {
                     LogPdfPagesSuccess(filePath, pagesCount);
                     return pagesCount;
@@ -336,41 +436,82 @@ namespace Glazecs.Modules.FMMS.Services
         #region Hashing
 
         /// <summary>
-        /// Вычисляет хеши файла с использованием настроенных алгоритмов.
+        /// Вычисляет хеши содержимого файла всеми настроенными алгоритмами за одно чтение файла.
         /// </summary>
-        /// <param name="settings">Настройки сканирования (формат вывода, параллелизм, лимит размера).</param>
-        /// <param name="scannedFile">Объект файла, в который будут записаны вычисленные хеши.</param>
+        /// <param name="settings">Настройки хеширования (формат вывода, лимит размера).</param>
+        /// <param name="fileSize">Размер файла в байтах.</param>
         /// <param name="filePath">Полный путь к файлу.</param>
         /// <param name="hashProviders">Список провайдеров хеширования.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Словарь «имя алгоритма → хеш»; пустой, если хешировать нечего или файл не прочитан.</returns>
         /// <remarks>
-        /// <para>Если список провайдеров пуст или файл превышает лимит размера — метод завершается без действий.</para>
-        /// <para>При включённом <see cref="HashingSettings.CalculateInParallel"/> и наличии нескольких алгоритмов
-        /// хеши вычисляются параллельно через <see cref="Task.WhenAll"/>.</para>
-        /// <para>Результаты записываются в словарь <see cref="ScannedFile.Hashes"/>
-        /// с ключом, равным имени алгоритма.</para>
+        /// <para>Каждый прочитанный блок подаётся сразу всем алгоритмам, поэтому файл читается один раз,
+        /// сколько бы алгоритмов ни было выбрано.</para>
+        /// <para>Ошибка чтения не выбрасывает файл из результатов: он остаётся в таблице без хешей,
+        /// ошибка пишется в лог.</para>
         /// </remarks>
-        private async Task<Dictionary<string, string>> CalculateHashesAsync(
+        private Dictionary<string, string> CalculateHashes(
             HashingSettings settings,
             long fileSize,
             string filePath,
             IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> hashProviders,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             if (hashProviders.Count == 0 || !IsEligibleForHashing(settings, fileSize))
             {
                 return [];
             }
 
-            if (settings.CalculateInParallel && settings.MaxDegreeOfParallelism > 1 && hashProviders.Count > 1)
+            List<(string AlgorithmName, IIncrementalHasher Hasher)> hashers = new(hashProviders.Count);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(HashReadBufferSize);
+
+            try
             {
-                // Parallel
-                return await CalculateHashesInParallelAsync(hashProviders, filePath, settings.OutputFormat, settings.MaxDegreeOfParallelism, cancellationToken).ConfigureAwait(false);
+                foreach ((string algorithmName, IHashProvider provider) in hashProviders)
+                {
+                    hashers.Add((algorithmName, provider.CreateIncrementalHasher()));
+                }
+
+                // bufferSize: 1 — без внутреннего буфера FileStream: читаем сразу крупными блоками
+                using (FileStream stream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 1, FileOptions.SequentialScan))
+                {
+                    int bytesRead;
+
+                    while ((bytesRead = stream.Read(buffer, 0, HashReadBufferSize)) > 0)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        foreach ((string _, IIncrementalHasher hasher) in hashers)
+                        {
+                            hasher.Append(buffer, 0, bytesRead);
+                        }
+                    }
+                }
+
+                Dictionary<string, string> results = new(hashers.Count);
+
+                foreach ((string algorithmName, IIncrementalHasher hasher) in hashers)
+                {
+                    string hash = hasher.GetHash().ToFormattedString(settings.OutputFormat);
+                    results[algorithmName] = hash;
+                    LogHash(algorithmName, hash);
+                }
+
+                return results;
             }
-            else
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                // Not Parallel
-                return await CalculateHashesSequentiallyAsync(hashProviders, filePath, settings.OutputFormat, cancellationToken).ConfigureAwait(false);
+                _logger?.LogError(ex, "Failed to calculate hashes for \"{FilePath}\"", filePath);
+                return [];
+            }
+            finally
+            {
+                foreach ((string _, IIncrementalHasher hasher) in hashers)
+                {
+                    hasher.Dispose();
+                }
+
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 
@@ -378,125 +519,11 @@ namespace Glazecs.Modules.FMMS.Services
         /// Проверяет, подлежит ли файл хешированию с учётом лимита размера.
         /// </summary>
         /// <param name="settings">Настройки хеширования.</param>
-        /// <param name="scannedFile">Объект файла с информацией о размере.</param>
+        /// <param name="fileSize">Размер файла в байтах.</param>
         /// <returns><see langword="true"/>, если файл не превышает лимит или лимит не задан; иначе <see langword="false"/>.</returns>
         private static bool IsEligibleForHashing(HashingSettings settings, long fileSize)
         {
             return settings.MaxFileSizeBytes <= 0 || fileSize <= settings.MaxFileSizeBytes;
-        }
-
-        /// <summary>
-        /// Вычисляет хеши файла параллельно для всех настроенных алгоритмов.
-        /// </summary>
-        /// <param name="providers">Список провайдеров хеширования.</param>
-        /// <param name="filePath">Полный путь к файлу.</param>
-        /// <param name="format">Формат вывода хеша (например, LowerHex, UpperHex).</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <remarks>
-        /// <para>Все алгоритмы запускаются одновременно через <see cref="Task.WhenAll"/>.</para>
-        /// <para>Каждый провайдер открывает файл независимо — это безопасно для SSD,
-        /// но может вызвать троттлинг на HDD.</para>
-        /// <para>Ошибки в одном алгоритме не влияют на вычисление остальных.</para>
-        /// </remarks>
-        private async Task<Dictionary<string, string>> CalculateHashesInParallelAsync(
-            IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> providers,
-            string filePath,
-            HashOutputFormat format,
-            int maxDegreeOfParallelism = 2,
-            CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(providers);
-            ArgumentNullException.ThrowIfNull(filePath);
-
-            ConcurrentDictionary<string, string> results = new();
-
-            ParallelOptions parallelOptions = new()
-            {
-                MaxDegreeOfParallelism = maxDegreeOfParallelism == 0 ? -1 : maxDegreeOfParallelism,
-                CancellationToken = cancellationToken
-            };
-
-            await Parallel.ForEachAsync(providers, parallelOptions, async (provider, ct) =>
-            {
-                (string? hash, bool success) = await ComputeSingleHashAsync(
-                    provider.Provider, provider.AlgorithmName, filePath, format, ct)
-                    .ConfigureAwait(false);
-
-                if (success && hash is not null)
-                {
-                    results[provider.AlgorithmName] = hash;
-                    LogHash(provider.AlgorithmName, hash);
-                }
-            }).ConfigureAwait(false);
-
-            return new Dictionary<string, string>(results);
-        }
-
-        /// <summary>
-        /// Вычисляет хеши файла последовательно для всех настроенных алгоритмов.
-        /// </summary>
-        /// <param name="providers">Список провайдеров хеширования.</param>
-        /// <param name="filePath">Полный путь к файлу.</param>
-        /// <param name="format">Формат вывода хеша.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <remarks>
-        /// <para>Алгоритмы выполняются один за другим в порядке регистрации.</para>
-        /// <para>На каждой итерации проверяется токен отмены для быстрого прерывания.</para>
-        /// </remarks>
-        private async Task<Dictionary<string, string>> CalculateHashesSequentiallyAsync(
-            IReadOnlyList<(string AlgorithmName, IHashProvider Provider)> providers,
-            string filePath,
-            HashOutputFormat format,
-            CancellationToken cancellationToken = default)
-        {
-            Dictionary<string, string> results = [];
-
-            foreach ((string AlgorithmName, IHashProvider Provider) in providers)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                (string Hash, bool Success) = await ComputeSingleHashAsync(Provider, AlgorithmName, filePath, format, cancellationToken).ConfigureAwait(false);
-
-                if (Success)
-                {
-                    results[AlgorithmName] = Hash;
-                    LogHash(AlgorithmName, Hash);
-                }
-            }
-
-            return results;
-        }
-
-        /// <summary>
-        /// Вычисляет хеш файла одним алгоритмом с обработкой ошибок.
-        /// </summary>
-        /// <param name="provider">Провайдер хеширования.</param>
-        /// <param name="algorithmName">Имя алгоритма (используется для логирования и ключа в словаре).</param>
-        /// <param name="filePath">Полный путь к файлу.</param>
-        /// <param name="format">Формат вывода хеша.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Кортеж: имя алгоритма, вычисленный хеш (или пустая строка при ошибке), флаг успешности.</returns>
-        /// <remarks>
-        /// При возникновении исключения логирует ошибку и возвращает кортеж с <c>Success = false</c>,
-        /// не прерывая выполнение остальных алгоритмов.
-        /// </remarks>
-        private async Task<(string Hash, bool Success)> ComputeSingleHashAsync(
-            IHashProvider provider,
-            string algorithmName,
-            string filePath,
-            HashOutputFormat format,
-            CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                string hash = await provider.CalculateAsync(filePath, format, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return (hash, true);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger?.LogError(ex, "Failed to calculate {Algorithm} for \"{FilePath}\"", algorithmName, filePath);
-                return (string.Empty, false);
-            }
         }
 
         /// <summary>

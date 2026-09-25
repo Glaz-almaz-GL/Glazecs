@@ -1,10 +1,19 @@
-﻿using Glazecs.Modules.FMMS.Abstractions.Interfaces;
+using Glazecs.Modules.FMMS.Abstractions.Interfaces;
 using Glazecs.Modules.FMMS.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 
 namespace Glazecs.Modules.FMMS.Services
 {
+    /// <summary>
+    /// Сканирование дерева директорий: для каждой директории — суммарный размер и число файлов
+    /// вместе со всеми поддиректориями.
+    /// </summary>
+    /// <remarks>
+    /// Дерево обходится один раз: каждая директория перечисляется одним вызовом, который отдаёт
+    /// и файлы (их размер уже есть в данных перечисления), и поддиректории. Итоги поддиректорий
+    /// складываются в родителя снизу вверх.
+    /// </remarks>
     internal sealed class DirectoryScannerService(ILogger<DirectoryScannerService>? logger = null) : IDirectoryScannerService
     {
         private readonly ILogger<DirectoryScannerService>? _logger = logger;
@@ -12,9 +21,9 @@ namespace Glazecs.Modules.FMMS.Services
         #region Enumeration Options
 
         /// <summary>
-        /// Опции обхода директорий с включёнными Hidden.
+        /// Опции перечисления содержимого директории с включёнными Hidden.
         /// </summary>
-        private static readonly EnumerationOptions DirEnumerationOptionsWithHidden = new()
+        private static readonly EnumerationOptions EntriesEnumerationOptionsWithHidden = new()
         {
             RecurseSubdirectories = false,
             IgnoreInaccessible = true,
@@ -24,40 +33,35 @@ namespace Glazecs.Modules.FMMS.Services
         };
 
         /// <summary>
-        /// Опции обхода директорий без Hidden (фильтрация на уровне API).
+        /// Опции перечисления содержимого директории без Hidden (фильтрация на уровне API).
         /// </summary>
-        private static readonly EnumerationOptions DirEnumerationOptions = new()
+        private static readonly EnumerationOptions EntriesEnumerationOptions = new()
         {
             RecurseSubdirectories = false,
             IgnoreInaccessible = true,
             AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.Hidden,
             ReturnSpecialDirectories = false,
-            BufferSize = 4096
-        };
-
-        /// <summary>
-        /// Опции перечисления файлов с включёнными Hidden.
-        /// </summary>
-        private static readonly EnumerationOptions FileEnumerationOptionsWithHidden = new()
-        {
-            RecurseSubdirectories = false,
-            IgnoreInaccessible = true,
-            AttributesToSkip = FileAttributes.ReparsePoint,
-            BufferSize = 4096
-        };
-
-        /// <summary>
-        /// Опции перечисления файлов без Hidden (фильтрация на уровне API).
-        /// </summary>
-        private static readonly EnumerationOptions FileEnumerationOptions = new()
-        {
-            RecurseSubdirectories = false,
-            IgnoreInaccessible = true,
-            AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.Hidden,
             BufferSize = 4096
         };
 
         #endregion
+
+        /// <summary>
+        /// Директория дерева: собственные файлы, затем — итог вместе с поддиректориями.
+        /// </summary>
+        private sealed class DirectoryNode(string fullName, int parentIndex)
+        {
+            public string FullName { get; } = fullName;
+
+            /// <summary>
+            /// Индекс родителя в списке узлов; -1 у корня.
+            /// </summary>
+            public int ParentIndex { get; } = parentIndex;
+
+            public long Size { get; set; }
+
+            public int FilesCount { get; set; }
+        }
 
         public async IAsyncEnumerable<ScannedDirectory> ScanDirectoryAsync(
              string rootPath,
@@ -77,42 +81,39 @@ namespace Glazecs.Modules.FMMS.Services
                 rootPath, settings.IncludeHidden);
             }
 
-            List<DirectoryInfo> allDirectories = await Task.Run(() =>
+            List<DirectoryNode> nodes = await Task.Run(() =>
             {
-                return CollectDirectories(new DirectoryInfo(rootPath), settings.IncludeHidden, cancellationToken);
+                return CollectDirectoryTree(new DirectoryInfo(rootPath), settings.IncludeHidden, cancellationToken);
             }, cancellationToken).ConfigureAwait(false);
 
-            if (allDirectories.Count == 0)
+            if (nodes.Count == 0)
             {
                 progress?.Report(100);
                 yield break;
             }
 
-            List<DirectoryInfo> sortedDirectories = [.. allDirectories.OrderByDescending(d => d.FullName.Length)];
+            // Более длинный путь — глубже в дереве: дети идут раньше родителей, и к моменту выдачи
+            // директории итоги всех её поддиректорий уже сложены в неё
+            int[] order = [.. Enumerable.Range(0, nodes.Count).OrderByDescending(i => nodes[i].FullName.Length)];
 
-            allDirectories.Clear();
-            allDirectories.TrimExcess();
-
-            int totalDirs = sortedDirectories.Count;
+            int totalDirs = nodes.Count;
             int rootLength = Path.TrimEndingDirectorySeparator(rootPath).Length + 1;
             int processedDirs = 0;
             int lastReportedProgress = -1;
-
-            Dictionary<string, (long Size, int FilesCount)> dirStats = new(totalDirs);
             int index = 1;
 
-            foreach (DirectoryInfo dir in sortedDirectories)
+            foreach (int nodeIndex in order)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                (long currentSizeBytes, int currentFilesCount) = await Task.Run(() =>
-                {
-                    (long size, int count) = CalculateDirectoryStats(dir, settings.IncludeHidden, cancellationToken);
-                    AggregateSubdirectoriesStats(dir, dirStats, ref size, ref count);
-                    return (size, count);
-                }, cancellationToken).ConfigureAwait(false);
+                DirectoryNode node = nodes[nodeIndex];
 
-                dirStats[dir.FullName] = (currentSizeBytes, currentFilesCount);
+                if (node.ParentIndex >= 0)
+                {
+                    DirectoryNode parent = nodes[node.ParentIndex];
+                    parent.Size += node.Size;
+                    parent.FilesCount += node.FilesCount;
+                }
 
                 processedDirs++;
 
@@ -126,10 +127,10 @@ namespace Glazecs.Modules.FMMS.Services
                 yield return new ScannedDirectory
                 {
                     Id = index,
-                    FullPath = dir.FullName,
-                    RelativePath = dir.FullName.Length > rootLength ? dir.FullName[rootLength..] : "\\",
-                    Size = currentSizeBytes,
-                    FilesCount = currentFilesCount
+                    FullPath = node.FullName,
+                    RelativePath = node.FullName.Length > rootLength ? node.FullName[rootLength..] : "\\",
+                    Size = node.Size,
+                    FilesCount = node.FilesCount
                 };
 
                 index++;
@@ -147,78 +148,12 @@ namespace Glazecs.Modules.FMMS.Services
         }
 
         /// <summary>
-        /// Подсчитывает размер и количество файлов в указанной директории (без учёта вложенных).
-        /// Фильтрация Hidden выполняется на уровне Win32 API через <see cref="EnumerationOptions.AttributesToSkip"/>.
+        /// Обходит дерево от корня и собирает директории с размером и числом их собственных файлов.
         /// </summary>
-        private (long Size, int FilesCount) CalculateDirectoryStats(
-            DirectoryInfo dir,
-            bool includeHidden,
-            CancellationToken ct)
-        {
-            long size = 0;
-            int count = 0;
-
-            EnumerationOptions options = includeHidden ? FileEnumerationOptionsWithHidden : FileEnumerationOptions;
-
-            try
-            {
-                foreach (FileInfo file in dir.EnumerateFiles("*", options))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    count++;
-                    size += file.Length;
-                }
-            }
-            catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException or IOException)
-            {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
-                {
-                    _logger.LogDebug(ex, "Не удалось прочитать файлы: \"{FullName}\"", dir.FullName);
-                }
-            }
-
-            return (size, count);
-        }
-
-        /// <summary>
-        /// Суммирует размеры и количество файлов из уже обработанных вложенных директорий.
-        /// Использует <see cref="DirEnumerationOptionsWithHidden"/>, т.к. все необходимые директории
-        /// уже присутствуют в <paramref name="dirStats"/> (с учётом их атрибутов Hidden).
-        /// </summary>
-        private void AggregateSubdirectoriesStats(
-            DirectoryInfo dir,
-            Dictionary<string, (long Size, int FilesCount)> dirStats,
-            ref long currentSizeBytes,
-            ref int currentFilesCount)
-        {
-            try
-            {
-                // Используем опции с Hidden, т.к. нам нужно найти ВСЕ поддиректории,
-                // которые уже были обработаны и сохранены в dirStats
-                foreach (DirectoryInfo subDir in dir.EnumerateDirectories("*", DirEnumerationOptionsWithHidden))
-                {
-                    if (dirStats.TryGetValue(subDir.FullName, out (long Size, int FilesCount) subStats))
-                    {
-                        currentSizeBytes += subStats.Size;
-                        currentFilesCount += subStats.FilesCount;
-                    }
-                }
-            }
-            catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException or IOException)
-            {
-                if (_logger?.IsEnabled(LogLevel.Debug) == true)
-                {
-                    _logger.LogDebug(ex, "Не удалось получить поддиректории для агрегации: \"{FullName}\"", dir.FullName);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Рекурсивно собирает все директории в список, начиная с указанной корневой.
-        /// Корневая директория всегда добавляется в результат, даже если она имеет атрибут Hidden,
-        /// так как пользователь явно указал её для сканирования.
-        /// </summary>
-        private List<DirectoryInfo> CollectDirectories(
+        /// <remarks>
+        /// Корень берётся всегда, даже скрытый: пользователь указал его явно.
+        /// </remarks>
+        private List<DirectoryNode> CollectDirectoryTree(
             DirectoryInfo rootDir,
             bool includeHidden,
             CancellationToken cancellationToken)
@@ -227,8 +162,6 @@ namespace Glazecs.Modules.FMMS.Services
 
             bool isRootHidden = (int)rootDir.Attributes == -1 ||
                                 (rootDir.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden;
-
-            Stack<DirectoryInfo> stack = new();
 
             if ((int)rootDir.Attributes == -1)
             {
@@ -243,13 +176,22 @@ namespace Glazecs.Modules.FMMS.Services
                 rootDir.FullName);
             }
 
-            stack.Push(rootDir);
+            EnumerationOptions options = includeHidden ? EntriesEnumerationOptionsWithHidden : EntriesEnumerationOptions;
+            Stack<(DirectoryInfo Directory, int ParentIndex)> stack = new();
+            stack.Push((rootDir, -1));
 
-            List<DirectoryInfo> result = new(capacity: 256);
+            List<DirectoryNode> result = new(capacity: 256);
 
             while (stack.Count > 0)
             {
-                CollectSubDirectories(stack, includeHidden, result, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                (DirectoryInfo currentDir, int parentIndex) = stack.Pop();
+                DirectoryNode node = new(currentDir.FullName, parentIndex);
+                int nodeIndex = result.Count;
+                result.Add(node);
+
+                ReadDirectoryEntries(currentDir, nodeIndex, node, options, stack, cancellationToken);
             }
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
@@ -261,39 +203,38 @@ namespace Glazecs.Modules.FMMS.Services
         }
 
         /// <summary>
-        /// Извлекает одну директорию из стека и добавляет её в результирующий список,
-        /// а её валидные поддиректории помещает обратно в стек для последующей обработки.
+        /// Одним перечислением считает собственные файлы директории и кладёт её поддиректории в стек обхода.
         /// </summary>
-        /// <remarks>
-        /// Фильтрация Hidden выполняется на уровне Win32 API через <see cref="EnumerationOptions.AttributesToSkip"/>.
-        /// Дополнительная ручная проверка не требуется.
-        /// </remarks>
-        private void CollectSubDirectories(
-            Stack<DirectoryInfo> stack,
-            bool includeHidden,
-            List<DirectoryInfo> result,
+        private void ReadDirectoryEntries(
+            DirectoryInfo directory,
+            int nodeIndex,
+            DirectoryNode node,
+            EnumerationOptions options,
+            Stack<(DirectoryInfo Directory, int ParentIndex)> stack,
             CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            DirectoryInfo currentDir = stack.Pop();
-            result.Add(currentDir);
-
-            EnumerationOptions options = includeHidden ? DirEnumerationOptionsWithHidden : DirEnumerationOptions;
-
             try
             {
-                // Hidden-директории уже отфильтрованы на уровне API при includeHidden = false
-                foreach (DirectoryInfo subDir in currentDir.EnumerateDirectories("*", options))
+                foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos("*", options))
                 {
-                    stack.Push(subDir);
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (entry is FileInfo file)
+                    {
+                        node.Size += file.Length;
+                        node.FilesCount++;
+                    }
+                    else if (entry is DirectoryInfo subDirectory)
+                    {
+                        stack.Push((subDirectory, nodeIndex));
+                    }
                 }
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException or IOException)
             {
                 if (_logger?.IsEnabled(LogLevel.Debug) == true)
                 {
-                    _logger.LogDebug(ex, "Не удалось перечислить поддиректории: \"{FullName}\"", currentDir.FullName);
+                    _logger.LogDebug(ex, "Не удалось прочитать содержимое директории: \"{FullName}\"", directory.FullName);
                 }
             }
         }
