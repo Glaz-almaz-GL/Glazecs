@@ -150,17 +150,22 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             _cts = new CancellationTokenSource();
         }
 
+        /// <remarks>
+        /// Поток файлов читается вне потока UI (ConfigureAwait(false)): иначе каждый файл — отдельная задача
+        /// в очереди UI, и при быстром сканировании нажатия клавиш ждали бы секундами. В UI уходят только пачки.
+        /// </remarks>
         private async Task ProcessFilesAsync(Stopwatch sw)
         {
             List<ScannedFile> tempList = new(capacity: BatchSize);
             long lastUiUpdate = Environment.TickCount64;
             CancellationToken token = _cts?.Token ?? CancellationToken.None;
+            int totalCount = 0;
 
             await foreach (ScannedFile file in ScannerService.ScanDirectoryAsync(
                 _dirPath,
                 SettingsService.FilesScanningSettings,
                 progress: null,
-                token))
+                token).ConfigureAwait(false))
             {
                 tempList.Add(file);
 
@@ -170,17 +175,16 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
                 if (isBatchFull || isTimeToUpdate)
                 {
-                    await FlushBatchAsync(tempList);
+                    totalCount += tempList.Count;
+                    await FlushBatchAsync(tempList).ConfigureAwait(false);
                     lastUiUpdate = Environment.TickCount64;
-
-                    // Отдаём управление UI потоку
-                    await Task.Delay(1, token);
                 }
             }
 
             if (tempList.Count > 0)
             {
-                await FlushBatchAsync(tempList);
+                totalCount += tempList.Count;
+                await FlushBatchAsync(tempList).ConfigureAwait(false);
             }
 
             sw.Stop();
@@ -189,25 +193,33 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             {
                 Logger.LogInformation(
                     "Сканирование файлов завершено успешно. Найдено файлов: {Count}, Время: {ElapsedMs} мс",
-                    _scannedFiles.Count, sw.ElapsedMilliseconds);
+                    totalCount, sw.ElapsedMilliseconds);
             }
 
-            Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success);
+            await InvokeAsync(() => Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success));
         }
 
+        /// <summary>
+        /// Передаёт накопленную пачку в UI. Список таблицы меняется только в потоке UI.
+        /// </summary>
         private async Task FlushBatchAsync(List<ScannedFile> tempList)
         {
-            _scannedFiles.AddRange(tempList);
-            _processedFilesCount = _scannedFiles.Count;
+            ScannedFile[] batch = [.. tempList];
             tempList.Clear();
 
-            if (Logger.IsEnabled(LogLevel.Trace))
+            await InvokeAsync(() =>
             {
-                Logger.LogTrace("Пакетное обновление UI: добавлено {BatchSize} файлов. Всего: {Total}",
-                    BatchSize, _scannedFiles.Count);
-            }
+                _scannedFiles.AddRange(batch);
+                _processedFilesCount = _scannedFiles.Count;
 
-            await InvokeAsync(StateHasChanged);
+                if (Logger.IsEnabled(LogLevel.Trace))
+                {
+                    Logger.LogTrace("Пакетное обновление UI: добавлено {BatchSize} файлов. Всего: {Total}",
+                        batch.Length, _scannedFiles.Count);
+                }
+
+                StateHasChanged();
+            });
         }
 
         private void HandleScanningCancellation(OperationCanceledException ex, Stopwatch sw)
@@ -711,13 +723,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Keyboard Shortcuts
 
+        // Работает и во время сканирования: обработчик и пополнение списка идут в одном потоке UI
         private async Task OnDataGridKeyDown(KeyboardEventArgs e)
         {
-            if (_isScanning)
-            {
-                return;
-            }
-
             if (Logger.IsEnabled(LogLevel.Trace))
             {
                 Logger.LogTrace("Нажата клавиша: {Code}, Ctrl: {Ctrl}, Shift: {Shift}",

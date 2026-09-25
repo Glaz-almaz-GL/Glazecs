@@ -46,8 +46,8 @@
                             @L["Scanner_Processed"]: <strong>@_processedFilesCount</strong>
                         </MudText>
                         <MudProgressLinear Color="Color.Primary"
-                                           Value="@_processedFilesCount"
-                                           Indeterminate="@(_processedFilesCount == 0)"
+                                           Value="100"
+                                           Indeterminate="@_isScanning"
                                            Style="flex-grow: 1;" />
                     </MudStack>
                 }

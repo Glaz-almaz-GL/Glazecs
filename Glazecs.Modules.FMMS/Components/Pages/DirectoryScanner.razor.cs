@@ -150,17 +150,22 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             _cts = new CancellationTokenSource();
         }
 
+        /// <remarks>
+        /// Поток директорий читается вне потока UI (ConfigureAwait(false)): иначе каждая директория — отдельная
+        /// задача в очереди UI, и нажатия клавиш ждали бы секундами. В UI уходят только пачки.
+        /// </remarks>
         private async Task ProcessDirsAsync(Stopwatch sw)
         {
             List<ScannedDirectory> tempList = new(capacity: BatchSize);
             long lastUiUpdate = Environment.TickCount64;
             CancellationToken token = _cts?.Token ?? CancellationToken.None;
+            int totalCount = 0;
 
             await foreach (ScannedDirectory dir in Scanner.ScanDirectoryAsync(
                 _dirPath,
                 SettingsService.DirectoryScanningSettings,
                 progress: null,
-                token))
+                token).ConfigureAwait(false))
             {
                 tempList.Add(dir);
 
@@ -170,16 +175,16 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
                 if (isBatchFull || isTimeToUpdate)
                 {
-                    await FlushBatchAsync(tempList);
+                    totalCount += tempList.Count;
+                    await FlushBatchAsync(tempList).ConfigureAwait(false);
                     lastUiUpdate = Environment.TickCount64;
-
-                    await Task.Delay(1, token);
                 }
             }
 
             if (tempList.Count > 0)
             {
-                await FlushBatchAsync(tempList);
+                totalCount += tempList.Count;
+                await FlushBatchAsync(tempList).ConfigureAwait(false);
             }
 
             sw.Stop();
@@ -188,25 +193,33 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             {
                 Logger.LogInformation(
                     "Сканирование директорий завершено успешно. Найдено директорий: {Count}, Время: {ElapsedMs} мс",
-                    _scannedDirs.Count, sw.ElapsedMilliseconds);
+                    totalCount, sw.ElapsedMilliseconds);
             }
 
-            Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success);
+            await InvokeAsync(() => Snackbar.Add(L["Scanner_Completed_Success"], Severity.Success));
         }
 
+        /// <summary>
+        /// Передаёт накопленную пачку в UI. Список таблицы меняется только в потоке UI.
+        /// </summary>
         private async Task FlushBatchAsync(List<ScannedDirectory> tempList)
         {
-            _scannedDirs.AddRange(tempList);
-            _processedDirsCount = _scannedDirs.Count;
+            ScannedDirectory[] batch = [.. tempList];
             tempList.Clear();
 
-            if (Logger.IsEnabled(LogLevel.Trace))
+            await InvokeAsync(() =>
             {
-                Logger.LogTrace("Пакетное обновление UI: добавлено {Count} директорий. Всего: {Total}",
-                    tempList.Count, _scannedDirs.Count);
-            }
+                _scannedDirs.AddRange(batch);
+                _processedDirsCount = _scannedDirs.Count;
 
-            await InvokeAsync(StateHasChanged);
+                if (Logger.IsEnabled(LogLevel.Trace))
+                {
+                    Logger.LogTrace("Пакетное обновление UI: добавлено {Count} директорий. Всего: {Total}",
+                        batch.Length, _scannedDirs.Count);
+                }
+
+                StateHasChanged();
+            });
         }
 
         private void HandleScanningCancellation(OperationCanceledException ex, Stopwatch sw)
@@ -596,13 +609,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Keyboard Shortcuts
 
+        // Работает и во время сканирования: обработчик и пополнение списка идут в одном потоке UI
         private async Task OnDataGridKeyDown(KeyboardEventArgs e)
         {
-            if (_isScanning)
-            {
-                return;
-            }
-
             if (Logger.IsEnabled(LogLevel.Trace))
             {
                 Logger.LogTrace("Нажата клавиша: {Code}, Ctrl: {Ctrl}, Shift: {Shift}",

@@ -47,8 +47,8 @@
                             @L["Scanner_Processed"]: <strong>@_processedDirsCount</strong>
                         </MudText>
                         <MudProgressLinear Color="Color.Primary"
-                                           Value="@_processedDirsCount"
-                                           Indeterminate="@(_processedDirsCount == 0)"
+                                           Value="100"
+                                           Indeterminate="@_isScanning"
                                            Style="flex-grow: 1;" />
                     </MudStack>
                 }
