@@ -8,5 +8,12 @@
     public record ColumnConfig<T>(
         string HeaderKey,
         Func<T, string> ValueSelector
-    );
+    )
+    {
+        /// <summary>
+        /// Колонка — номер строки: при копировании в ней пишется порядковый номер среди скопированных (1, 2, 3…),
+        /// а не значение из модели.
+        /// </summary>
+        public bool IsRowNumber { get; init; }
+    }
 }

@@ -1,0 +1,25 @@
+/* Выделение строк таблиц FMMS: подключается модулем js/gridSelection.js */
+
+.fmms-grid-selection {
+    outline: none;
+}
+
+.fmms-grid-selection tbody {
+    user-select: none;
+}
+
+.fmms-grid-selection tr.fmms-row-selected > td {
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.16) !important;
+}
+
+.fmms-grid-selection:focus-within tr.fmms-row-cursor > td {
+    box-shadow: inset 0 1px 0 var(--mud-palette-primary), inset 0 -1px 0 var(--mud-palette-primary);
+}
+
+.fmms-selection-box {
+    position: fixed;
+    z-index: 2000;
+    pointer-events: none;
+    border: 1px solid var(--mud-palette-primary);
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.15);
+}

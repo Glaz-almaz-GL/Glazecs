@@ -5,7 +5,7 @@
 @using MudBlazor
 @page "/modules/fmms/files_scanner"
 
-<MudContainer @onkeydown="OnDataGridKeyDown" MaxWidth="MaxWidth.False" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     <MudStack Spacing="3">
 
         <!-- Панель управления -->
@@ -57,10 +57,15 @@
         <!-- Таблица результатов -->
         <MudCard Outlined="true">
             <MudCardContent Style="padding: 0;">
-                <div style="overflow-x: auto; max-height: 100%; overflow-y: auto;">
+                <div @ref="_gridContainer"
+                     class="fmms-grid-selection"
+                     tabindex="0"
+                     @onkeydown="OnDataGridKeyDown"
+                     style="overflow-x: auto; max-height: 100%; overflow-y: auto;">
                     <MudDataGrid T="ScannedFile"
+                                 @ref="_grid"
                                  Items="@_scannedFiles"
-                                 SelectedItems="@_selectedRows"
+                                 SelectedItems="@_selection.Selected"
                                  SelectedItemsChanged="@SelectedItemsChanged"
                                  Hover="true"
                                  Striped="true"
@@ -73,7 +78,8 @@
                                  ReadOnly="true"
                                  SortMode="SortMode.Single"
                                  MultiSelection="true"
-                                 SelectOnRowClick="true"
+                                 SelectOnRowClick="false"
+                                 RowClassFunc="@_selection.GetRowClass"
                                  Bordered="true"
                                  RowContextMenuClick="@OpenMenuContent"
                                  RowsPerPage="20">
@@ -121,7 +127,10 @@
                                      Icon="@Icons.Material.Outlined.FileCopy">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
                                 <MudText Typo="Typo.body2">@L["Menu_Copy_Info"]</MudText>
-                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
+                                @if (!HasMultipleSelection)
+                                {
+                                    <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
+                                }
                             </MudStack>
                         </MudMenuItem>
 
@@ -129,23 +138,32 @@
                                      Icon="@Icons.Material.TwoTone.FileCopy">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
                                 <MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV"]</MudText>
-                                <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
+                                @if (!HasMultipleSelection)
+                                {
+                                    <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
+                                }
                             </MudStack>
                         </MudMenuItem>
 
-                        @if (_selectedRows != null && _selectedRows.Count > 1)
+                        @if (HasMultipleSelection)
                         {
                             <MudDivider Class="my-1" />
 
-                            <!-- Группа 3: Массовые операции -->
+                            <!-- Группа 3: Массовые операции (Ctrl + C копирует всё выделенное) -->
                             <MudMenuItem OnClick="@CopySelectedInfoAsync"
                                          Icon="@Icons.Material.Outlined.CopyAll">
-                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"] (@_selectedRows.Count)</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                    <MudText Typo="Typo.body2">@L["Menu_Copy_Info_All"] (@_selection.Selected.Count)</MudText>
+                                    <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + C</MudChip>
+                                </MudStack>
                             </MudMenuItem>
 
                             <MudMenuItem OnClick="@CopySelectedInfoTsvAsync"
                                          Icon="@Icons.Material.TwoTone.CopyAll">
-                                <MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"] (@_selectedRows.Count)</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="justify-space-between" Style="width: 100%;">
+                                    <MudText Typo="Typo.body2">@L["Menu_Copy_Info_TSV_All"] (@_selection.Selected.Count)</MudText>
+                                    <MudChip T="string" Variant="Variant.Text" Size="Size.Small" Color="Color.Default" Class="ml-4">Ctrl + Shift + C</MudChip>
+                                </MudStack>
                             </MudMenuItem>
                         }
                     </MudMenu>

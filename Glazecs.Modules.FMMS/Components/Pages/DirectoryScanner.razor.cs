@@ -9,13 +9,14 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Diagnostics;
 using System.Text;
 
 namespace Glazecs.Modules.FMMS.Components.Pages
 {
-    public partial class DirectoryScanner : ComponentBase, IDisposable
+    public partial class DirectoryScanner : ComponentBase, IDisposable, IAsyncDisposable
     {
         #region Injection
 
@@ -24,6 +25,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         [Inject] private FmmsSettingsService SettingsService { get; set; } = default!;
         [Inject] private IStringLocalizer<FmmsResources> L { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        [Inject] private IJSRuntime JS { get; set; } = default!;
 
         #endregion
 
@@ -35,8 +37,10 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private CancellationTokenSource? _cts;
         private ScannedDirectory? _contextRow;
         private MudMenu _contextMenu = null!;
+        private MudDataGrid<ScannedDirectory> _grid = null!;
+        private ElementReference _gridContainer;
         private readonly List<ScannedDirectory> _scannedDirs = [];
-        private HashSet<ScannedDirectory>? _selectedRows;
+        private readonly GridSelectionController<ScannedDirectory> _selection;
         private List<DirectoryColumnConfig> _visibleColumnsCache = [];
         private bool _disposed;
         private const int ThrottleIntervalMs = 200;
@@ -44,9 +48,30 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #endregion
 
+        public DirectoryScanner()
+        {
+            _selection = new GridSelectionController<ScannedDirectory>(dir => dir.Id, () => InvokeAsync(StateHasChanged));
+        }
+
         #region Properties
 
         private FileSizeType DisplayedSizeType => SettingsService.DirectoryScanningSettings.DisplayedSizeType;
+
+        private bool HasMultipleSelection => _selection.Selected.Count > 1;
+
+        #endregion
+
+        #region Lifecycle
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                await _selection.AttachAsync(JS, _gridContainer, _grid);
+            }
+
+            await _selection.AfterRenderAsync();
+        }
 
         #endregion
 
@@ -120,7 +145,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             _isScanning = true;
             _processedDirsCount = 0;
             _scannedDirs.Clear();
-            _selectedRows?.Clear();
+            _selection.Clear();
             _visibleColumnsCache.Clear();
             _cts = new CancellationTokenSource();
         }
@@ -237,6 +262,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private async Task OpenMenuContent(DataGridRowClickEventArgs<ScannedDirectory> args)
         {
             _contextRow = args.Item;
+            _selection.EnsureSelected(args.Item);
 
             if (Logger.IsEnabled(LogLevel.Trace))
             {
@@ -248,7 +274,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private void SelectedItemsChanged(HashSet<ScannedDirectory> items)
         {
-            _selectedRows = items;
+            _selection.SyncFromGrid(items);
 
             if (Logger.IsEnabled(LogLevel.Trace))
             {
@@ -300,7 +326,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private void AddStandardColumns(List<DirectoryColumnConfig> configs)
         {
-            TryAddColumn(configs, "Table_Id", dir => dir.Id.ToString());
+            TryAddColumn(configs, "Table_Id", dir => dir.Id.ToString(), isRowNumber: true);
             TryAddColumn(configs, "Column_Name_Dir", dir => dir.RelativePath);
             TryAddColumn(configs, "Table_Full_Path", dir => dir.FullPath);
             TryAddColumn(configs, "Column_Size", dir => FormatSize(dir.Size));
@@ -310,9 +336,10 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private static void TryAddColumn(
             List<DirectoryColumnConfig> configs,
             string headerKey,
-            Func<ScannedDirectory, string> valueSelector)
+            Func<ScannedDirectory, string> valueSelector,
+            bool isRowNumber = false)
         {
-            configs.Add(new DirectoryColumnConfig(headerKey, valueSelector));
+            configs.Add(new DirectoryColumnConfig(headerKey, valueSelector) { IsRowNumber = isRowNumber });
         }
 
         #endregion
@@ -360,7 +387,8 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Clipboard Operations
 
-        private string GetDirInfoFormatted(ScannedDirectory dir)
+        /// <param name="number">Номер директории среди скопированных — пишется в колонку номера вместо Id.</param>
+        private string GetDirInfoFormatted(ScannedDirectory dir, int number)
         {
             StringBuilder sb = new();
             List<DirectoryColumnConfig> configs = GetVisibleColumnsConfig();
@@ -368,18 +396,23 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             foreach (DirectoryColumnConfig config in configs)
             {
                 string header = L[config.HeaderKey];
-                string value = config.ValueSelector(dir);
+                string value = GetCopiedValue(config, dir, number);
                 sb.Append($"{header}: {value} | ");
             }
 
             return sb.Length > 3 ? sb.ToString(0, sb.Length - 3) : sb.ToString();
         }
 
-        private string GetDirInfoTsv(ScannedDirectory dir)
+        private string GetDirInfoTsv(ScannedDirectory dir, int number)
         {
             List<DirectoryColumnConfig> configs = GetVisibleColumnsConfig();
-            IEnumerable<string> values = configs.Select(c => c.ValueSelector(dir));
+            IEnumerable<string> values = configs.Select(c => GetCopiedValue(c, dir, number));
             return string.Join("\t", values);
+        }
+
+        private static string GetCopiedValue(DirectoryColumnConfig config, ScannedDirectory dir, int number)
+        {
+            return config.IsRowNumber ? number.ToString() : config.ValueSelector(dir);
         }
 
         private string GetTsvHeaders()
@@ -433,7 +466,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             }
 
             string content = formatted
-                ? GetDirInfoFormatted(dir)
+                ? GetDirInfoFormatted(dir, number: 1)
                 : BuildTsvContent([dir]);
 
             await Clipboard.Default.SetTextAsync(content);
@@ -456,15 +489,15 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (Logger.IsEnabled(LogLevel.Debug))
             {
-                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (форматированно)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (форматированно)", _selection.Selected.Count);
             }
 
             List<ScannedDirectory> sortedDirs = GetSortedSelectedDirs();
             StringBuilder sb = new();
 
-            foreach (ScannedDirectory dir in sortedDirs)
+            for (int i = 0; i < sortedDirs.Count; i++)
             {
-                sb.AppendLine(GetDirInfoFormatted(dir));
+                sb.AppendLine(GetDirInfoFormatted(sortedDirs[i], number: i + 1));
             }
 
             string content = sb.ToString();
@@ -488,7 +521,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (Logger.IsEnabled(LogLevel.Debug))
             {
-                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (TSV)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных директориях (TSV)", _selection.Selected.Count);
             }
 
             List<ScannedDirectory> sortedDirs = GetSortedSelectedDirs();
@@ -510,9 +543,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             StringBuilder sb = new();
             sb.AppendLine(GetTsvHeaders());
 
-            foreach (ScannedDirectory dir in dirs)
+            for (int i = 0; i < dirs.Count; i++)
             {
-                sb.AppendLine(GetDirInfoTsv(dir));
+                sb.AppendLine(GetDirInfoTsv(dirs[i], number: i + 1));
             }
 
             return sb.ToString();
@@ -520,7 +553,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private bool ValidateSelectedDirs(string operationName)
         {
-            if (_selectedRows == null || _selectedRows.Count == 0)
+            if (_selection.Selected.Count == 0)
             {
                 if (Logger.IsEnabled(LogLevel.Warning))
                 {
@@ -535,18 +568,28 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private ScannedDirectory? GetActiveDir()
         {
-            return _contextRow ?? (_selectedRows?.Count == 1 ? _selectedRows.FirstOrDefault() : null);
+            return _contextRow ?? GetKeyboardActiveDir();
         }
 
-        private List<ScannedDirectory> GetSortedSelectedDirs()
+        /// <summary>
+        /// Директория для горячих клавиш: текущая строка, если она выделена, иначе единственная выделенная.
+        /// </summary>
+        private ScannedDirectory? GetKeyboardActiveDir()
         {
-            if (_selectedRows == null || _selectedRows.Count == 0)
+            if (_selection.Cursor.HasValue && _selection.Selected.Contains(_selection.Cursor.Value))
             {
-                return [];
+                return _selection.Cursor;
             }
 
-            // Сортировка по индексу в исходном списке для сохранения порядка, как в оригинальной логике
-            return [.. _selectedRows.OrderBy(_scannedDirs.IndexOf)];
+            return _selection.Selected.Count == 1 ? _selection.Selected.First() : null;
+        }
+
+        /// <summary>
+        /// Выделенные директории в порядке, в котором они показаны в таблице.
+        /// </summary>
+        private List<ScannedDirectory> GetSortedSelectedDirs()
+        {
+            return _selection.GetSelectedInDisplayOrder(_selection.OrderedItems);
         }
 
         #endregion
@@ -566,7 +609,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     e.Code, e.CtrlKey, e.ShiftKey);
             }
 
-            if (TryHandleCopyShortcut(e))
+            if (_selection.HandleKey(e) || TryHandleCopyShortcut(e))
             {
                 return;
             }
@@ -588,7 +631,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     Logger.LogDebug("Горячая клавиша: Ctrl+Shift+C (копирование TSV)");
                 }
 
-                _ = CopySingleInfoTsvAsync();
+                _ = CopySelectedInfoTsvAsync();
                 return true;
             }
 
@@ -599,7 +642,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     Logger.LogDebug("Горячая клавиша: Ctrl+C (копирование)");
                 }
 
-                _ = CopySingleInfoAsync();
+                _ = CopySelectedInfoAsync();
                 return true;
             }
 
@@ -613,7 +656,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            ScannedDirectory? activeDir = GetActiveDir();
+            ScannedDirectory? activeDir = GetKeyboardActiveDir();
             if (!activeDir.HasValue)
             {
                 return;
@@ -652,6 +695,13 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        // Blazor вызывает только DisposeAsync, если компонент реализует оба интерфейса
+        public async ValueTask DisposeAsync()
+        {
+            await _selection.DisposeAsync();
+            Dispose();
         }
 
         #endregion

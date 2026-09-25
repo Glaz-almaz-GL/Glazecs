@@ -9,13 +9,14 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Diagnostics;
 using System.Text;
 
 namespace Glazecs.Modules.FMMS.Components.Pages
 {
-    public partial class FilesScanner : ComponentBase, IDisposable
+    public partial class FilesScanner : ComponentBase, IDisposable, IAsyncDisposable
     {
         #region Injection
 
@@ -24,6 +25,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         [Inject] private FmmsSettingsService SettingsService { get; set; } = default!;
         [Inject] private IStringLocalizer<FmmsResources> L { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        [Inject] private IJSRuntime JS { get; set; } = default!;
 
         #endregion
 
@@ -35,8 +37,10 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private CancellationTokenSource? _cts;
         private ScannedFile? _contextRow;
         private MudMenu _contextMenu = null!;
+        private MudDataGrid<ScannedFile> _grid = null!;
+        private ElementReference _gridContainer;
         private readonly List<ScannedFile> _scannedFiles = [];
-        private HashSet<ScannedFile>? _selectedRows;
+        private readonly GridSelectionController<ScannedFile> _selection;
         private List<FileColumnConfig> _visibleColumnsCache = [];
         private bool _disposed;
         private const int ThrottleIntervalMs = 200;
@@ -44,9 +48,30 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #endregion
 
+        public FilesScanner()
+        {
+            _selection = new GridSelectionController<ScannedFile>(file => file.Id, () => InvokeAsync(StateHasChanged));
+        }
+
         #region Properties
 
         private FileSizeType DisplayedSizeType => SettingsService.FilesScanningSettings.DisplayedSizeType;
+
+        private bool HasMultipleSelection => _selection.Selected.Count > 1;
+
+        #endregion
+
+        #region Lifecycle
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                await _selection.AttachAsync(JS, _gridContainer, _grid);
+            }
+
+            await _selection.AfterRenderAsync();
+        }
 
         #endregion
 
@@ -120,7 +145,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             _isScanning = true;
             _processedFilesCount = 0;
             _scannedFiles.Clear();
-            _selectedRows?.Clear();
+            _selection.Clear();
             _visibleColumnsCache.Clear();
             _cts = new CancellationTokenSource();
         }
@@ -238,6 +263,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         private async Task OpenMenuContent(DataGridRowClickEventArgs<ScannedFile> args)
         {
             _contextRow = args.Item;
+            _selection.EnsureSelected(args.Item);
 
             if (Logger.IsEnabled(LogLevel.Trace))
             {
@@ -249,7 +275,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private void SelectedItemsChanged(HashSet<ScannedFile> items)
         {
-            _selectedRows = items;
+            _selection.SyncFromGrid(items);
 
             if (Logger.IsEnabled(LogLevel.Trace))
             {
@@ -311,7 +337,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             AnalyzeFileSettings analyzeSettings = settings.AnalyzeSettings;
 
             TryAddColumn(configs, analyzeSettings, AnalyzeField.Id, true, "Table_Id",
-                f => f.Id.ToString());
+                f => f.Id.ToString(), isRowNumber: true);
 
             TryAddColumn(configs, analyzeSettings, AnalyzeField.Name, true, "Table_Name",
                 f => f.Name);
@@ -352,11 +378,12 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             AnalyzeField field,
             bool defaultValue,
             string headerKey,
-            Func<ScannedFile, string> valueSelector)
+            Func<ScannedFile, string> valueSelector,
+            bool isRowNumber = false)
         {
             if (visibleSettings.FieldsToAnalyze.GetValueOrDefault(field, defaultValue))
             {
-                configs.Add(new FileColumnConfig(headerKey, valueSelector));
+                configs.Add(new FileColumnConfig(headerKey, valueSelector) { IsRowNumber = isRowNumber });
             }
         }
 
@@ -475,7 +502,8 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Clipboard Operations
 
-        private string GetFileInfoFormatted(ScannedFile file)
+        /// <param name="number">Номер файла среди скопированных — пишется в колонку номера вместо Id.</param>
+        private string GetFileInfoFormatted(ScannedFile file, int number)
         {
             StringBuilder sb = new();
             List<FileColumnConfig> configs = GetVisibleColumnsConfig();
@@ -483,18 +511,23 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             foreach (FileColumnConfig config in configs)
             {
                 string header = L[config.HeaderKey];
-                string value = config.ValueSelector(file);
+                string value = GetCopiedValue(config, file, number);
                 sb.Append($"{header}: {value} | ");
             }
 
             return sb.Length > 3 ? sb.ToString(0, sb.Length - 3) : sb.ToString();
         }
 
-        private string GetFileInfoTsv(ScannedFile file)
+        private string GetFileInfoTsv(ScannedFile file, int number)
         {
             List<FileColumnConfig> configs = GetVisibleColumnsConfig();
-            IEnumerable<string> values = configs.Select(c => c.ValueSelector(file));
+            IEnumerable<string> values = configs.Select(c => GetCopiedValue(c, file, number));
             return string.Join("\t", values);
+        }
+
+        private static string GetCopiedValue(FileColumnConfig config, ScannedFile file, int number)
+        {
+            return config.IsRowNumber ? number.ToString() : config.ValueSelector(file);
         }
 
         private string GetTsvHeaders()
@@ -548,7 +581,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             }
 
             string content = formatted
-                ? GetFileInfoFormatted(file)
+                ? GetFileInfoFormatted(file, number: 1)
                 : BuildTsvContent([file]);
 
             await Clipboard.Default.SetTextAsync(content);
@@ -571,15 +604,15 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (Logger.IsEnabled(LogLevel.Debug))
             {
-                Logger.LogDebug("Копирование информации о {Count} выбранных файлах (форматированно)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных файлах (форматированно)", _selection.Selected.Count);
             }
 
             List<ScannedFile> sortedFiles = GetSortedSelectedFiles();
             StringBuilder sb = new();
 
-            foreach (ScannedFile file in sortedFiles)
+            for (int i = 0; i < sortedFiles.Count; i++)
             {
-                sb.AppendLine(GetFileInfoFormatted(file));
+                sb.AppendLine(GetFileInfoFormatted(sortedFiles[i], number: i + 1));
             }
 
             string content = sb.ToString();
@@ -603,7 +636,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
             if (Logger.IsEnabled(LogLevel.Debug))
             {
-                Logger.LogDebug("Копирование информации о {Count} выбранных файлах (TSV)", _selectedRows!.Count);
+                Logger.LogDebug("Копирование информации о {Count} выбранных файлах (TSV)", _selection.Selected.Count);
             }
 
             List<ScannedFile> sortedFiles = GetSortedSelectedFiles();
@@ -625,9 +658,9 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             StringBuilder sb = new();
             sb.AppendLine(GetTsvHeaders());
 
-            foreach (ScannedFile file in files)
+            for (int i = 0; i < files.Count; i++)
             {
-                sb.AppendLine(GetFileInfoTsv(file));
+                sb.AppendLine(GetFileInfoTsv(files[i], number: i + 1));
             }
 
             return sb.ToString();
@@ -635,7 +668,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private bool ValidateSelectedFiles(string operationName)
         {
-            if (_selectedRows == null || _selectedRows.Count == 0)
+            if (_selection.Selected.Count == 0)
             {
                 if (Logger.IsEnabled(LogLevel.Warning))
                 {
@@ -650,12 +683,28 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         private ScannedFile? GetActiveFile()
         {
-            return _contextRow ?? (_selectedRows?.Count == 1 ? _selectedRows.FirstOrDefault() : null);
+            return _contextRow ?? GetKeyboardActiveFile();
         }
 
+        /// <summary>
+        /// Файл для горячих клавиш: текущая строка, если она выделена, иначе единственный выделенный.
+        /// </summary>
+        private ScannedFile? GetKeyboardActiveFile()
+        {
+            if (_selection.Cursor.HasValue && _selection.Selected.Contains(_selection.Cursor.Value))
+            {
+                return _selection.Cursor;
+            }
+
+            return _selection.Selected.Count == 1 ? _selection.Selected.First() : null;
+        }
+
+        /// <summary>
+        /// Выделенные файлы в порядке, в котором они показаны в таблице.
+        /// </summary>
         private List<ScannedFile> GetSortedSelectedFiles()
         {
-            return _selectedRows == null || _selectedRows.Count == 0 ? [] : [.. _selectedRows.OrderBy(f => f.Id)];
+            return _selection.GetSelectedInDisplayOrder(_selection.OrderedItems);
         }
 
         #endregion
@@ -675,7 +724,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     e.Code, e.CtrlKey, e.ShiftKey);
             }
 
-            if (TryHandleCopyShortcut(e))
+            if (_selection.HandleKey(e) || TryHandleCopyShortcut(e))
             {
                 return;
             }
@@ -697,7 +746,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     Logger.LogDebug("Горячая клавиша: Ctrl+Shift+C (копирование TSV)");
                 }
 
-                _ = CopySingleInfoTsvAsync();
+                _ = CopySelectedInfoTsvAsync();
                 return true;
             }
 
@@ -708,7 +757,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                     Logger.LogDebug("Горячая клавиша: Ctrl+C (копирование)");
                 }
 
-                _ = CopySingleInfoAsync();
+                _ = CopySelectedInfoAsync();
                 return true;
             }
 
@@ -722,7 +771,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 return;
             }
 
-            ScannedFile? activeFile = GetActiveFile();
+            ScannedFile? activeFile = GetKeyboardActiveFile();
             if (!activeFile.HasValue)
             {
                 return;
@@ -770,6 +819,13 @@ namespace Glazecs.Modules.FMMS.Components.Pages
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        // Blazor вызывает только DisposeAsync, если компонент реализует оба интерфейса
+        public async ValueTask DisposeAsync()
+        {
+            await _selection.DisposeAsync();
+            Dispose();
         }
 
         #endregion
