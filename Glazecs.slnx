@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/Apps/">
     <Project Path="Glazecs.App.Desktop/Glazecs.App.Desktop.csproj" Id="de1aaab2-8d8a-471c-9803-faba14db2b9e">
       <Deploy />
@@ -18,9 +18,12 @@
     <Project Path="Glazecs.Modules.FMMS/Glazecs.Modules.FMMS.csproj" />
     <Project Path="Glazecs.Modules.Hash.Abstractions/Glazecs.Modules.Hash.Abstractions.csproj" />
     <Project Path="Glazecs.Modules.Hash.Providers/Glazecs.Modules.Hash.Providers.csproj" Id="d578578c-9ab1-45f0-a25b-135c6275073c" />
+    <Project Path="Glazecs.Modules.TTS.Abstractions/Glazecs.Modules.TTS.Abstractions.csproj" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="Glazecs.Shared.Core/Glazecs.Shared.Core.csproj" Id="b190462f-8c15-474b-87a6-0ac82593926f" />
+    <Project Path="Glazecs.Shared.Modules/Glazecs.Shared.Modules.csproj" />
     <Project Path="Glazecs.Shared.UI/Glazecs.Shared.UI.csproj" Id="951f5856-6d00-41a8-be3e-0e87204f03fb" />
   </Folder>
 </Solution>
+
