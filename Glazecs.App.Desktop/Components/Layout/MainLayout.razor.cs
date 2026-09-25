@@ -99,7 +99,7 @@ namespace Glazecs.App.Desktop.Components.Layout
                     ChangeCultureInfo(value);
 
                     AppSettings.Settings.Culture = value;
-                    _ = SaveSettingsAsync();
+                    SaveSettings();
 
                     if (_isLoaded)
                     {
@@ -138,19 +138,17 @@ namespace Glazecs.App.Desktop.Components.Layout
                 _ => await _mudThemeProvider.GetSystemDarkModeAsync(),
             };
 
-            await SaveSettingsAsync();
+            SaveSettings();
         }
 
-        private async Task ToggleCultureAsync(CultureInfo cultureInfo)
+        private void ToggleCulture(CultureInfo cultureInfo)
         {
             CurrentCulture = cultureInfo;
-            await SaveSettingsAsync();
+            SaveSettings();
         }
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
-            await AppSettings.LoadAsync();
-
             // Применяем сохраненный язык до первой отрисовки
             if (AppSettings.Settings.Culture != CultureInfo.CurrentCulture)
             {
@@ -176,11 +174,11 @@ namespace Glazecs.App.Desktop.Components.Layout
             }
         }
 
-        private async Task SaveSettingsAsync()
+        private void SaveSettings()
         {
             try
             {
-                await AppSettings.SaveAsync();
+                AppSettings.Save();
             }
             catch (Exception ex)
             {

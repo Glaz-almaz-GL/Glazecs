@@ -14,13 +14,13 @@ namespace Glazecs.Shared.UI.Interfaces
         /// </summary>
         event Action<AppSettings>? OnSettingsChanged;
 
-        Task LoadAsync(CancellationToken cancellationToken = default);
-        Task SaveAsync(CancellationToken cancellationToken = default);
+        void Load();
+        void Save();
 
         /// <summary>
         /// Сбрасывает настройки к значениям по умолчанию.
         /// </summary>
-        Task ResetToDefaultsAsync(CancellationToken cancellationToken = default);
+        void ResetToDefaults();
 
     }
 }

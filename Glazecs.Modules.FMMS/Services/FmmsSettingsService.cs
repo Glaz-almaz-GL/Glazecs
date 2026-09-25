@@ -1,4 +1,4 @@
-﻿using Glazecs.Modules.FMMS.Abstractions.Models;
+using Glazecs.Modules.FMMS.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +9,7 @@ namespace Glazecs.Modules.FMMS.Services
     {
         private readonly ILogger<FmmsSettingsService>? _logger;
         private readonly string _filePath;
-        private readonly SemaphoreSlim _saveLock = new(1, 1);
+        private readonly object _fileLock = new();
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -41,60 +41,59 @@ namespace Glazecs.Modules.FMMS.Services
             {
                 _logger.LogDebug("FMMS settings service initialized. File path: {FilePath}", _filePath);
             }
+
+            Load();
         }
 
-        public async Task LoadAsync(CancellationToken cancellationToken = default)
+        public void Load()
         {
-            try
+            lock (_fileLock)
             {
-                if (!File.Exists(_filePath))
+                try
                 {
-                    if (_logger?.IsEnabled(LogLevel.Information) == true)
+                    if (!File.Exists(_filePath))
                     {
-                        _logger.LogInformation("FMMS settings file not found at {FilePath}. Using defaults.", _filePath);
+                        if (_logger?.IsEnabled(LogLevel.Information) == true)
+                        {
+                            _logger.LogInformation("FMMS settings file not found at {FilePath}. Using defaults.", _filePath);
+                        }
+                        return;
                     }
-                    return;
+
+                    string json = File.ReadAllText(_filePath);
+
+                    SavedSettingsContainer? savedSettings = JsonSerializer.Deserialize<SavedSettingsContainer>(json, _jsonOptions);
+
+                    if (savedSettings is null ||
+                        savedSettings.FilesScanningSettings is null ||
+                        savedSettings.DirectoryScanningSettings is null)
+                    {
+                        _logger?.LogWarning("FMMS settings file is empty or corrupted (null values). Resetting to defaults.");
+                        HandleCorruptedFile();
+                        return;
+                    }
+
+                    ApplySettings(savedSettings);
                 }
-
-                string json = await File.ReadAllTextAsync(_filePath, cancellationToken).ConfigureAwait(false);
-
-                SavedSettingsContainer? savedSettings = JsonSerializer.Deserialize<SavedSettingsContainer>(json, _jsonOptions);
-
-                if (savedSettings is null ||
-                    savedSettings.FilesScanningSettings is null ||
-                    savedSettings.DirectoryScanningSettings is null)
+                catch (JsonException jsonEx)
                 {
-                    _logger?.LogWarning("FMMS settings file is empty or corrupted (null values). Resetting to defaults.");
-                    await ResetToDefaultsAsync(cancellationToken).ConfigureAwait(false);
-                    return;
-                }
+                    if (_logger?.IsEnabled(LogLevel.Error) == true)
+                    {
+                        _logger.LogError(jsonEx, "FMMS settings deserialization error. File is corrupted.");
+                    }
 
-                ApplySettings(savedSettings);
-            }
-            catch (JsonException jsonEx)
-            {
-                if (_logger?.IsEnabled(LogLevel.Error) == true)
-                {
-                    _logger.LogError(jsonEx, "FMMS settings deserialization error. File is corrupted.");
+                    HandleCorruptedFile();
                 }
+                catch (Exception ex)
+                {
+                    if (_logger?.IsEnabled(LogLevel.Error) == true)
+                    {
+                        _logger.LogError(ex, "Unexpected error loading FMMS settings. Default settings will be used for this session; the file is left untouched.");
+                    }
 
-                await HandleCorruptedFileAsync();
-            }
-            catch (OperationCanceledException ex)
-            {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
-                {
-                    _logger.LogWarning(ex, "FMMS settings loading was canceled.");
+                    // Only in memory: the failure may be temporary (e.g. file locked), so don't overwrite saved settings
+                    ResetToDefaultValues();
                 }
-            }
-            catch (Exception ex)
-            {
-                if (_logger?.IsEnabled(LogLevel.Error) == true)
-                {
-                    _logger.LogError(ex, "Unexpected error loading FMMS settings. Default settings will be used.");
-                }
-
-                await ResetToDefaultsAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -115,62 +114,53 @@ namespace Glazecs.Modules.FMMS.Services
             OnSettingsLoaded?.Invoke();
         }
 
-        public async Task SaveCurrentAsync(CancellationToken cancellationToken = default)
+        public void SaveCurrent()
         {
-            await SaveAsync(FilesScanningSettings, DirectoryScanningSettings, cancellationToken).ConfigureAwait(false);
+            Save(FilesScanningSettings, DirectoryScanningSettings);
         }
 
-        public async Task SaveAsync(FilesScanningSettings filesScanningSettings, DirectoryScanningSettings directoryScanningSettings, CancellationToken cancellationToken = default)
+        public void Save(FilesScanningSettings filesScanningSettings, DirectoryScanningSettings directoryScanningSettings)
         {
-            await _saveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
+            lock (_fileLock)
             {
-                string? directory = Path.GetDirectoryName(_filePath);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                try
                 {
-                    Directory.CreateDirectory(directory);
-                }
+                    string? directory = Path.GetDirectoryName(_filePath);
+                    if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
 
-                SavedSettingsContainer container = new()
-                {
-                    FilesScanningSettings = filesScanningSettings,
-                    DirectoryScanningSettings = directoryScanningSettings
-                };
+                    SavedSettingsContainer container = new()
+                    {
+                        FilesScanningSettings = filesScanningSettings,
+                        DirectoryScanningSettings = directoryScanningSettings
+                    };
 
-                string json = JsonSerializer.Serialize(container, _jsonOptions);
-                await File.WriteAllTextAsync(_filePath, json, cancellationToken).ConfigureAwait(false);
+                    string json = JsonSerializer.Serialize(container, _jsonOptions);
+                    File.WriteAllText(_filePath, json);
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation("FMMS settings saved successfully to {FilePath}.", _filePath);
-                }
+                    if (_logger?.IsEnabled(LogLevel.Information) == true)
+                    {
+                        _logger.LogInformation("FMMS settings saved successfully to {FilePath}.", _filePath);
+                    }
 
-                OnSettingsSaved?.Invoke();
-            }
-            catch (OperationCanceledException ex)
-            {
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
-                {
-                    _logger.LogWarning(ex, "FMMS settings saving was canceled.");
+                    OnSettingsSaved?.Invoke();
                 }
-            }
-            catch (Exception ex)
-            {
-                if (_logger?.IsEnabled(LogLevel.Error) == true)
+                catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Critical error saving FMMS settings.");
+                    if (_logger?.IsEnabled(LogLevel.Error) == true)
+                    {
+                        _logger.LogError(ex, "Critical error saving FMMS settings.");
+                    }
                 }
-            }
-            finally
-            {
-                _saveLock.Release();
             }
         }
 
-        public async Task ResetToDefaultsAsync(CancellationToken cancellationToken = default)
+        public void ResetToDefaults()
         {
             ResetToDefaultValues();
-            await SaveCurrentAsync(cancellationToken).ConfigureAwait(false);
+            SaveCurrent();
 
             if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
@@ -184,7 +174,7 @@ namespace Glazecs.Modules.FMMS.Services
             DirectoryScanningSettings = new DirectoryScanningSettings();
         }
 
-        private async Task HandleCorruptedFileAsync()
+        private void HandleCorruptedFile()
         {
             try
             {
@@ -204,7 +194,7 @@ namespace Glazecs.Modules.FMMS.Services
                 }
             }
 
-            await ResetToDefaultsAsync();
+            ResetToDefaults();
             OnSettingsLoaded?.Invoke();
         }
 

@@ -40,13 +40,13 @@
                             Color="Color.Primary"
                             Size="Size.Small"
                             title="Русский"
-                            OnClick="async () => { await ToggleCultureAsync(RussianCulture); }" />
+                            OnClick="() => ToggleCulture(RussianCulture)" />
 
             <MudFabMenuItem StartIcon="@Icons.Material.Filled.Translate"
                             Color="Color.Primary"
                             Size="Size.Small"
                             title="English"
-                            OnClick="async () => { await ToggleCultureAsync(EnglishCulture); }" />
+                            OnClick="() => ToggleCulture(EnglishCulture)" />
 
         </MudFabMenu>
 

@@ -46,7 +46,7 @@ namespace Glazecs.Modules.FMMS.Components.Pages
 
         #region Hashing Logic
 
-        private async Task OnAlgorithmToggled(string algorithm, bool isChecked)
+        private void OnAlgorithmToggled(string algorithm, bool isChecked)
         {
             HashingSettings hashSettings = SettingsService.FilesScanningSettings.Hashing;
 
@@ -59,57 +59,57 @@ namespace Glazecs.Modules.FMMS.Components.Pages
                 hashSettings.AlgorithmsToCalculate.Remove(algorithm);
             }
 
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
         #endregion
 
         #region Columns Logic
 
-        private async Task OnStandardColumnToggled(AnalyzeField column, bool isVisible)
+        private void OnStandardColumnToggled(AnalyzeField column, bool isVisible)
         {
             SettingsService.FilesScanningSettings.AnalyzeSettings.FieldsToAnalyze[column] = isVisible;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
         #endregion
 
         #region Archive Extensions Logic
 
-        private async Task AddArchiveExtension()
+        private void AddArchiveExtension()
         {
             if (TryNormalizeExtension(_newArchiveExt, out string? ext) && SettingsService.FilesScanningSettings.CustomArchiveExtensions.Add(ext))
             {
                 _newArchiveExt = "";
-                await SaveExplicitly();
+                SaveExplicitly();
             }
         }
 
-        private async Task RemoveArchiveExtension(string ext)
+        private void RemoveArchiveExtension(string ext)
         {
             SettingsService.FilesScanningSettings.CustomArchiveExtensions.Remove(ext);
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
         #endregion
 
         #region Page Rules Logic
 
-        private async Task AddPageRule()
+        private void AddPageRule()
         {
             if (TryNormalizeExtension(_newRuleExt, out string? ext))
             {
                 SettingsService.FilesScanningSettings.PagesCountCustomRules[ext] = _newRulePages;
                 _newRuleExt = "";
                 _newRulePages = 1;
-                await SaveExplicitly();
+                SaveExplicitly();
             }
         }
 
-        private async Task RemovePageRule(string key)
+        private void RemovePageRule(string key)
         {
             SettingsService.FilesScanningSettings.PagesCountCustomRules.Remove(key);
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
         #endregion
@@ -143,67 +143,67 @@ namespace Glazecs.Modules.FMMS.Components.Pages
             return true;
         }
 
-        private async Task OnIncludeHiddenSettingsChanged(bool value)
+        private void OnIncludeHiddenSettingsChanged(bool value)
         {
             SettingsService.DirectoryScanningSettings.IncludeHidden = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task OnParallelismSettingsChanged(int value)
+        private void OnParallelismSettingsChanged(int value)
         {
             SettingsService.FilesScanningSettings.Hashing.MaxDegreeOfParallelism = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task OnCalculateSettingsChanged(bool value)
+        private void OnCalculateSettingsChanged(bool value)
         {
             SettingsService.FilesScanningSettings.Hashing.CalculateInParallel = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task OnMaxSizeSettingsChanged(long value)
+        private void OnMaxSizeSettingsChanged(long value)
         {
             SettingsService.FilesScanningSettings.Hashing.MaxFileSizeBytes = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task OnSizeTypeSettingChanged(FileSizeType value)
+        private void OnSizeTypeSettingChanged(FileSizeType value)
         {
             SettingsService.FilesScanningSettings.DisplayedSizeType = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task OnArchiveSettingsChanged(bool value)
+        private void OnArchiveSettingsChanged(bool value)
         {
             SettingsService.FilesScanningSettings.ScanArchives = value;
-            await SaveExplicitly();
+            SaveExplicitly();
         }
 
-        private async Task SaveExplicitly()
+        private void SaveExplicitly()
         {
-            await SettingsService.SaveCurrentAsync();
+            SettingsService.SaveCurrent();
             Snackbar.Add(L["Settings_Saved_Success"], Severity.Success);
         }
 
-        private async Task HandleEnterKey(KeyboardEventArgs args)
+        private void HandleEnterKey(KeyboardEventArgs args)
         {
             if (args.Key == "Enter")
             {
-                await AddArchiveExtension();
+                AddArchiveExtension();
             }
         }
 
-        private async Task HandleEnterKeyPages(KeyboardEventArgs args)
+        private void HandleEnterKeyPages(KeyboardEventArgs args)
         {
             if (args.Key == "Enter")
             {
-                await AddPageRule();
+                AddPageRule();
             }
         }
 
         public async Task ResetToDefaultsAsync()
         {
-            await SettingsService.ResetToDefaultsAsync();
+            SettingsService.ResetToDefaults();
             await InvokeAsync(StateHasChanged);
         }
 
