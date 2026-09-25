@@ -37,7 +37,7 @@
         <ApplicationId>com.companyname.glazecs.app.desktop</ApplicationId>
 
         <!-- Versions -->
-        <Version>1.4.0</Version>
+        <Version>1.5.0</Version>
         <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
 
@@ -92,4 +92,17 @@
         <LastGenOutput>DesktopResources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
     </ItemGroup>
+
+    <!--
+      Windows App SDK кладёт в публикацию переводы WinUI (*.mui) в папки на ~90 языков и не смотрит
+      на SatelliteResourceLanguages. Оставляем только поддерживаемые языки — en и ru, как выше.
+    -->
+    <Target Name="RemoveUnsupportedWinUILanguagesFromPublish"
+            AfterTargets="ComputeResolvedFilesToPublishList"
+            Condition="'$(TargetPlatformIdentifier)' == 'windows'">
+      <ItemGroup>
+        <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                               Condition="'%(ResolvedFileToPublish.Extension)' == '.mui' and !$([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '(?i)^(en|ru)[-\\/]'))" />
+      </ItemGroup>
+    </Target>
 </Project>

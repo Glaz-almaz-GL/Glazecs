@@ -3,6 +3,7 @@
     <Project Path="Glazecs.App.Desktop/Glazecs.App.Desktop.csproj" Id="de1aaab2-8d8a-471c-9803-faba14db2b9e">
       <Deploy />
     </Project>
+    <Project Path="Glazecs.App.Launcher/Glazecs.App.Launcher.csproj" />
     <Project Path="Glazecs.App.Mobile/Glazecs.App.Mobile.csproj" Id="c938e1da-b187-49b7-ad5b-d9ec28b85922">
       <Deploy />
     </Project>

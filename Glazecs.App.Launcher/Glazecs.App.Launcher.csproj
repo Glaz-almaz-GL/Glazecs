@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Лаунчер Windows-сборки: маленький Glazecs.exe в корне установки запускает app\Glazecs.exe.
+    Так в корне два элемента вместо сотен библиотек WinUI и .NET.
+    .NET Framework 4.7.2 встроен в Windows 10 1809+ (минимальная версия приложения) и Windows 11,
+    поэтому лаунчеру не нужен ни установленный .NET, ни свой рантайм — exe весит несколько килобайт.
+    Публикуется вместе с приложением профилем Portable-win-x64 проекта Glazecs.App.Desktop.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Glazecs</AssemblyName>
+    <RootNamespace>Glazecs.App.Launcher</RootNamespace>
+    <ApplicationIcon>..\Glazecs.App.Desktop\Resources\AppIcon\glazecs.ico</ApplicationIcon>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <!-- Без Glazecs.exe.config рядом: exe для CLR 4 и так запускается на встроенном .NET Framework -->
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+</Project>
